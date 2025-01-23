@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,10 +22,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={cn(inter.className, "antialiased min-h-screen ")}>
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={cn(inter.className, "antialiased min-h-screen")}>
+          <Toaster />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
