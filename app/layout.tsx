@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
+import { QueryProvider } from "@/components/query-provider";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -26,7 +27,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={cn(inter.className, "antialiased min-h-screen")}>
           <Toaster />
-          {children}
+          <QueryProvider>{children}</QueryProvider>
         </body>
       </html>
     </ClerkProvider>

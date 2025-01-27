@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRef } from "react";
 import { z } from "zod";
+import { workspaceSchema } from "@/features/workspaces/schemas";
 
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -26,16 +27,6 @@ interface WorkspaceFormProps {
   initialValues?: z.infer<typeof workspaceSchema>;
   onCancel?: () => void;
 }
-
-const workspaceSchema = z.object({
-  name: z.string().nonempty("Name is required"),
-  image: z
-    .union([
-      z.instanceof(File),
-      z.string().transform((val) => (val === "" ? undefined : val)),
-    ])
-    .optional(),
-});
 
 const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   const [isPending, setIsPending] = useState(false);
