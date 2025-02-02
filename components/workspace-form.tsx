@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { toast } from "sonner";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
+import { useCreateWorkspace } from "@/features/workspaces/api/use-create-workspace";
 
 interface WorkspaceFormProps {
   initialValues?: z.infer<typeof workspaceSchema>;
@@ -29,7 +30,7 @@ interface WorkspaceFormProps {
 }
 
 const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
-  const [isPending, setIsPending] = useState(false);
+  const { mutate, isPending } = useCreateWorkspace();
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -42,25 +43,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   });
   console.log();
   const onSubmit = async (data: z.infer<typeof workspaceSchema>) => {
-    //call the createWorkspace route
-    try {
-      setIsPending(true);
-      let x = new FormData();
-      x.append("name", data.name);
-      x.append("image", data.image as File);
-      const response = await fetch("/api/workspaces", {
-        method: "POST",
-        body: x,
-      });
-      if (response.ok) {
-        toast.success("Workspace created successfully");
-      }
-    } catch (e) {
-      toast.error("Error creating workspace");
-      console.error(e);
-    } finally {
-      setIsPending(false);
-    }
+    mutate({ json: data });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
