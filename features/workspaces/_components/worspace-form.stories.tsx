@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react";
-import WorkspaceForm from "./workspace-form";
+import WorkspaceForm from "./create-workspace-form";
 import {} from "@prisma/client";
 import { within, waitFor } from "@storybook/testing-library";
 import { expect } from "@storybook/test";

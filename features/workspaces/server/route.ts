@@ -2,25 +2,36 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { workspaceSchema } from "../schemas";
 import { getAuth } from "@hono/clerk-auth";
-import prisma from "@/prisma/prisma";
+import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { createWorkspace, getWorkspaces } from "@/lib/dbService/workspaces";
 
 const app = new Hono()
-  .get("/", zValidator("json", workspaceSchema), async (c) => {
-    return c.json({ workspaces: [] });
+  .get("/", async (c) => {
+    const workspaces = await getWorkspaces();
+    return c.json({ data: workspaces });
   })
   .post("/", zValidator("json", workspaceSchema), async (c) => {
     const auth = await getAuth(c);
     if (!auth?.userId) {
-      //return 401
+      //TODO: return 401
     }
     const { name, image } = c.req.valid("json");
-    let uploadedImageUrl: string | undefined;
+    let fileUrl: string | null = null;
     if (image instanceof File) {
+      const uploadDir = "uploaded_files";
+
+      //const image = (formData.get("image") as File) || null;
+      const buffer = Buffer.from(await image.arrayBuffer());
+
+      const uploadDirPath = join(process.cwd(), "public", uploadDir);
+      await writeFile(`${uploadDirPath}/${image.name}`, buffer);
+      fileUrl = `${uploadDir}/${image.name}`;
+      console.log("fileUrl", fileUrl);
     }
-    const ws = await prisma.workspace.create({
-      data: { userId: auth?.userId!, name },
-    });
-    return c.json({ data: ws });
+
+    const workspaces = await createWorkspace(name, fileUrl, auth?.userId!);
+    return c.json({ data: workspaces });
   });
 
 export default app;

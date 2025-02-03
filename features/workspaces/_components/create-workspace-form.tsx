@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { z } from "zod";
 import { workspaceSchema } from "@/features/workspaces/schemas";
 
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormField,
@@ -13,13 +13,11 @@ import {
   FormControl,
   FormItem,
   FormLabel,
-} from "./ui/form";
-import DottedSeparator from "./dotted-separator";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { toast } from "sonner";
+} from "@/components/ui/form";
+import DottedSeparator from "@/components/dotted-separator";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useCreateWorkspace } from "@/features/workspaces/api/use-create-workspace";
