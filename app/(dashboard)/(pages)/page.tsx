@@ -1,4 +1,4 @@
-import WorkspaceForm from "@/components/workspace-form";
+import WorkspaceForm from "@/features/workspaces/_components/create-workspace-form";
 import { auth } from "@clerk/nextjs/server";
 
 const Page = async () => {
