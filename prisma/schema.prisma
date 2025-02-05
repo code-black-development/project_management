@@ -10,19 +10,21 @@ datasource db {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String    @id @default(cuid())
+  user      String
   name      String
   image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  members   Members[]
 }
 
 model Members {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId String
   userId      String
-  role        String?  @default("member")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  role        String?   @default("member")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

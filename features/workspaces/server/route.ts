@@ -1,36 +1,47 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { workspaceSchema } from "../schemas";
-import { getAuth } from "@hono/clerk-auth";
-import { join } from "node:path";
-import { writeFile } from "node:fs/promises";
-import { createWorkspace, getWorkspaces } from "@/lib/dbService/workspaces";
+import { HTTPException } from "hono/http-exception";
+import { join } from "path";
+import { writeFile } from "fs/promises";
+import {
+  createWorkspace,
+  getWorkspaceByUserId,
+  getWorkspaces,
+} from "@/lib/dbService/workspaces";
+import { getSessionUserId } from "@/lib/authFunctions";
 
 const app = new Hono()
   .get("/", async (c) => {
-    const workspaces = await getWorkspaces();
+    const userId = await getSessionUserId(c);
+    if (!userId) {
+      throw new HTTPException(401, { message: "Custom error message" });
+    }
+    const workspaces = await getWorkspaceByUserId(userId);
     return c.json({ data: workspaces });
   })
-  .post("/", zValidator("json", workspaceSchema), async (c) => {
-    const auth = await getAuth(c);
-    if (!auth?.userId) {
-      //TODO: return 401
+  .post("/", zValidator("form", workspaceSchema), async (c) => {
+    const userId = await getSessionUserId(c);
+    if (!userId) {
+      throw new HTTPException(401, { message: "Custom error message" });
     }
-    const { name, image } = c.req.valid("json");
+    const { name, image } = c.req.valid("form");
+
+    if (!image) {
+      return c.json({ error: "No file uploaded" }, 400);
+    }
     let fileUrl: string | null = null;
     if (image instanceof File) {
       const uploadDir = "uploaded_files";
-
-      //const image = (formData.get("image") as File) || null;
       const buffer = Buffer.from(await image.arrayBuffer());
-
       const uploadDirPath = join(process.cwd(), "public", uploadDir);
       await writeFile(`${uploadDirPath}/${image.name}`, buffer);
       fileUrl = `${uploadDir}/${image.name}`;
       console.log("fileUrl", fileUrl);
     }
 
-    const workspaces = await createWorkspace(name, fileUrl, auth?.userId!);
+    const workspaces = await createWorkspace(name, fileUrl, userId!);
+    console.log("workspaces", workspaces);
     return c.json({ data: workspaces });
   });
 

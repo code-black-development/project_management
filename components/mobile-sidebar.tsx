@@ -1,6 +1,13 @@
 "use client";
 import { MenuIcon } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { VisuallyHidden } from "radix-ui";
+
 import Sidebar from "./sidebar";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
@@ -22,6 +29,9 @@ const MobileSidebar = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0">
+        <VisuallyHidden.Root>
+          <SheetTitle>Menu</SheetTitle>
+        </VisuallyHidden.Root>
         <Sidebar />
       </SheetContent>
     </Sheet>

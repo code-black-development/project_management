@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { QueryProvider } from "@/components/query-provider";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";

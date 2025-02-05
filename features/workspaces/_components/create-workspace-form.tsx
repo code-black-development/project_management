@@ -39,9 +39,12 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
       image: initialValues?.image || "",
     },
   });
-  console.log();
   const onSubmit = async (data: z.infer<typeof workspaceSchema>) => {
-    mutate({ json: data });
+    const formValues = {
+      ...data,
+      image: data.image instanceof File ? data.image : "",
+    };
+    mutate({ form: formValues });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

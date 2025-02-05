@@ -2,6 +2,15 @@ import prisma from "@/prisma/prisma";
 
 import { Workspace } from "@prisma/client";
 
+/**
+ *
+ * @param name
+ * @param fileUrl
+ * @param userId
+ * @returns
+ *
+ * This also needs to create a new admin workspace member with the user id and workspace id
+ */
 export const createWorkspace = async (
   name: string,
   fileUrl: string | null,
@@ -12,10 +21,15 @@ export const createWorkspace = async (
       data: {
         name,
         image: fileUrl,
-        userId,
+        user: userId,
+        members: {
+          create: {
+            userId,
+            role: "admin",
+          },
+        },
       },
     });
-    console.log("workspace", workspace);
     return workspace;
   } catch (e) {
     console.error(e);
@@ -30,7 +44,13 @@ export const getWorkspaces = async () => {
 export const getWorkspaceByUserId = async (userId: string) => {
   const workspace = await prisma.workspace.findMany({
     where: {
-      userId,
+      members: {
+        some: {
+          userId: {
+            equals: userId,
+          },
+        },
+      },
     },
   });
   return workspace;
