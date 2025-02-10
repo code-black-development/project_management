@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils";
 import {
   Layout,
@@ -14,6 +15,9 @@ import {
   GoHome,
   GoHomeFill,
 } from "react-icons/go";
+
+import { usePathname } from "next/navigation";
+import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 
 const routes = [
   { icon: GoHome, activeIcon: GoHomeFill, label: "Home", href: "" },
@@ -37,13 +41,16 @@ const routes = [
   },
 ];
 const Navigation = () => {
+  const workspaceId = useWorkspaceId();
+  const pathname = usePathname();
   return (
     <ul className="flex flex-col ">
       {routes.map((route) => {
-        const isActive = false;
+        const fullPath = `/workspaces/${workspaceId}${route.href}`;
+        const isActive = pathname === fullPath;
         const Icon = isActive ? route.activeIcon : route.icon;
         return (
-          <Link href={route.href} key={route.href}>
+          <Link href={fullPath} key={route.href}>
             <div
               className={cn(
                 "flex items-center gap-2.5 p-2.5 rounded-md font-medium hover:text-primary transition text-neutral-500",

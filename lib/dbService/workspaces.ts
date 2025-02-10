@@ -1,7 +1,5 @@
 import prisma from "@/prisma/prisma";
 
-import { Workspace } from "@prisma/client";
-
 /**
  *
  * @param name
@@ -46,9 +44,7 @@ export const getWorkspaceByUserId = async (userId: string) => {
     where: {
       members: {
         some: {
-          userId: {
-            equals: userId,
-          },
+          userId,
         },
       },
     },
@@ -65,23 +61,48 @@ export const getWorkspaceById = async (workspaceId: string) => {
   return workspace;
 };
 
+//takes userId to ensure the user is allowed to update the workspace by looking at the members
 export const updateWorkspace = async (
-  data: Omit<Workspace, "createdAt" | "updatedAt">
+  userId: string,
+  workspaceId: string,
+  data: { name: string; image?: string | null }
 ) => {
-  const workspace = await prisma.workspace.update({
-    where: {
-      id: data.id,
-    },
-    data,
-  });
-  return workspace;
+  try {
+    const workspace = await prisma.workspace.update({
+      where: {
+        id: workspaceId,
+        members: {
+          some: {
+            userId,
+            role: "admin",
+          },
+        },
+      },
+      data,
+    });
+    return workspace;
+  } catch (e) {
+    console.error(JSON.stringify(e));
+    throw new Error("Error updating workspace");
+  }
 };
-
-export const deleteWorkspace = async (workspaceId: string) => {
-  const workspace = await prisma.workspace.delete({
-    where: {
-      id: workspaceId,
-    },
-  });
-  return workspace;
+//TODO - delete the workspace members, projects and tasks as well
+export const deleteWorkspace = async (workspaceId: string, userId: string) => {
+  try {
+    const workspace = await prisma.workspace.delete({
+      where: {
+        id: workspaceId,
+        members: {
+          some: {
+            userId,
+            role: "admin",
+          },
+        },
+      },
+    });
+    return workspace;
+  } catch (e) {
+    console.error(JSON.stringify(e));
+    throw new Error("Error deleting workspace");
+  }
 };

@@ -21,7 +21,7 @@ model Workspace {
 
 model Members {
   id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   userId      String
   role        String?   @default("member")

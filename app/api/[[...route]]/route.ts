@@ -13,7 +13,7 @@ const routes = app.route("/workspace", workspaces);
 
 export const POST = handle(app);
 export const GET = handle(app);
-export const PUT = handle(app);
+export const PATCH = handle(app);
 export const DELETE = handle(app);
 
 export type AppType = typeof routes;

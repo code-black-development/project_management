@@ -1,4 +1,4 @@
 const WorkspacePage = () => {
-  return <div>WorkspacePage</div>;
+  return <div>Workspace Id Page</div>;
 };
 export default WorkspacePage;

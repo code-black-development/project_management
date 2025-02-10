@@ -1,10 +1,12 @@
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
+import CreateWorkspaceModal from "@/features/workspaces/_components/create-workspace-modal";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     // Todo: could make sidebar collapsible in which case the pl of the main tag would be 56 or 0 based on the state of the sidebar
     <div className="min-h-sctreen">
+      <CreateWorkspaceModal />
       <div className="flex w-full h-full">
         <div className="fixed left-0 top-0 hidden lg:block h-full lg:w-[264px] overflow-y-auto">
           <Sidebar />
