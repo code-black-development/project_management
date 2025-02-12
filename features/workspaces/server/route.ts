@@ -11,7 +11,15 @@ import {
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
 import { getSessionUserId } from "@/lib/authFunctions";
-import { string } from "zod";
+import { z } from "zod";
+import {
+  createWorkspaceInvite,
+  getWorkspaceInvite,
+} from "@/lib/dbService/workspace-invites";
+import {
+  addMember,
+  checkIfUserIsAdmin,
+} from "@/lib/dbService/workspace-members";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -29,10 +37,6 @@ const app = new Hono()
     }
     const { name, image } = c.req.valid("form");
 
-    //TODO - image upload is optional so maybe we should not return error - should check if we actually get an error if no image is uploaded
-    if (!image) {
-      return c.json({ error: "No file uploaded" }, 400);
-    }
     let fileUrl: string | null = null;
     if (image instanceof File) {
       const uploadDir = "uploaded_files";
@@ -90,6 +94,46 @@ const app = new Hono()
     const { workspaceId } = c.req.param();
     const workspace = await deleteWorkspace(workspaceId, userId);
     return c.json({ data: workspace });
-  });
+  })
+  .post(
+    "/:workspaceId/invite",
+    zValidator("json", z.object({ invitedUserId: z.string() })),
+    async (c) => {
+      const userId = await getSessionUserId(c);
+      if (!userId) {
+        throw new HTTPException(401, { message: "Custom error message" });
+      }
+      const { workspaceId } = c.req.param();
+      const { invitedUserId } = c.req.valid("json");
+
+      const isWorkspaceAdmin = await checkIfUserIsAdmin(userId, workspaceId);
+      if (!isWorkspaceAdmin) {
+        throw new HTTPException(403, {
+          message: "You are not authorized to invite users",
+        });
+      }
+      const invite = await createWorkspaceInvite(workspaceId, invitedUserId);
+
+      //TODO - send email to the user with the invite link
+      return c.json({ data: invite });
+    }
+  )
+  .post(
+    "/:workspaceId/join",
+    zValidator("json", z.object({ code: z.string() })),
+    async (c) => {
+      const { workspaceId } = c.req.param();
+      const { code } = c.req.valid("json");
+      //check if invite code is valid and if the user is already a member
+      //if not add user to workspace
+      const isInvited = await getWorkspaceInvite(code);
+      if (!isInvited) {
+        throw new HTTPException(404, { message: "Invalid invite code" });
+      }
+      const member = await addMember(isInvited.userId, workspaceId);
+      //by as the invite is tied to a user it cannot be reused by anyone else. Invite will be deleted after 7 days by a CRON job
+      return c.json({ data: member });
+    }
+  );
 
 export default app;

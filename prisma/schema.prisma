@@ -10,21 +10,46 @@ datasource db {
 }
 
 model Workspace {
-  id        String    @id @default(cuid())
+  id        String             @id @default(cuid())
   user      String
   name      String
   image     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   members   Members[]
+  invites   WorkspaceInvites[]
+  projects  Projects[]
 }
 
 model Members {
-  id          String    @id @default(cuid())
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   userId      String
-  role        String?   @default("member")
+  role        String    @default("member")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@id(name: "memberId", [workspaceId, userId])
+}
+
+model WorkspaceInvites {
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  userId      String
+  code        String    @unique
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime  @default(dbgenerated("now() + interval '7 days'"))
+  updatedAt   DateTime  @updatedAt
+
+  @@id(name: "inviteId", [workspaceId, userId])
+}
+
+model Projects {
+  id          String    @id @default(cuid())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  name        String
+  imageUrl    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

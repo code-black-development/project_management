@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
-import { ArrowLeftIcon, Delete, ImageIcon } from "lucide-react";
+import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
 import { useCreateWorkspace } from "@/features/workspaces/api/use-create-workspace";
 import { useRouter } from "next/navigation";
 import { Workspace } from "@prisma/client";
@@ -115,9 +115,11 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      form.setValue("image", file);
+      form.setValue("image", file, { shouldDirty: true });
     }
   };
+
+  const handleCopyInviteLink = () => {};
 
   const action = initialValues ? "Update" : "Create";
 
@@ -267,7 +269,11 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="lg" disabled={isPending}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isPending || !isDirty}
+                >
                   {action} Workspace
                 </Button>
               </div>
@@ -276,27 +282,64 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
         </CardContent>
       </Card>
       {initialValues && (
-        <Card className="w-full h-full border-none shadow-none">
-          <CardContent className="p-7">
-            <div className="flex flex-col">
-              <h3 className="font-bold">Danger Zone</h3>
-              <p className="text-sm text-muted-foreground">
-                Deleting a workspace is irreversible and will remove all
-                asociated data.
-              </p>
-              <Button
-                className="mt-6 w-fit ml-auto"
-                size="sm"
-                variant="destructive"
-                type="button"
-                disabled={isPending}
-                onClick={handleDelete}
-              >
-                Delete Workspace
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-y-4">
+          <DeleteDialog />
+          <Card className="w-full h-full border-none shadow-none">
+            <CardContent className="p-7">
+              <div className="flex flex-col">
+                <h3 className="font-bold">Invite Members</h3>
+                <p className="text-sm text-muted-foreground">
+                  Invite others to collaborate on your projects in this
+                  workspace.
+                  <br /> (Invites will expire after 7 days).
+                </p>
+                <div className="mt-4">
+                  <div className="flex items-center gap-x-2">
+                    <Input disabled value="" />
+                    <Button
+                      onClick={handleCopyInviteLink}
+                      variant="secondary"
+                      className="size-10"
+                    >
+                      <CopyIcon className="size-5" />
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  className="mt-6 w-fit ml-auto"
+                  size="sm"
+                  variant="primary"
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleDelete}
+                >
+                  Send Invite
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="w-full h-full border-none shadow-none">
+            <CardContent className="p-7">
+              <div className="flex flex-col">
+                <h3 className="font-bold">Danger Zone</h3>
+                <p className="text-sm text-muted-foreground">
+                  Deleting a workspace is irreversible and will remove all
+                  asociated data.
+                </p>
+                <Button
+                  className="mt-6 w-fit ml-auto"
+                  size="sm"
+                  variant="destructive"
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleDelete}
+                >
+                  Delete Workspace
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
