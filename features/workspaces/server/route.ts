@@ -2,15 +2,12 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { createWorkspaceSchema, updateWorkspaceSchema } from "../schemas";
 import { HTTPException } from "hono/http-exception";
-import { join } from "path";
-import { writeFile } from "fs/promises";
 import {
   createWorkspace,
   deleteWorkspace,
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
-import { getSessionUserId } from "@/lib/authFunctions";
 import { z } from "zod";
 import {
   createWorkspaceInvite,
@@ -20,44 +17,39 @@ import {
   addMember,
   checkIfUserIsAdmin,
 } from "@/lib/dbService/workspace-members";
+import { authMiddleware } from "@/features/auth/server/authMiddleware";
+import { uploadImageToLocalStorage } from "@/lib/image-upload";
 
 const app = new Hono()
-  .get("/", async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, { message: "Custom error message" });
-    }
+  .get("/", authMiddleware, async (c) => {
+    const userId = c.get("userId");
     const workspaces = await getWorkspaceByUserId(userId);
     return c.json({ data: workspaces });
   })
-  .post("/", zValidator("form", createWorkspaceSchema), async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, { message: "Custom error message" });
+  .post(
+    "/",
+    authMiddleware,
+    zValidator("form", createWorkspaceSchema),
+    async (c) => {
+      const userId = c.get("userId");
+      const { name, image } = c.req.valid("form");
+
+      let fileUrl: string | null = null;
+      if (image instanceof File) {
+        fileUrl = await uploadImageToLocalStorage(image);
+      }
+
+      const workspace = await createWorkspace(name, fileUrl, userId!);
+
+      return c.json({ data: workspace });
     }
-    const { name, image } = c.req.valid("form");
-
-    let fileUrl: string | null = null;
-    if (image instanceof File) {
-      const uploadDir = "uploaded_files";
-      const buffer = Buffer.from(await image.arrayBuffer());
-      const uploadDirPath = join(process.cwd(), "public", uploadDir);
-      await writeFile(`${uploadDirPath}/${image.name}`, buffer);
-      fileUrl = `${uploadDir}/${image.name}`;
-    }
-
-    const workspace = await createWorkspace(name, fileUrl, userId!);
-
-    return c.json({ data: workspace });
-  })
+  )
   .patch(
     "/:workspaceId",
+    authMiddleware,
     zValidator("form", updateWorkspaceSchema),
     async (c) => {
-      const userId = await getSessionUserId(c);
-      if (!userId) {
-        throw new HTTPException(401, { message: "Custom error message" });
-      }
+      const userId = c.get("userId");
       const { workspaceId } = c.req.param();
       const { name, image } = c.req.valid("form");
 
@@ -69,11 +61,7 @@ const app = new Hono()
       let fileUrl: string | null;
 
       if (image instanceof File) {
-        const uploadDir = "uploaded_files";
-        const buffer = Buffer.from(await image.arrayBuffer());
-        const uploadDirPath = join(process.cwd(), "public", uploadDir);
-        await writeFile(`${uploadDirPath}/${image.name}`, buffer);
-        fileUrl = `${uploadDir}/${image.name}`;
+        fileUrl = await uploadImageToLocalStorage(image);
       } else {
         fileUrl = null;
       }
@@ -86,11 +74,8 @@ const app = new Hono()
       return c.json({ data: response });
     }
   )
-  .delete("/:workspaceId", async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, { message: "Custom error message" });
-    }
+  .delete("/:workspaceId", authMiddleware, async (c) => {
+    const userId = c.get("userId");
     const { workspaceId } = c.req.param();
     const workspace = await deleteWorkspace(workspaceId, userId);
     return c.json({ data: workspace });
@@ -99,10 +84,7 @@ const app = new Hono()
     "/:workspaceId/invite",
     zValidator("json", z.object({ invitedUserId: z.string() })),
     async (c) => {
-      const userId = await getSessionUserId(c);
-      if (!userId) {
-        throw new HTTPException(401, { message: "Custom error message" });
-      }
+      const userId = c.get("userId");
       const { workspaceId } = c.req.param();
       const { invitedUserId } = c.req.valid("json");
 
@@ -120,6 +102,7 @@ const app = new Hono()
   )
   .post(
     "/:workspaceId/join",
+    authMiddleware,
     zValidator("json", z.object({ code: z.string() })),
     async (c) => {
       const { workspaceId } = c.req.param();

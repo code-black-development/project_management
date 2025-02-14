@@ -4,10 +4,6 @@ import { useForm } from "react-hook-form";
 import { useRef } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import {
-  createWorkspaceSchema,
-  updateWorkspaceSchema,
-} from "@/features/workspaces/schemas";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,33 +20,40 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
-import { useCreateWorkspace } from "@/features/workspaces/api/use-create-workspace";
 import { useRouter } from "next/navigation";
-import { Workspace } from "@prisma/client";
-import { useUpdateWorkspace } from "../api/use-update-workspace";
-import { useConfirm } from "@/hooks/use-confirm";
-import { useDeleteWorkspace } from "../api/use-delete-workspace";
+import { Project } from "@prisma/client";
 
-interface WorkspaceFormProps {
-  initialValues?: Partial<Workspace>;
+import { useConfirm } from "@/hooks/use-confirm";
+
+import { createProjectSchema, updateProjectSchema } from "../schema";
+import { useCreateProject } from "../api/use-create-project";
+import { useUpdateProject } from "../api/use-update-project";
+import { useDeleteProject } from "../api/use-delete-project";
+import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+
+interface ProjectFormProps {
+  initialValues?: Partial<Project>;
   onCancel?: () => void;
 }
 
-const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
+const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
+  const workspaceId = useWorkspaceId();
+
   const formSchema = initialValues
-    ? updateWorkspaceSchema
-    : createWorkspaceSchema;
+    ? updateProjectSchema
+    : createProjectSchema.omit({ workspaceId: true });
+
   const router = useRouter();
 
   const { mutate, isPending } = initialValues
-    ? useUpdateWorkspace()
-    : useCreateWorkspace();
+    ? useUpdateProject()
+    : useCreateProject();
 
-  const { mutate: deleteWorkspace, isPending: isDeletingWorkSpace } =
-    useDeleteWorkspace();
+  const { mutate: deleteProject, isPending: isDeletingProject } =
+    useDeleteProject();
 
   const [DeleteDialog, confirmDelete] = useConfirm(
-    "Delete Workspace",
+    "Delete Project",
     "This action cannot be undone",
     "destructive"
   );
@@ -72,43 +75,21 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
     if (!deleteStatus) {
       return;
     }
-    deleteWorkspace(
-      { param: { workspaceId: initialValues?.id! } },
-      {
-        onSuccess: () => {
-          router.push("/");
-        },
-      }
-    );
+    deleteProject({ param: { projectId: initialValues?.id! } });
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const formValues = {
       ...values,
+      ...(!initialValues && { workspaceId }),
       image: values.image instanceof File || values.image ? values.image : "",
     };
 
-    if (initialValues) {
-      mutate(
-        { form: formValues, param: { workspaceId: initialValues.id! } },
-        {
-          onSuccess: () => {
-            form.reset();
-          },
-        }
-      );
-    } else {
-      mutate(
-        // @ts-ignore param is only required if we are editing a workspace. TS is not picking that up TODO: check this again later.
-        { form: formValues },
-        {
-          onSuccess: ({ data }) => {
-            form.reset();
-            router.push(`/workspaces/${data?.id}`);
-          },
-        }
-      );
-    }
+    mutate({
+      //@ts-ignore ts is not picking up that the param is only in the type if we have initialValues
+      form: formValues,
+      ...(initialValues && { param: { projectId: initialValues.id! } }),
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,8 +98,6 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
       form.setValue("image", file, { shouldDirty: true });
     }
   };
-
-  const handleCopyInviteLink = () => {};
 
   const action = initialValues ? "Update" : "Create";
 
@@ -140,7 +119,10 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
               onClick={
                 onCancel
                   ? onCancel
-                  : () => router.push(`/workspaces/${initialValues.id}`)
+                  : () =>
+                      router.push(
+                        `/workspaces/${initialValues.workspaceId}/project/${initialValues.id}`
+                      )
               }
             >
               Back
@@ -149,7 +131,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
           )}
           {!initialValues ? (
             <CardTitle className="text-xl font-bold">
-              {action} Workspace
+              {action} Project
             </CardTitle>
           ) : (
             <CardTitle className="text-xl font-bold">
@@ -169,12 +151,12 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Workspace Name</FormLabel>
+                      <FormLabel>Project Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="text"
-                          placeholder="Workspace Name"
+                          placeholder="Project Name"
                           className="input"
                         />
                       </FormControl>
@@ -210,7 +192,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                           </Avatar>
                         )}
                         <div className="flex flex-col">
-                          <p className="text-sm">Workspace Icon</p>
+                          <p className="text-sm">Project Icon</p>
                           <p className="text-sm text-muted-foreground">
                             JPG, PNG, SVG or JPEG. Max 1mb.
                           </p>
@@ -273,7 +255,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                   size="lg"
                   disabled={isPending || !isDirty}
                 >
-                  {action} Workspace
+                  {action} Project
                 </Button>
               </div>
             </form>
@@ -286,43 +268,9 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
           <Card className="w-full h-full border-none shadow-none">
             <CardContent className="p-7">
               <div className="flex flex-col">
-                <h3 className="font-bold">Invite Members</h3>
-                <p className="text-sm text-muted-foreground">
-                  Invite others to collaborate on your projects in this
-                  workspace.
-                  <br /> (Invites will expire after 7 days).
-                </p>
-                <div className="mt-4">
-                  <div className="flex items-center gap-x-2">
-                    <Input disabled value="" />
-                    <Button
-                      onClick={handleCopyInviteLink}
-                      variant="secondary"
-                      className="size-10"
-                    >
-                      <CopyIcon className="size-5" />
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  className="mt-6 w-fit ml-auto"
-                  size="sm"
-                  variant="primary"
-                  type="button"
-                  disabled={isPending}
-                  onClick={handleDelete}
-                >
-                  Send Invite
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="w-full h-full border-none shadow-none">
-            <CardContent className="p-7">
-              <div className="flex flex-col">
                 <h3 className="font-bold">Danger Zone</h3>
                 <p className="text-sm text-muted-foreground">
-                  Deleting a workspace is irreversible and will remove all
+                  Deleting a project is irreversible and will remove all
                   asociated data.
                 </p>
                 <Button
@@ -333,7 +281,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                   disabled={isPending}
                   onClick={handleDelete}
                 >
-                  Delete Workspace
+                  Delete Project
                 </Button>
               </div>
             </CardContent>
@@ -344,4 +292,4 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   );
 };
 
-export default WorkspaceForm;
+export default ProjectForm;

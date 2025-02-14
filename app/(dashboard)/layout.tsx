@@ -1,5 +1,7 @@
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
+import CreateProjectModal from "@/features/projects/_components/create-project-modal";
+import CreateTaskModal from "@/features/tasks/_components/create-task-modal";
 import CreateWorkspaceModal from "@/features/workspaces/_components/create-workspace-modal";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
@@ -7,6 +9,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     // Todo: could make sidebar collapsible in which case the pl of the main tag would be 56 or 0 based on the state of the sidebar
     <div className="min-h-sctreen">
       <CreateWorkspaceModal />
+      <CreateProjectModal />
+      <CreateTaskModal />
       <div className="flex w-full h-full">
         <div className="fixed left-0 top-0 hidden lg:block h-full lg:w-[264px] overflow-y-auto">
           <Sidebar />

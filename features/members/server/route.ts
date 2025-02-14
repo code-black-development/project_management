@@ -1,15 +1,26 @@
-import { getSessionUserId } from "@/lib/authFunctions";
-import { getMembersByWorkspaceId } from "@/lib/dbService/workspace-members";
+import { authMiddleware } from "@/features/auth/server/authMiddleware";
+import {
+  deleteMember,
+  getMembersByWorkspaceId,
+} from "@/lib/dbService/workspace-members";
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
+import { z } from "zod";
 
-const app = new Hono().get("/", async (c) => {
-  const userId = await getSessionUserId(c);
-  if (!userId) {
-    throw new HTTPException(401, { message: "Custom error message" });
-  }
-  const workspaces = await getMembersByWorkspaceId(userId);
-  return c.json({ data: workspaces });
-});
+const app = new Hono()
+  .get("/", authMiddleware, async (c) => {
+    const workspaces = await getMembersByWorkspaceId(workspaceId);
+    return c.json({ data: workspaces });
+  })
+  .delete(
+    "/",
+    authMiddleware,
+    zValidator("json", { memberId: z.string(), workspaceId: z.string() }),
+    async (c) => {
+      const { memberId, workspaceId } = c.req.valid("json");
+      await deleteMember(memberId, workspaceId);
+      return c.json({ message: "Member deleted" });
+    }
+  );
 
 export default app;

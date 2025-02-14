@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/authFunctions";
+import { getUser } from "@/lib/auth-functions";
 import { getWorkspaceByUserId } from "@/lib/dbService/workspaces";
 import { redirect } from "next/navigation";
 

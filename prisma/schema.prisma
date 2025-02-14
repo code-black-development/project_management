@@ -14,11 +14,11 @@ model Workspace {
   user      String
   name      String
   image     String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
   members   Members[]
   invites   WorkspaceInvites[]
-  projects  Projects[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  projects  Project[]
 }
 
 model Members {
@@ -44,12 +44,34 @@ model WorkspaceInvites {
   @@id(name: "inviteId", [workspaceId, userId])
 }
 
-model Projects {
+model Project {
   id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
   name        String
-  imageUrl    String?
+  image       String?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  assigneeId  String?
+  projectId   String
+  workspaceId String
+  dueDate     DateTime?
+  status      TaskStatus
+  position    Int
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
 }

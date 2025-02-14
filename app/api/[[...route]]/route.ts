@@ -5,6 +5,7 @@ import { clerkMiddleware } from "@hono/clerk-auth";
 import workspaces from "@/features/workspaces/server/route";
 import members from "@/features/members/server/route";
 import projects from "@/features/projects/server/route";
+import tasks from "@/features/tasks/server/route";
 
 //export const runtime = "edge";
 
@@ -14,7 +15,8 @@ app.use("*", clerkMiddleware());
 const routes = app
   .route("/workspace", workspaces)
   .route("/members", members)
-  .route("/projects", projects);
+  .route("/projects", projects)
+  .route("/tasks", tasks);
 
 export const POST = handle(app);
 export const GET = handle(app);
