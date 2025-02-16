@@ -5,16 +5,16 @@ import {
   getTasksByWorkspaceId,
 } from "@/lib/dbService/tasks";
 import { Hono } from "hono";
-import { TaskSchema } from "../schemas";
+import { createTaskSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
-import { authMiddleware } from "@/features/auth/server/authMiddleware";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
+
+import { HTTPException } from "hono/http-exception";
 
 const app = new Hono()
   .get(
     "/",
-    authMiddleware,
     zValidator(
       "query",
       z.object({
@@ -33,8 +33,13 @@ const app = new Hono()
       return c.json({ data });
     }
   )
-  .post("/", authMiddleware, zValidator("json", TaskSchema), async (c) => {
-    const userId = c.get("userId");
+  .post("/", zValidator("json", createTaskSchema), async (c) => {
+    const userId = await getSessionUserId(c);
+    if (!userId) {
+      throw new HTTPException(401, {
+        message: "Unauthorized: User not logged in",
+      });
+    }
     const data = c.req.valid("json");
 
     const highestPositionTask = await getHighestPositionTask(

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { ClerkProvider } from "@clerk/nextjs";
+
+//import { SessionProvider } from "@hono/auth-js/react";
 import { QueryProvider } from "@/components/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+//import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -25,15 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={cn(inter.className, "antialiased min-h-screen")}>
-          <Toaster />
-          <NuqsAdapter>
-            <QueryProvider>{children}</QueryProvider>
-          </NuqsAdapter>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={cn(inter.className, "antialiased min-h-screen")}>
+        <Toaster />
+        <NuqsAdapter>
+          <QueryProvider>{children}</QueryProvider>
+        </NuqsAdapter>
+      </body>
+    </html>
   );
 }

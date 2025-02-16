@@ -1,4 +1,3 @@
-import { UserButton } from "@clerk/nextjs";
 import MobileSidebar from "./mobile-sidebar";
 
 const Navbar = () => {
@@ -11,7 +10,6 @@ const Navbar = () => {
         </p>
       </div>
       <MobileSidebar />
-      <UserButton />
     </nav>
   );
 };

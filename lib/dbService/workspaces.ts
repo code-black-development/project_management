@@ -30,7 +30,7 @@ export const createWorkspace = async (
     });
     return workspace;
   } catch (e) {
-    console.error(e);
+    console.error(JSON.stringify(e));
     throw new Error("Error creating workspace");
   }
 };

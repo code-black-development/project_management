@@ -17,36 +17,31 @@ import {
   addMember,
   checkIfUserIsAdmin,
 } from "@/lib/dbService/workspace-members";
-import { authMiddleware } from "@/features/auth/server/authMiddleware";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
 
 const app = new Hono()
-  .get("/", authMiddleware, async (c) => {
+  .get("/", async (c) => {
     const userId = c.get("userId");
     const workspaces = await getWorkspaceByUserId(userId);
     return c.json({ data: workspaces });
   })
-  .post(
-    "/",
-    authMiddleware,
-    zValidator("form", createWorkspaceSchema),
-    async (c) => {
-      const userId = c.get("userId");
-      const { name, image } = c.req.valid("form");
-
-      let fileUrl: string | null = null;
-      if (image instanceof File) {
-        fileUrl = await uploadImageToLocalStorage(image);
-      }
-
-      const workspace = await createWorkspace(name, fileUrl, userId!);
-
-      return c.json({ data: workspace });
+  .post("/", zValidator("form", createWorkspaceSchema), async (c) => {
+    const { name, image } = c.req.valid("form");
+    const userId = c.get("userId");
+    console.log("name", name);
+    console.log("image", image);
+    console.log("user id", userId);
+    let fileUrl: string | null = null;
+    if (image instanceof File) {
+      fileUrl = await uploadImageToLocalStorage(image);
     }
-  )
+    console.log("file url", fileUrl);
+    const workspace = await createWorkspace(name, fileUrl, userId!);
+
+    return c.json({ data: workspace });
+  })
   .patch(
     "/:workspaceId",
-    authMiddleware,
     zValidator("form", updateWorkspaceSchema),
     async (c) => {
       const userId = c.get("userId");
@@ -74,7 +69,7 @@ const app = new Hono()
       return c.json({ data: response });
     }
   )
-  .delete("/:workspaceId", authMiddleware, async (c) => {
+  .delete("/:workspaceId", async (c) => {
     const userId = c.get("userId");
     const { workspaceId } = c.req.param();
     const workspace = await deleteWorkspace(workspaceId, userId);
@@ -102,7 +97,6 @@ const app = new Hono()
   )
   .post(
     "/:workspaceId/join",
-    authMiddleware,
     zValidator("json", z.object({ code: z.string() })),
     async (c) => {
       const { workspaceId } = c.req.param();

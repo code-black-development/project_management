@@ -1,3 +1,4 @@
+"use client";
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -29,7 +31,11 @@ const SignInCard = () => {
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
+    signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirectTo: "/",
+    });
   };
 
   return (
@@ -76,7 +82,7 @@ const SignInCard = () => {
       <div className="px-7">
         <DottedSeparator />
       </div>
-      <CardContent className="p-7 flex flex-col gap-y-4">
+      {/* <CardContent className="p-7 flex flex-col gap-y-4">
         <Button variant="secondary" size="lg" className="w-full">
           <FcGoogle className="mr-2" />
           Login with Google
@@ -85,7 +91,7 @@ const SignInCard = () => {
           <FaGithub className="mr-2" />
           Login with Github
         </Button>
-      </CardContent>
+      </CardContent> */}
     </Card>
   );
 };

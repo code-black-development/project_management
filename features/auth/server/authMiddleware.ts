@@ -1,25 +1,23 @@
-import { MiddlewareHandler } from "hono";
-import { HTTPException } from "hono/http-exception";
-import { getAuth } from "@hono/clerk-auth";
+import { Hono } from "hono";
+import { auth } from "@/auth";
+import { Context } from "hono";
 
-// Extend Hono's ContextVariableMap to include userId
 declare module "hono" {
   interface ContextVariableMap {
     userId: string;
   }
 }
 
-export const authMiddleware: MiddlewareHandler = async (c, next) => {
-  const auth = getAuth(c);
+export const authMiddleware = async (c: Context, next: () => Promise<void>) => {
+  const session = await auth();
+  const userId = session?.user?.id;
 
-  if (!auth?.userId) {
-    throw new HTTPException(401, {
-      message: "Unauthorized: User not logged in",
-    });
+  if (!userId) {
+    return c.json({ message: "Unauthorized" }, 401);
   }
 
-  // Store userId in context for use in route handlers
-  c.set("userId", auth.userId);
+  // Set the userId in context
+  c.set("userId", userId);
 
   await next();
 };

@@ -10,17 +10,10 @@ import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
 import { onlyWorkspaceMember } from "@/lib/dbService/db-utils";
-import { getSessionUserId } from "@/lib/auth-functions";
 import { HTTPException } from "hono/http-exception";
 
 const app = new Hono()
   .delete("/:projectId", async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, {
-        message: "Unauthorized: User not logged in",
-      });
-    }
     const { projectId } = c.req.param();
     //TODO: check if the user is an admin of the workspace
     const project = await deleteProject(projectId);
@@ -31,12 +24,6 @@ const app = new Hono()
     zValidator("form", updateProjectSchema),
 
     async (c) => {
-      const userId = await getSessionUserId(c);
-      if (!userId) {
-        throw new HTTPException(401, {
-          message: "Unauthorized: User not logged in",
-        });
-      }
       const { projectId } = c.req.param();
       const { name, image } = c.req.valid("form");
       //TODO: check if the user is a member of the workspace
@@ -54,12 +41,6 @@ const app = new Hono()
     }
   )
   .post("/", zValidator("form", createProjectSchema), async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, {
-        message: "Unauthorized: User not logged in",
-      });
-    }
     const { name, image, workspaceId } = c.req.valid("form");
 
     //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
@@ -81,17 +62,8 @@ const app = new Hono()
 
     zValidator("query", z.object({ workspaceId: z.string() })),
     async (c) => {
-      const userId = await getSessionUserId(c);
       const { workspaceId } = c.req.valid("query");
-
-      if (!userId) {
-        throw new HTTPException(401, {
-          message: "Unauthorized: User not logged in",
-        });
-      }
-
       const projects = await getProjectsByWorkspaceId(workspaceId);
-
       return c.json({ data: projects });
     }
   );

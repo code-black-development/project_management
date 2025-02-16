@@ -1,5 +1,5 @@
 import Logo from "@/components/logo";
-import { UserButton } from "@clerk/nextjs";
+import UserButton from "@/features/auth/components/user-button";
 
 interface StandaloneLayoutProps {
   children: React.ReactNode;

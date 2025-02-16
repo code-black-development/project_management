@@ -5,6 +5,9 @@ export const getMembersByWorkspaceId = async (workspaceId: string) => {
     where: {
       workspaceId,
     },
+    include: {
+      user: true,
+    },
   });
 };
 
