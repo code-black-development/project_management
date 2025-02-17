@@ -26,9 +26,13 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
 };
 
 export const createTask = async (
-  data: Omit<Task, "createdAt" | "updatedAt" | "id" | "assigneeId">
+  data: Omit<Task, "createdAt" | "updatedAt" | "id">
 ) => {
-  return await prisma.task.create({ data });
+  try {
+    return await prisma.task.create({ data });
+  } catch (e) {
+    console.log(JSON.stringify(e));
+  }
 };
 
 export const updateTask = async (taskId: string, data: Partial<Task>) => {

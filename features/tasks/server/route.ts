@@ -10,8 +10,6 @@ import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
-import { HTTPException } from "hono/http-exception";
-
 const app = new Hono()
   .get(
     "/",
@@ -30,32 +28,59 @@ const app = new Hono()
       const { workspaceId, projectId, assigneeId, status, search, dueDate } =
         c.req.valid("query");
       const tasks = await getTasksByWorkspaceId(workspaceId);
-      return c.json({ data });
+      // return c.json({ data });
     }
   )
-  .post("/", zValidator("json", createTaskSchema), async (c) => {
-    const userId = await getSessionUserId(c);
-    if (!userId) {
-      throw new HTTPException(401, {
-        message: "Unauthorized: User not logged in",
-      });
+  .post(
+    "/",
+    zValidator(
+      "json",
+      z.object({
+        name: z.string(),
+        projectId: z.string(),
+        status: z.nativeEnum(TaskStatus),
+        workspaceId: z.string(),
+        assigneeId: z.string().nullish(),
+        description: z.string().nullish(),
+        dueDate: z.string().nullish(),
+      })
+    ),
+    async (c) => {
+      const {
+        name,
+        status,
+        workspaceId,
+        projectId,
+        dueDate,
+        assigneeId,
+        description,
+      } = c.req.valid("json");
+
+      //TODO: we should get the taskstatus passed and check that not just hard code TDOD
+      const highestPositionTask = await getHighestPositionTask(
+        workspaceId,
+        TaskStatus.TODO
+      );
+
+      const newPosition = highestPositionTask
+        ? highestPositionTask.position + 1
+        : 0;
+
+      const taskData = {
+        name,
+        status,
+        workspaceId,
+        projectId,
+        dueDate: typeof dueDate === "string" ? new Date(dueDate) : null,
+        assigneeId: assigneeId ?? null,
+        position: newPosition,
+        description: description ?? null,
+      };
+
+      const task = await createTask(taskData);
+
+      return c.json(task);
     }
-    const data = c.req.valid("json");
-
-    const highestPositionTask = await getHighestPositionTask(
-      data.workspaceId,
-      TaskStatus.TODO
-    );
-
-    const newPosition = highestPositionTask
-      ? highestPositionTask.position + 1
-      : 0;
-
-    const taskData = { ...data, position: newPosition };
-
-    const task = await createTask(taskData);
-
-    return c.json({ data: task });
-  });
+  );
 
 export default app;

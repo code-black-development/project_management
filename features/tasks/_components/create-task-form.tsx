@@ -95,7 +95,8 @@ const TaskForm = ({
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutate({ json: values, workspaceId });
+    console.log("values: ", values);
+    mutate({ json: { ...values, workspaceId } });
   };
 
   const action = initialValues ? "Update" : "Create";

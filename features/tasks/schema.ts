@@ -9,15 +9,15 @@ export const createTaskSchema = z.object({
   dueDate: z
     .date()
     .optional()
-    .transform((val) => val ?? null), //prisma expects no value to be null not undefined.
+    .transform((val) => val || null), //prisma expects no value to be null not undefined.
   assigneeId: z
     .string()
     .optional()
-    .transform((val) => val ?? null),
+    .transform((val) => val || null),
   description: z
     .string()
     .optional()
-    .transform((val) => val ?? null),
+    .transform((val) => val || null),
 });
 
 export const updateTaskSchema = z.object({
