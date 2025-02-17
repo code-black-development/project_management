@@ -40,7 +40,7 @@ export const updateTaskSchema = z.object({
 });
 
 export const taskSearchSchema = z.object({
-  workspaceId: z.string(),
+  workspaceId: z.string().nullish(),
   projectId: z.string().nullish(),
   assigneeId: z.string().nullish(),
   status: z.nativeEnum(TaskStatus).nullish(),

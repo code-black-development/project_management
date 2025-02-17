@@ -1,12 +1,14 @@
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
-import { Task, TaskStatus } from "@prisma/client";
+import { Prisma, Task, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
 export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
-  const where: any = {
-    workspaceId: data.workspaceId,
-  };
+  const where: Prisma.TaskWhereInput = {};
+
+  if (data.workspaceId) {
+    where.workspaceId = data.workspaceId;
+  }
 
   if (data.projectId) {
     where.projectId = data.projectId;

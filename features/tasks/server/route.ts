@@ -1,12 +1,10 @@
 import {
   createTask,
   getHighestPositionTask,
-  getTasksByProjectId,
-  getTasksByWorkspaceId,
   searchTasks,
 } from "@/lib/dbService/tasks";
 import { Hono } from "hono";
-import { createTaskSchema, taskSearchSchema } from "../schema";
+import { taskSearchSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
