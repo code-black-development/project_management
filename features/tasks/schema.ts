@@ -38,3 +38,12 @@ export const updateTaskSchema = z.object({
     .optional()
     .transform((val) => val ?? null),
 });
+
+export const taskSearchSchema = z.object({
+  workspaceId: z.string(),
+  projectId: z.string().nullish(),
+  assigneeId: z.string().nullish(),
+  status: z.nativeEnum(TaskStatus).nullish(),
+  search: z.string().nullish(),
+  dueDate: z.date().nullish(),
+});

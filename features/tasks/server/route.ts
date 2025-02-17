@@ -3,36 +3,24 @@ import {
   getHighestPositionTask,
   getTasksByProjectId,
   getTasksByWorkspaceId,
+  searchTasks,
 } from "@/lib/dbService/tasks";
 import { Hono } from "hono";
-import { createTaskSchema } from "../schema";
+import { createTaskSchema, taskSearchSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
 const app = new Hono()
-  .get(
-    "/",
-    zValidator(
-      "query",
-      z.object({
-        workspaceId: z.string(),
-        projectId: z.string().nullish(),
-        assigneeId: z.string().nullish(),
-        status: z.nativeEnum(TaskStatus).nullish(),
-        search: z.string().nullish(),
-        dueDate: z.date().nullish(),
-      })
-    ),
-    async (c) => {
-      const { workspaceId, projectId, assigneeId, status, search, dueDate } =
-        c.req.valid("query");
-      const tasks = await getTasksByWorkspaceId(workspaceId);
-      // return c.json({ data });
-    }
-  )
+  .get("/", zValidator("query", taskSearchSchema), async (c) => {
+    const data = c.req.valid("query");
+    const tasks = await searchTasks(data);
+
+    return c.json({ data: tasks });
+  })
   .post(
     "/",
+    //TODO: we should find out why we can't use the createTaskSchema here (400 Bad Request when we do)
     zValidator(
       "json",
       z.object({
@@ -65,7 +53,7 @@ const app = new Hono()
       const newPosition = highestPositionTask
         ? highestPositionTask.position + 1
         : 0;
-
+      //TODO: we should check if the user is a member of the workspace and has permission
       const taskData = {
         name,
         status,
