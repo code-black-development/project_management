@@ -45,6 +45,7 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
 
   return await prisma.task.findMany({
     where,
+    include: { project: true, assignee: { include: { user: true } } },
   });
 };
 
@@ -61,6 +62,7 @@ export const getTaskById = async (taskId: string) => {
     where: {
       id: taskId,
     },
+    include: { project: true, assignee: { include: { user: true } } },
   });
 };
 
@@ -81,14 +83,27 @@ export const createTask = async (
     console.log(JSON.stringify(e));
   }
 };
-
-export const updateTask = async (taskId: string, data: Partial<Task>) => {
-  return await prisma.task.update({
-    where: {
-      id: taskId,
-    },
-    data,
-  });
+type UpdateTaskSchema = {
+  name: string;
+  status: TaskStatus;
+  projectId: string;
+  dueDate?: Date;
+  assigneeId?: string;
+  description?: string;
+};
+export const updateTask = async (taskId: string, data: UpdateTaskSchema) => {
+  console.log("update task db");
+  try {
+    return await prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data,
+    });
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw new Error("Failed to update task");
+  }
 };
 
 export const deleteTask = async (taskId: string) => {

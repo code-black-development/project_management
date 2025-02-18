@@ -6,8 +6,14 @@ interface MemberAvatarProps {
   image?: string;
   name: string;
   className?: string;
+  fallbackClassName?: string;
 }
-const MemberAvatar = ({ image, className, name }: MemberAvatarProps) => {
+const MemberAvatar = ({
+  image,
+  className,
+  name,
+  fallbackClassName,
+}: MemberAvatarProps) => {
   if (image) {
     return (
       <div
@@ -18,8 +24,13 @@ const MemberAvatar = ({ image, className, name }: MemberAvatarProps) => {
     );
   }
   return (
-    <Avatar className={cn("size-10 rounded-md", className)}>
-      <AvatarFallback className="text-white bg-blue-600 font-semibold text-lg uppercase rounded-md">
+    <Avatar className={cn("size-5 rounded", className)}>
+      <AvatarFallback
+        className={cn(
+          "text-neutral-600 bg-neutral-300 font-semibold text-lg uppercase rounded-lg",
+          fallbackClassName
+        )}
+      >
         {name[0]}
       </AvatarFallback>
     </Avatar>

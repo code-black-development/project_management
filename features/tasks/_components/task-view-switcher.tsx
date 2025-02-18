@@ -8,16 +8,25 @@ import { useGetTasks } from "../api/use-get-tasks";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useQueryState } from "nuqs";
 import DataFilters from "./data-filters";
+import useTaskFilters from "../api/use-task-filters";
+import { DataTable } from "./data-table";
+import { columns } from "./columns";
+import DataKanban from "./data-kanban";
 
 interface TaskViewSwitcherProps {
   projectId: string;
 }
 
 const TaskViewSwitcher = ({}: TaskViewSwitcherProps) => {
+  const [{ status, assigneeId, projectId, dueDate }] = useTaskFilters();
   const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
   const workspaceId = useWorkspaceId();
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
+    status,
+    assigneeId,
+    projectId,
+    dueDate,
   });
   const { open } = useCreateTaskModal();
   return (
@@ -54,10 +63,10 @@ const TaskViewSwitcher = ({}: TaskViewSwitcherProps) => {
         ) : (
           <>
             <TabsContent value="table" className="mt-0">
-              {JSON.stringify(tasks)}
+              <DataTable columns={columns} data={tasks ?? []} />
             </TabsContent>
             <TabsContent value="kanban" className="mt-0">
-              {JSON.stringify(tasks)}
+              <DataKanban data={tasks} />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0">
               {JSON.stringify(tasks)}

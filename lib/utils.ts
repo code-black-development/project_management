@@ -16,3 +16,10 @@ export function generateCode(length: number) {
   }
   return result;
 }
+
+export function snakeCaseToTitleCase(snakeCase: string) {
+  return snakeCase
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}

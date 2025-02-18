@@ -18,9 +18,9 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
-    mutationFn: async ({ form, param }) => {
+    mutationFn: async ({ json, param }) => {
       const response = await client.api.tasks[":taskId"].$patch({
-        form,
+        json,
         param,
       });
 
@@ -36,7 +36,7 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ["task", data.id] });
     },
     onError: () => {
-      toast.error("Failed to update workspace");
+      toast.error("Failed to update task");
     },
   });
   return mutation;

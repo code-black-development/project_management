@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import { ArrowLeftIcon, Delete, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Members, Project, Task, TaskStatus, User } from "@prisma/client";
+import { Member, Project, Task, TaskStatus, User } from "@prisma/client";
 
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -41,11 +41,15 @@ import {
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 
+import type { TaskWithUser } from "@/types/types";
+
 interface TaskFormProps {
-  initialValues?: Partial<Task>;
+  initialValues?: TaskWithUser;
   onCancel?: () => void;
-  projectOptions: Project[];
-  memberOptions: (Members & { user: User })[];
+  projectOptions: Omit<Project, "createdAt" | "updatedAt">[];
+  memberOptions: (Omit<Member, "createdAt" | "updatedAt"> & {
+    user: Omit<User, "emailVerified">;
+  })[];
 }
 
 const TaskForm = ({
@@ -77,26 +81,37 @@ const TaskForm = ({
     defaultValues: {
       workspaceId,
       name: initialValues?.name ?? "",
-      dueDate: initialValues?.dueDate ?? new Date(),
+      dueDate: initialValues?.dueDate
+        ? new Date(initialValues.dueDate)
+        : undefined,
       assigneeId: initialValues?.assigneeId ?? "",
       status: initialValues?.status ?? TaskStatus.TODO,
       projectId: initialValues?.projectId ?? "",
     },
   });
 
-  //const { isDirty } = form.formState;
-
   const handleDelete = async () => {
     const deleteStatus = await confirmDelete();
     if (!deleteStatus) {
       return;
     }
-    deleteTask({ param: { projectId: initialValues?.id! } });
+    deleteTask({ param: { taskId: initialValues?.id! } });
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log("values: ", values);
-    mutate({ json: { ...values, workspaceId } });
+    mutate(
+      {
+        json: { ...values, ...(!initialValues && { workspaceId }) },
+        ...(initialValues && { param: { taskId: initialValues?.id } }),
+      },
+      {
+        onSuccess: () => {
+          form.reset();
+          onCancel?.();
+        },
+      }
+    );
   };
 
   const action = initialValues ? "Update" : "Create";

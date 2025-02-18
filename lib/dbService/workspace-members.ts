@@ -1,7 +1,8 @@
 import prisma from "@/prisma/prisma";
+import { Member } from "@prisma/client";
 
 export const getMembersByWorkspaceId = async (workspaceId: string) => {
-  return await prisma.members.findMany({
+  return await prisma.member.findMany({
     where: {
       workspaceId,
     },
@@ -11,40 +12,31 @@ export const getMembersByWorkspaceId = async (workspaceId: string) => {
   });
 };
 
-export const getMemberById = async (userId: string, workspaceId: string) => {
-  return await prisma.members.findUnique({
+export const getMemberById = async (id: string) => {
+  return await prisma.member.findUnique({
     where: {
-      memberId: {
-        userId,
-        workspaceId,
-      },
+      id,
     },
   });
 };
 
 /** members get the role: member by default due to db schema */
-export const addMember = async (userId: string, workspaceId: string) => {
-  return await prisma.members.create({
-    data: {
-      userId,
-      workspaceId,
-    },
+export const addMember = async (data: Partial<Member>) => {
+  return await prisma.member.create({
+    data,
   });
 };
 
-export const deleteMember = async (userId: string, workspaceId: string) => {
-  return await prisma.members.delete({
+export const deleteMember = async (id: string) => {
+  return await prisma.member.delete({
     where: {
-      memberId: {
-        userId,
-        workspaceId,
-      },
+      id,
     },
   });
 };
 
 export const getMembersbyUserId = async (userId: string) => {
-  return await prisma.members.findMany({
+  return await prisma.member.findMany({
     where: {
       userId,
     },
@@ -52,7 +44,7 @@ export const getMembersbyUserId = async (userId: string) => {
 };
 
 export const deleteAllMembersByUserId = async (userId: string) => {
-  return await prisma.members.deleteMany({
+  return await prisma.member.deleteMany({
     where: {
       userId,
     },
@@ -63,6 +55,8 @@ export const checkIfUserIsAdmin = async (
   userId: string,
   workspaceId: string
 ) => {
-  const member = await getMemberById(userId, workspaceId);
+  const member = await prisma.member.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId } },
+  });
   return !!(member && member.role === "admin");
 };

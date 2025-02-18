@@ -8,7 +8,7 @@ export const onlyWorkspaceMember = async (
   workspaceId: string,
   adminOnly = false
 ) => {
-  const user = await prisma.members.findFirst({
+  const user = await prisma.member.findFirst({
     where: {
       workspaceId,
       userId,

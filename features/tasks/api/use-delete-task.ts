@@ -30,7 +30,6 @@ export function useDeleteTask() {
     },
     onSuccess: ({ data }) => {
       toast.success("task deleted");
-      router.push(`/workspaces/${data.workspaceId}`);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", data.id] });
     },
