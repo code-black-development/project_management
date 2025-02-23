@@ -123,7 +123,7 @@ model Task {
   project     Project    @relation(fields: [projectId], references: [id])
   projectId   String
   workspaceId String
-  dueDate     DateTime?
+  dueDate     DateTime
   status      TaskStatus
   position    Int
 }

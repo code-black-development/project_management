@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import { ArrowLeftIcon, Delete, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Member, Project, Task, TaskStatus, User } from "@prisma/client";
+import { TaskStatus } from "@prisma/client";
 
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -41,14 +41,19 @@ import {
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 
-import type { TaskWithUser } from "@/types/types";
+import type {
+  MemberSafeDate,
+  ProjectSafeDate,
+  TaskWithUser,
+  UserSafeDate,
+} from "@/types/types";
 
 interface TaskFormProps {
   initialValues?: TaskWithUser;
   onCancel?: () => void;
-  projectOptions: Omit<Project, "createdAt" | "updatedAt">[];
-  memberOptions: (Omit<Member, "createdAt" | "updatedAt"> & {
-    user: Omit<User, "emailVerified">;
+  projectOptions: ProjectSafeDate[];
+  memberOptions: (MemberSafeDate & {
+    user: UserSafeDate;
   })[];
 }
 

@@ -13,6 +13,32 @@ import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
 const app = new Hono()
+  .post(
+    "/bulk-update",
+    zValidator(
+      "json",
+      z.object({
+        tasks: z.array(
+          z.object({
+            id: z.string(),
+            status: z.nativeEnum(TaskStatus),
+            position: z.number().int().positive(),
+          })
+        ),
+      })
+    ),
+    async (c) => {
+      const { tasks } = c.req.valid("json");
+      //TODO: we should check that these tasks all belong to the same workspace and if the user is a member of the workspace and has permission
+      const updatedTasks = await Promise.all(
+        tasks.map(async (task: any) => {
+          const { id, status, position } = task;
+          return await updateTask(id, { status, position });
+        })
+      );
+      return c.json({ data: updatedTasks });
+    }
+  )
   .get("/:taskId", async (c) => {
     const { taskId } = c.req.param();
     //TODO: we should check if the user is a member of the workspace and has permission
@@ -109,7 +135,7 @@ const app = new Hono()
         status,
         workspaceId,
         projectId,
-        dueDate: typeof dueDate === "string" ? new Date(dueDate) : null,
+        dueDate: typeof dueDate === "string" ? new Date(dueDate) : dueDate,
         assigneeId: assigneeId ?? null,
         position: newPosition,
         description: description ?? null,

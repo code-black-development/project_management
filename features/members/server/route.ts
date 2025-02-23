@@ -14,14 +14,14 @@ const app = new Hono()
     zValidator("query", z.object({ workspaceId: z.string() })),
     async (c) => {
       const { workspaceId } = c.req.valid("query");
-      const workspaces = await getMembersByWorkspaceId(workspaceId);
-      return c.json({ data: workspaces });
+      const members = await getMembersByWorkspaceId(workspaceId);
+      return c.json({ data: members });
     }
   )
   .delete(
     "/",
 
-    zValidator("json", { memberId: z.string(), workspaceId: z.string() }),
+    zValidator("json", { id: z.string(), workspaceId: z.string() }),
     async (c) => {
       const { memberId, workspaceId } = c.req.valid("json");
       await deleteMember(memberId, workspaceId);

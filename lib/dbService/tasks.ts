@@ -83,15 +83,16 @@ export const createTask = async (
     console.log(JSON.stringify(e));
   }
 };
-type UpdateTaskSchema = {
-  name: string;
-  status: TaskStatus;
-  projectId: string;
+/* type UpdateTaskSchema = {
+  name?: string;
+  status?: TaskStatus;
+  projectId?: string;
   dueDate?: Date;
   assigneeId?: string;
   description?: string;
-};
-export const updateTask = async (taskId: string, data: UpdateTaskSchema) => {
+  position?: number;
+}; */
+export const updateTask = async (taskId: string, data: Partial<Task>) => {
   console.log("update task db");
   try {
     return await prisma.task.update({

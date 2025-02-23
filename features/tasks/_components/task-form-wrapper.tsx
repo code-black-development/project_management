@@ -40,7 +40,7 @@ const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
 
   return (
     <TaskForm
-      initialValues={id ? task : undefined}
+      initialValues={id && task ? task : undefined}
       projectOptions={projects ?? []}
       memberOptions={members?.data ?? []}
       onCancel={onCancel}

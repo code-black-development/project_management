@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
+import { MemberSafeDate, UserSafeDate } from "@/types/types";
 
 interface UseGetMembersProps {
   workspaceId: string;
