@@ -21,10 +21,10 @@ const app = new Hono()
   .delete(
     "/",
 
-    zValidator("json", { id: z.string(), workspaceId: z.string() }),
+    zValidator("param", z.object({ memberId: z.string() })),
     async (c) => {
-      const { memberId, workspaceId } = c.req.valid("json");
-      await deleteMember(memberId, workspaceId);
+      const { memberId } = c.req.valid("param");
+      await deleteMember(memberId);
       return c.json({ message: "Member deleted" });
     }
   );

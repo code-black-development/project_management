@@ -4,14 +4,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface MemberAvatarProps {
   image?: string;
-  name: string;
+  name?: string;
   className?: string;
   fallbackClassName?: string;
 }
 const MemberAvatar = ({
   image,
   className,
-  name,
+  name = "unassigned",
   fallbackClassName,
 }: MemberAvatarProps) => {
   if (image) {

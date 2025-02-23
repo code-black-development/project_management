@@ -1,6 +1,7 @@
 import {
   createProject,
   deleteProject,
+  getProjectById,
   getProjectsByWorkspaceId,
   updateProject,
 } from "@/lib/dbService/projects";
@@ -10,7 +11,13 @@ import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
 import { onlyWorkspaceMember } from "@/lib/dbService/db-utils";
-import { HTTPException } from "hono/http-exception";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import {
+  getProjectOverdueTasks,
+  getProjectTasksInDateRange,
+} from "@/lib/dbService/tasks";
+import { th } from "date-fns/locale";
+import { TaskStatus } from "@prisma/client";
 
 const app = new Hono()
   .delete("/:projectId", async (c) => {
@@ -66,6 +73,89 @@ const app = new Hono()
       const projects = await getProjectsByWorkspaceId(workspaceId);
       return c.json({ data: projects });
     }
-  );
+  )
+  .get("/:projectId", async (c) => {
+    const { projectId } = c.req.param();
+    const project = await getProjectById(projectId);
+
+    return c.json({ data: project });
+  })
+  .get("/:projectId/analytics", async (c) => {
+    const { projectId } = c.req.param();
+
+    const now = new Date();
+    const thisMonthStart = startOfMonth(now);
+    const thisMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    const thismonthTasks = await getProjectTasksInDateRange(
+      projectId,
+      thisMonthStart,
+      thisMonthEnd
+    );
+
+    const lastMonthTasks = await getProjectTasksInDateRange(
+      projectId,
+      lastMonthStart,
+      lastMonthEnd
+    );
+    const overdueProjectTasks = await getProjectOverdueTasks(
+      projectId,
+      new Date()
+    );
+
+    const taskCount = thismonthTasks.length;
+    const taskDifference = taskCount - lastMonthTasks.length;
+
+    const thisMonthIncompleteTasks = thismonthTasks.filter(
+      (task) => task.status !== TaskStatus.DONE
+    );
+    const lastMonthIncompleteTasks = lastMonthTasks.filter(
+      (task) => task.status !== TaskStatus.DONE
+    );
+    const incompleteTaskCount = thisMonthIncompleteTasks.length;
+    const incompleteTaskDifference =
+      incompleteTaskCount - lastMonthIncompleteTasks.length;
+
+    const thisMonthCompletedTasks = thismonthTasks.filter(
+      (task) => task.status === TaskStatus.DONE
+    );
+    const lastMonthCompletedTasks = lastMonthTasks.filter(
+      (task) => task.status === TaskStatus.DONE
+    );
+    const completedTaskCount = thisMonthCompletedTasks.length;
+    const completedTaskDifference =
+      completedTaskCount - lastMonthCompletedTasks.length;
+
+    const overdueProjectTasksTotalCount = overdueProjectTasks.length;
+    const thisMonthOverdueProjectTasks = overdueProjectTasks.filter(
+      (task) =>
+        task.createdAt >= thisMonthStart && task.createdAt <= thisMonthEnd
+    );
+    const lastMonthOverdueProjectTasks = overdueProjectTasks.filter(
+      (task) =>
+        task.createdAt >= lastMonthStart && task.createdAt <= lastMonthEnd
+    );
+    const lastMonthOverdueProjectTasksCount =
+      lastMonthOverdueProjectTasks.length;
+    const thisMonthOverdueProjectTasksCount =
+      thisMonthOverdueProjectTasks.length;
+
+    const overdueProjectTasksDifference =
+      thisMonthOverdueProjectTasksCount - lastMonthOverdueProjectTasksCount;
+
+    return c.json({
+      taskCount,
+      taskDifference,
+      completedTaskCount,
+      completedTaskDifference,
+      incompleteTaskCount,
+      incompleteTaskDifference,
+      overdueProjectTasksTotalCount,
+      overdueProjectTasksCount: thisMonthOverdueProjectTasksCount,
+      overdueProjectTasksDifference,
+    });
+  });
 
 export default app;

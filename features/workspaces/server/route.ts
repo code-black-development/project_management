@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import {
   createWorkspace,
   deleteWorkspace,
+  getWorkspaceById,
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
@@ -18,6 +19,12 @@ import {
   checkIfUserIsAdmin,
 } from "@/lib/dbService/workspace-members";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
+import { TaskStatus } from "@prisma/client";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import {
+  getWorkspaceOverdueTasks,
+  getWorkspaceTasksInDateRange,
+} from "@/lib/dbService/tasks";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -107,10 +114,94 @@ const app = new Hono()
       if (!isInvited) {
         throw new HTTPException(404, { message: "Invalid invite code" });
       }
+      //TODO: this is notimplemented at all  - redo this
       const member = await addMember(isInvited.userId, workspaceId);
       //by as the invite is tied to a user it cannot be reused by anyone else. Invite will be deleted after 7 days by a CRON job
       return c.json({ data: member });
     }
-  );
+  )
+  .get("/:workspaceId", async (c) => {
+    const { workspaceId } = c.req.param();
+    //TODO: check if the user is a member of the workspace
+    const workspace = await getWorkspaceById(workspaceId);
+    return c.json({ data: workspace });
+  })
+  .get("/:workspaceId/analytics", async (c) => {
+    const { workspaceId } = c.req.param();
+
+    const now = new Date();
+    const thisMonthStart = startOfMonth(now);
+    const thisMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    const thismonthTasks = await getWorkspaceTasksInDateRange(
+      workspaceId,
+      thisMonthStart,
+      thisMonthEnd
+    );
+
+    const lastMonthTasks = await getWorkspaceTasksInDateRange(
+      workspaceId,
+      lastMonthStart,
+      lastMonthEnd
+    );
+    const overdueProjectTasks = await getWorkspaceOverdueTasks(
+      workspaceId,
+      new Date()
+    );
+
+    const taskCount = thismonthTasks.length;
+    const taskDifference = taskCount - lastMonthTasks.length;
+
+    const thisMonthIncompleteTasks = thismonthTasks.filter(
+      (task) => task.status !== TaskStatus.DONE
+    );
+    const lastMonthIncompleteTasks = lastMonthTasks.filter(
+      (task) => task.status !== TaskStatus.DONE
+    );
+    const incompleteTaskCount = thisMonthIncompleteTasks.length;
+    const incompleteTaskDifference =
+      incompleteTaskCount - lastMonthIncompleteTasks.length;
+
+    const thisMonthCompletedTasks = thismonthTasks.filter(
+      (task) => task.status === TaskStatus.DONE
+    );
+    const lastMonthCompletedTasks = lastMonthTasks.filter(
+      (task) => task.status === TaskStatus.DONE
+    );
+    const completedTaskCount = thisMonthCompletedTasks.length;
+    const completedTaskDifference =
+      completedTaskCount - lastMonthCompletedTasks.length;
+
+    const overdueProjectTasksTotalCount = overdueProjectTasks.length;
+    const thisMonthOverdueProjectTasks = overdueProjectTasks.filter(
+      (task) =>
+        task.createdAt >= thisMonthStart && task.createdAt <= thisMonthEnd
+    );
+    const lastMonthOverdueProjectTasks = overdueProjectTasks.filter(
+      (task) =>
+        task.createdAt >= lastMonthStart && task.createdAt <= lastMonthEnd
+    );
+    const lastMonthOverdueProjectTasksCount =
+      lastMonthOverdueProjectTasks.length;
+    const thisMonthOverdueProjectTasksCount =
+      thisMonthOverdueProjectTasks.length;
+
+    const overdueProjectTasksDifference =
+      thisMonthOverdueProjectTasksCount - lastMonthOverdueProjectTasksCount;
+
+    return c.json({
+      taskCount,
+      taskDifference,
+      completedTaskCount,
+      completedTaskDifference,
+      incompleteTaskCount,
+      incompleteTaskDifference,
+      overdueProjectTasksTotalCount,
+      overdueProjectTasksCount: thisMonthOverdueProjectTasksCount,
+      overdueProjectTasksDifference,
+    });
+  });
 
 export default app;

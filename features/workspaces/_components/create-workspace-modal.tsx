@@ -1,6 +1,6 @@
 "use client";
 import ResponsiveModal from "@/components/responsive-modal";
-import WorkspaceForm from "./create-workspace-form";
+import WorkspaceForm from "./workspace-form";
 import useCreateWorkspaceModal from "../hooks/use-create-workspace-modal";
 
 export const CreateWorkspaceModal = () => {

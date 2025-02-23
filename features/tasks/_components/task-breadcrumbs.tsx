@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
+import { useConfirm } from "@/hooks/use-confirm";
 import { ProjectSafeDate, TaskWithUser } from "@/types/types";
-import { ChevronsRightIcon, TrashIcon } from "lucide-react";
+import { ChevronRightIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
+import { useDeleteTask } from "../api/use-delete-task";
+import { useRouter } from "next/navigation";
 
 interface TaskBreadcrumbsProps {
   project: ProjectSafeDate;
@@ -10,8 +13,30 @@ interface TaskBreadcrumbsProps {
 }
 
 const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
+  const { mutate: deleteTask, isPending } = useDeleteTask();
+  const router = useRouter();
+  const [ConfirmDialog, confirm] = useConfirm(
+    "Delete Task",
+    "This action cannot be undone",
+    "destructive"
+  );
+
+  const handelDeleteTask = async () => {
+    const ok = await confirm();
+    if (!ok) return;
+    deleteTask(
+      { param: { taskId: task.id } },
+      {
+        onSuccess: () => {
+          router.push(`/workspaces/${project.workspaceId}/tasks/`);
+        },
+      }
+    );
+  };
+
   return (
     <div className="flex items-center gap-x-2">
+      <ConfirmDialog />
       <ProjectAvatar
         image={project.image ?? undefined}
         name={project.name}
@@ -22,9 +47,16 @@ const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
           {project.name}
         </p>
       </Link>
-      <ChevronsRightIcon className="size-4 lg:size-5 text-muted-foreground" />
+      <ChevronRightIcon className="size-4 lg:size-5 text-muted-foreground" />
       <p>{task.name}</p>
-      <Button variant="destructive" size="sm" className="flex items-center">
+
+      <Button
+        variant="destructive"
+        size="sm"
+        className="flex items-center ml-auto"
+        onClick={handelDeleteTask}
+        disabled={isPending}
+      >
         <TrashIcon className="size-4 lg:mr-2" />
         <span className="hidden lg:block">Delete Task</span>
       </Button>

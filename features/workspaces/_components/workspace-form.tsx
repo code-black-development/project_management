@@ -4,6 +4,10 @@ import { useForm } from "react-hook-form";
 import { useRef } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import {
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+} from "@/features/workspaces/schemas";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,40 +24,33 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
+import { useCreateWorkspace } from "@/features/workspaces/api/use-create-workspace";
 import { useRouter } from "next/navigation";
-import { Project } from "@prisma/client";
-
+import { useUpdateWorkspace } from "../api/use-update-workspace";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useDeleteWorkspace } from "../api/use-delete-workspace";
+import { WorkspaceSafeDates } from "@/types/types";
 
-import { createProjectSchema, updateProjectSchema } from "../schema";
-import { useCreateProject } from "../api/use-create-project";
-import { useUpdateProject } from "../api/use-update-project";
-import { useDeleteProject } from "../api/use-delete-project";
-import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
-
-interface ProjectFormProps {
-  initialValues?: Partial<Project>;
+interface WorkspaceFormProps {
+  initialValues?: Partial<WorkspaceSafeDates>;
   onCancel?: () => void;
 }
 
-const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
-  const workspaceId = useWorkspaceId();
-
+const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   const formSchema = initialValues
-    ? updateProjectSchema
-    : createProjectSchema.omit({ workspaceId: true });
-
+    ? updateWorkspaceSchema
+    : createWorkspaceSchema;
   const router = useRouter();
 
   const { mutate, isPending } = initialValues
-    ? useUpdateProject()
-    : useCreateProject();
+    ? useUpdateWorkspace()
+    : useCreateWorkspace();
 
-  const { mutate: deleteProject, isPending: isDeletingProject } =
-    useDeleteProject();
+  const { mutate: deleteWorkspace, isPending: isDeletingWorkSpace } =
+    useDeleteWorkspace();
 
   const [DeleteDialog, confirmDelete] = useConfirm(
-    "Delete Project",
+    "Delete Workspace",
     "This action cannot be undone",
     "destructive"
   );
@@ -75,21 +72,36 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
     if (!deleteStatus) {
       return;
     }
-    deleteProject({ param: { projectId: initialValues?.id! } });
+    deleteWorkspace(
+      { param: { workspaceId: initialValues?.id! } },
+      {
+        onSuccess: () => {
+          router.push("/");
+        },
+      }
+    );
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const formValues = {
       ...values,
-      ...(!initialValues && { workspaceId }),
       image: values.image instanceof File || values.image ? values.image : "",
     };
 
-    mutate({
-      //@ts-ignore ts is not picking up that the param is only in the type if we have initialValues
-      form: formValues,
-      ...(initialValues && { param: { projectId: initialValues.id! } }),
-    });
+    if (initialValues) {
+      mutate({ form: formValues, param: { workspaceId: initialValues.id! } });
+    } else {
+      mutate(
+        // @ts-ignore param is only required if we are editing a workspace. TS is not picking that up TODO: check this again later.
+        { form: formValues },
+        {
+          onSuccess: ({ data }) => {
+            form.reset();
+            router.push(`/workspaces/${data?.id}`);
+          },
+        }
+      );
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +110,8 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
       form.setValue("image", file, { shouldDirty: true });
     }
   };
+
+  const handleCopyInviteLink = () => {};
 
   const action = initialValues ? "Update" : "Create";
 
@@ -119,10 +133,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
               onClick={
                 onCancel
                   ? onCancel
-                  : () =>
-                      router.push(
-                        `/workspaces/${initialValues.workspaceId}/project/${initialValues.id}`
-                      )
+                  : () => router.push(`/workspaces/${initialValues.id}`)
               }
             >
               Back
@@ -131,7 +142,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
           )}
           {!initialValues ? (
             <CardTitle className="text-xl font-bold">
-              {action} Project
+              {action} Workspace
             </CardTitle>
           ) : (
             <CardTitle className="text-xl font-bold">
@@ -151,12 +162,12 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Name</FormLabel>
+                      <FormLabel>Workspace Name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="text"
-                          placeholder="Project Name"
+                          placeholder="Workspace Name"
                           className="input"
                         />
                       </FormControl>
@@ -192,7 +203,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                           </Avatar>
                         )}
                         <div className="flex flex-col">
-                          <p className="text-sm">Project Icon</p>
+                          <p className="text-sm">Workspace Icon</p>
                           <p className="text-sm text-muted-foreground">
                             JPG, PNG, SVG or JPEG. Max 1mb.
                           </p>
@@ -255,7 +266,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   size="lg"
                   disabled={isPending || !isDirty}
                 >
-                  {action} Project
+                  {action} Workspace
                 </Button>
               </div>
             </form>
@@ -268,9 +279,43 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
           <Card className="w-full h-full border-none shadow-none">
             <CardContent className="p-7">
               <div className="flex flex-col">
+                <h3 className="font-bold">Invite Members</h3>
+                <p className="text-sm text-muted-foreground">
+                  Invite others to collaborate on your projects in this
+                  workspace.
+                  <br /> (Invites will expire after 7 days).
+                </p>
+                <div className="mt-4">
+                  <div className="flex items-center gap-x-2">
+                    <Input disabled value="" />
+                    <Button
+                      onClick={handleCopyInviteLink}
+                      variant="secondary"
+                      className="size-10"
+                    >
+                      <CopyIcon className="size-5" />
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  className="mt-6 w-fit ml-auto"
+                  size="sm"
+                  variant="primary"
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleDelete}
+                >
+                  Send Invite
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="w-full h-full border-none shadow-none">
+            <CardContent className="p-7">
+              <div className="flex flex-col">
                 <h3 className="font-bold">Danger Zone</h3>
                 <p className="text-sm text-muted-foreground">
-                  Deleting a project is irreversible and will remove all
+                  Deleting a workspace is irreversible and will remove all
                   asociated data.
                 </p>
                 <Button
@@ -281,7 +326,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   disabled={isPending}
                   onClick={handleDelete}
                 >
-                  Delete Project
+                  Delete Workspace
                 </Button>
               </div>
             </CardContent>
@@ -292,4 +337,4 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
   );
 };
 
-export default ProjectForm;
+export default WorkspaceForm;

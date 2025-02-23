@@ -129,3 +129,60 @@ export const getHighestPositionTask = async (
     },
   });
 };
+
+export const getProjectTasksInDateRange = async (
+  projectId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+  return await prisma.task.findMany({
+    where: {
+      projectId,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+  });
+};
+
+export const getProjectOverdueTasks = async (projectId: string, date: Date) => {
+  return await prisma.task.findMany({
+    where: {
+      projectId,
+      dueDate: {
+        lt: date,
+      },
+    },
+  });
+};
+
+export const getWorkspaceTasksInDateRange = async (
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+  return await prisma.task.findMany({
+    where: {
+      workspaceId,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+  });
+};
+
+export const getWorkspaceOverdueTasks = async (
+  workspaceId: string,
+  date: Date
+) => {
+  return await prisma.task.findMany({
+    where: {
+      workspaceId,
+      dueDate: {
+        lt: date,
+      },
+    },
+  });
+};
