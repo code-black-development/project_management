@@ -10,6 +10,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,6 +29,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn(inter.className, "antialiased min-h-screen")}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                 const savedTheme = localStorage.getItem("theme");
+                 if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                   document.documentElement.classList.add("dark");
+                 }
+              })();
+  `,
+          }}
+        />
         <Toaster />
         <NuqsAdapter>
           <QueryProvider>{children}</QueryProvider>

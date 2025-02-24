@@ -11,10 +11,14 @@ export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
   updatedAt: string;
 };
 
-export type TaskSafeDate = Omit<Task, "createdAt" | "updatedAt" | "dueDate"> & {
+export type TaskSafeDate = Omit<
+  Task,
+  "createdAt" | "updatedAt" | "dueDate" | "timeEstimate"
+> & {
   createdAt: string;
   updatedAt: string;
   dueDate: string;
+  timeEstimate: string | null;
 };
 
 export type MemberSafeDate = Omit<Member, "createdAt" | "updatedAt"> & {

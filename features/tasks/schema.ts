@@ -6,6 +6,11 @@ export const createTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  timeEstimate: z
+    .string()
+
+    .optional()
+    .transform((val) => val ?? null),
   dueDate: z
     .date()
     .optional()
@@ -25,6 +30,10 @@ export const updateTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  timeEstimate: z
+    .string()
+    .optional()
+    .transform((val) => val ?? null),
   dueDate: z
     .date()
     .optional()

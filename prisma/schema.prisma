@@ -75,15 +75,17 @@ model Workspace {
 }
 
 model Member {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  role        String    @default("member")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  tasks       Task[]
+  id            String    @id @default(cuid())
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId   String
+  user          User      @relation(fields: [userId], references: [id])
+  userId        String
+  role          String    @default("member")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  assignedTasks Task[]    @relation(name: "TaskAssignee")
+  createdTasks  Task[]    @relation(name: "TaskCreator")
+  Worklog       Worklog[]
 
   @@unique([workspaceId, userId])
 }
@@ -113,19 +115,35 @@ model Project {
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  assignee    Member?    @relation(fields: [assigneeId], references: [id])
-  assigneeId  String?
-  project     Project    @relation(fields: [projectId], references: [id])
-  projectId   String
-  workspaceId String
-  dueDate     DateTime
-  status      TaskStatus
-  position    Int
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  assignee     Member?    @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId   String?
+  project      Project    @relation(fields: [projectId], references: [id])
+  projectId    String
+  workspaceId  String
+  dueDate      DateTime
+  status       TaskStatus
+  position     Int
+  timeEstimate Int? //store all values in minutes
+  createdBy    Member     @relation(name: "TaskCreator", fields: [createdById], references: [id])
+  createdById  String
+  Worklog      Worklog[]
+}
+
+model Worklog {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id])
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id])
+  timeSpent  Int
+  dateWorked DateTime //when the work was done
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum TaskStatus {

@@ -6,7 +6,7 @@ import Projects from "./projects";
 
 const Sidebar = async () => {
   return (
-    <aside className="h-full bg-neutral-100 p-4 w-full">
+    <aside className="h-full bg-neutral-100 dark:bg-neutral-800 p-4 w-full">
       <Logo />
       <DottedSeparator className="my-4" />
       <WorkspaceSwitcher />

@@ -18,7 +18,9 @@ const Projects = ({}: ProjectsProps) => {
   return (
     <div className="flex flex-col gap-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase text-neutral-500">Projects</p>
+        <p className="text-xs uppercase text-neutral-500 dark:text-neutral-200">
+          Projects
+        </p>
         <RiAddCircleFill
           className="size-5 text-neutral-500 cursor-pointer hover:opacity-75 transition"
           onClick={open}
@@ -32,9 +34,9 @@ const Projects = ({}: ProjectsProps) => {
             <Link href={href} key={project.id}>
               <div
                 className={cn(
-                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer hover:opcaity-75 transition text-neutral-500",
+                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer hover:opcaity-75 transition text-neutral-500 dark:text-neutral-200",
                   isActive &&
-                    "bg-white shadow-sm hover:opacity-100 text-primary"
+                    "bg-white dark:bg-neutral-600 shadow-sm hover:opacity-100 text-primary"
                 )}
               >
                 <ProjectAvatar

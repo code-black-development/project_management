@@ -92,6 +92,7 @@ const TaskForm = ({
       assigneeId: initialValues?.assigneeId ?? "",
       status: initialValues?.status ?? TaskStatus.TODO,
       projectId: initialValues?.projectId ?? "",
+      timeEstimate: initialValues?.timeEstimate ?? "",
     },
   });
 
@@ -235,6 +236,7 @@ const TaskForm = ({
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   name="status"
                   control={form.control}
@@ -299,6 +301,25 @@ const TaskForm = ({
                           ))}
                         </SelectContent>
                       </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="timeEstimate"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time Estimate</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          type="text"
+                          placeholder="2w 3d 4h 3m"
+                          className="input"
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

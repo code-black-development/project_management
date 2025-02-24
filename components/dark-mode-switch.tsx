@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@/components/ui/switch";
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 
 interface DarkModeSwitchProps {}
 type theme = "light" | "dark" | "system";
@@ -9,13 +9,11 @@ type theme = "light" | "dark" | "system";
 const DarkModeSwitch = ({}: DarkModeSwitchProps) => {
   const [activeTheme, setActiveTheme] = useState<theme>("system");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const savedTheme = localStorage.getItem("theme") as theme;
     if (savedTheme === "system" || !savedTheme) {
-      applySystemTheme();
       setActiveTheme("system");
     } else {
-      applyTheme(savedTheme);
       setActiveTheme(savedTheme);
     }
 
