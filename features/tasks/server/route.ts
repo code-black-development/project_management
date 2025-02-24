@@ -11,6 +11,7 @@ import { taskSearchSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
+import { minutesToTimeEstimateString } from "@/lib/utils";
 
 const app = new Hono()
   .post(
@@ -33,7 +34,13 @@ const app = new Hono()
       const updatedTasks = await Promise.all(
         tasks.map(async (task: any) => {
           const { id, status, position } = task;
-          return await updateTask(id, { status, position });
+          const result = await updateTask(id, { status, position });
+          return {
+            ...result,
+            timeEstimate: result?.timeEstimate
+              ? minutesToTimeEstimateString(result?.timeEstimate)
+              : null,
+          };
         })
       );
       return c.json({ data: updatedTasks });
@@ -43,7 +50,13 @@ const app = new Hono()
     const { taskId } = c.req.param();
     //TODO: we should check if the user is a member of the workspace and has permission
     const task = await getTaskById(taskId);
-    return c.json({ data: task });
+    const result = {
+      ...task,
+      timeEstimate: task?.timeEstimate
+        ? minutesToTimeEstimateString(task?.timeEstimate)
+        : null,
+    };
+    return c.json({ data: result });
   })
   .patch(
     "/:taskId",
@@ -78,8 +91,14 @@ const app = new Hono()
       };
 
       const task = await updateTask(taskId, taskData);
+      const result = {
+        ...task,
+        timeEstimate: task?.timeEstimate
+          ? minutesToTimeEstimateString(task?.timeEstimate)
+          : null,
+      };
 
-      return c.json({ data: task });
+      return c.json({ data: result });
     }
   )
   .delete("/:taskId", async (c) => {
@@ -91,8 +110,17 @@ const app = new Hono()
   .get("/", zValidator("query", taskSearchSchema), async (c) => {
     const data = c.req.valid("query");
     const tasks = await searchTasks(data);
+    let result = [];
+    for (let task of tasks) {
+      result.push({
+        ...task,
+        timeEstimate: task.timeEstimate
+          ? minutesToTimeEstimateString(task.timeEstimate)
+          : null,
+      });
+    }
 
-    return c.json({ data: tasks });
+    return c.json({ data: result });
   })
   .post(
     "/",
