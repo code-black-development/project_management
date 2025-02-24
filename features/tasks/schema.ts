@@ -8,7 +8,7 @@ export const createTaskSchema = z.object({
   projectId: z.string().nonempty("Project is required"),
   timeEstimate: z
     .string()
-
+    .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" }) // 1w 2d 3h 4m
     .optional()
     .transform((val) => val ?? null),
   dueDate: z
@@ -32,6 +32,7 @@ export const updateTaskSchema = z.object({
   projectId: z.string().nonempty("Project is required"),
   timeEstimate: z
     .string()
+    .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" })
     .optional()
     .transform((val) => val ?? null),
   dueDate: z

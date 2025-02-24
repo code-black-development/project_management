@@ -38,7 +38,7 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
   };
 
   const onOpenTask = () => {
-    router.push(`/workspaces/${workspaceId}/task/${id}`);
+    router.push(`/workspaces/${workspaceId}/tasks/${id}`);
   };
 
   const onOpenProject = () => {
