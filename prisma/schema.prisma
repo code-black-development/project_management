@@ -126,12 +126,12 @@ model Task {
   projectId    String
   workspaceId  String
   dueDate      DateTime
-  status       TaskStatus
+  status       TaskStatus @default(TODO)
   position     Int
   timeEstimate Int? //store all values in minutes
   createdBy    Member     @relation(name: "TaskCreator", fields: [createdById], references: [id])
   createdById  String
-  Worklog      Worklog[]
+  worklogs     Worklog[]
 }
 
 model Worklog {

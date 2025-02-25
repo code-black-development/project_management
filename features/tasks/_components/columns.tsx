@@ -2,30 +2,16 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Project, Task } from "@prisma/client";
-
-type SafeTaskType = Omit<Task, "dueDate" | "createdAt" | "updatedAt"> & {
-  dueDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-  project:
-    | (Omit<Project, "createdAt" | "updatedAt"> & {
-        createdAt: string;
-        updatedAt: string;
-      })
-    | null;
-  assignee: User | null;
-};
 import { ArrowUpDown, MoreVertical } from "lucide-react";
-import { User } from "next-auth";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
+import { TaskWithUser } from "@/types/types";
 
-export const columns: ColumnDef<SafeTaskType>[] = [
+export const columns: ColumnDef<TaskWithUser>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -85,15 +71,14 @@ export const columns: ColumnDef<SafeTaskType>[] = [
       );
     },
     cell: ({ row }) => {
-      const assignee = row.original.assignee || {};
       return (
         <div className="flex items-center gap-x-2 text-sm">
           <MemberAvatar
             className="size-6"
-            name={assignee.name || "Unassigned"}
-            image={row.original.assignee?.image || undefined}
+            name={row.original.assignee?.user?.name ?? "Unassigned"}
+            image={row.original.assignee?.user?.image || undefined}
           />
-          {assignee.name || "Unassigned"}
+          {row.original.assignee?.user.name || "Unassigned"}
         </div>
       );
     },
@@ -132,7 +117,7 @@ export const columns: ColumnDef<SafeTaskType>[] = [
       );
     },
     cell: ({ row }) => {
-      const status = row.original.status;
+      const status = row.original.status!;
       return (
         <TaskBadge variant={status}>{snakeCaseToTitleCase(status)}</TaskBadge>
       );
@@ -141,8 +126,8 @@ export const columns: ColumnDef<SafeTaskType>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const id = row.original.id;
-      const projectId = row.original.projectId;
+      const id = row.original.id as string;
+      const projectId = row.original.projectId as string;
       return (
         <TaskActions id={id} projectId={projectId}>
           <Button variant="ghost" className="size-8 p-0">

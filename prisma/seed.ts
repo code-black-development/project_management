@@ -1,11 +1,11 @@
 import prisma from "./prisma";
 
-const createCategories = async () => {};
-
 async function main() {
   try {
-    await createCategories();
-    console.log("👻 created categories");
+    const email = "castleantony6@gmail.com";
+    const password = "password";
+    await prisma.user.create({ data: { email, password } });
+    console.log("👻 created user");
   } catch (e) {
     console.error(e);
   }

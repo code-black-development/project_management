@@ -1,6 +1,7 @@
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
+import { error } from "console";
 import { z } from "zod";
 
 export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
@@ -45,7 +46,11 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
 
   return await prisma.task.findMany({
     where,
-    include: { project: true, assignee: { include: { user: true } } },
+    include: {
+      project: true,
+      assignee: { include: { user: true } },
+      worklogs: true,
+    },
   });
 };
 
@@ -62,7 +67,11 @@ export const getTaskById = async (taskId: string) => {
     where: {
       id: taskId,
     },
-    include: { project: true, assignee: { include: { user: true } } },
+    include: {
+      project: true,
+      assignee: { include: { user: true } },
+      worklogs: true,
+    },
   });
 };
 
@@ -71,6 +80,7 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
     where: {
       workspaceId,
     },
+    include: { project: true, assignee: { include: { user: true } } },
   });
 };
 
@@ -78,9 +88,11 @@ export const createTask = async (
   data: Omit<Task, "createdAt" | "updatedAt" | "id">
 ) => {
   try {
+    console.log("create task db", data);
     return await prisma.task.create({ data });
   } catch (e) {
     console.log(JSON.stringify(e));
+    throw new Error("Failed to create task");
   }
 };
 /* type UpdateTaskSchema = {
@@ -93,7 +105,7 @@ export const createTask = async (
   position?: number;
 }; */
 export const updateTask = async (taskId: string, data: Partial<Task>) => {
-  console.log("update task db");
+  console.log("update task db", data);
   try {
     return await prisma.task.update({
       where: {

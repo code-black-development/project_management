@@ -1,10 +1,17 @@
-import { Task, Member, User, Project, Workspace } from "@prisma/client";
+import {
+  Task,
+  Member,
+  User,
+  Project,
+  Workspace,
+  Worklog,
+} from "@prisma/client";
 
 export type TaskWithUser = TaskSafeDate & {
   assignee: (MemberSafeDate & { user: UserSafeDate }) | null;
 } & {
   project: ProjectSafeDate;
-};
+} & { worklogs: WorklogType[] };
 
 export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
   createdAt: string;
@@ -33,6 +40,15 @@ export type UserSafeDate = Omit<User, "emailVerified"> & {
 export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt"> & {
   createdAt: string;
   updatedAt: string;
+};
+
+export type WorklogType = Omit<
+  Worklog,
+  "createdAt" | "updatedAt" | "dateWorked"
+> & {
+  createdAt: string;
+  updatedAt: string;
+  dateWorked: string;
 };
 
 export enum MemberRole {

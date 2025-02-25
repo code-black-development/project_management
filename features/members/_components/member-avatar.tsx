@@ -31,7 +31,7 @@ const MemberAvatar = ({
           fallbackClassName
         )}
       >
-        {name[0]}
+        {(name && name[0]) || "U"}
       </AvatarFallback>
     </Avatar>
   );

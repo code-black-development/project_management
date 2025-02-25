@@ -47,6 +47,7 @@ import type {
   TaskWithUser,
   UserSafeDate,
 } from "@/types/types";
+import { defaultShouldDehydrateMutation } from "@tanstack/react-query";
 
 interface TaskFormProps {
   initialValues?: TaskWithUser;
@@ -106,11 +107,28 @@ const TaskForm = ({
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log("values: ", values);
+    let payload;
+    if (initialValues) {
+      payload = {
+        json: {
+          ...values,
+        },
+        param: {
+          taskId: initialValues.id,
+        },
+      };
+    } else {
+      payload = {
+        json: {
+          ...values,
+          workspaceId,
+        },
+      };
+    }
     mutate(
-      {
-        json: { ...values, ...(!initialValues && { workspaceId }) },
-        ...(initialValues && { param: { taskId: initialValues?.id } }),
-      },
+      //@ts-ignore
+      payload,
+
       {
         onSuccess: () => {
           form.reset();
@@ -192,7 +210,7 @@ const TaskForm = ({
                       <FormControl>
                         <DatePicker
                           {...field}
-                          value={field.value ?? undefined}
+                          value={(field.value as Date) ?? undefined}
                           placeholder="Select Due Date"
                         />
                       </FormControl>

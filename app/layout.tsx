@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-//import { SessionProvider } from "@hono/auth-js/react";
 import { QueryProvider } from "@/components/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { SessionProvider } from "next-auth/react";
 //import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./globals.css";
 
@@ -43,7 +43,9 @@ export default function RootLayout({
         />
         <Toaster />
         <NuqsAdapter>
-          <QueryProvider>{children}</QueryProvider>
+          <SessionProvider>
+            <QueryProvider>{children}</QueryProvider>
+          </SessionProvider>
         </NuqsAdapter>
       </body>
     </html>

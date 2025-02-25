@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import MobileSidebar from "./mobile-sidebar";
 import DarkModeSwitch from "./dark-mode-switch";
+import UserButton from "@/features/auth/components/user-button";
 
 const pathnameMap = {
   tasks: { title: "Tasks", description: "Manage all of your tasks here" },
@@ -32,7 +33,10 @@ const Navbar = () => {
         <h1 className="text-2xl font-semibold">{title}</h1>
         <p className="text-muted-foreground">{description}</p>
       </div>
-      <DarkModeSwitch />
+      <div className="flex items-center gap-4">
+        <DarkModeSwitch />
+        <UserButton />
+      </div>
       <MobileSidebar />
     </nav>
   );

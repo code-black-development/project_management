@@ -16,7 +16,7 @@ const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
 
   const { data: task, isLoading: isLoadingTask } = id
     ? useGetTask({ taskId: id })
-    : { data: null, isLoading: false };
+    : { data: undefined, isLoading: false };
 
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
     workspaceId,
@@ -40,7 +40,7 @@ const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
 
   return (
     <TaskForm
-      initialValues={id && task ? task : undefined}
+      initialValues={task || undefined}
       projectOptions={projects ?? []}
       memberOptions={members?.data ?? []}
       onCancel={onCancel}

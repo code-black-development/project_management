@@ -6,6 +6,8 @@ interface UseGetTasksProps {
   taskId: string;
 }
 
+import { TaskWithUser } from "@/types/types";
+
 export const useGetTask = ({ taskId }: UseGetTasksProps) => {
   return useQuery({
     queryKey: ["tasks", taskId],
@@ -18,7 +20,7 @@ export const useGetTask = ({ taskId }: UseGetTasksProps) => {
         throw new Error("Failed to fetch task");
       }
       const { data } = await response.json();
-      return data;
+      return data as TaskWithUser;
     },
   });
 };

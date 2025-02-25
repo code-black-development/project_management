@@ -11,7 +11,12 @@ import { taskSearchSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { z } from "zod";
-import { minutesToTimeEstimateString } from "@/lib/utils";
+import {
+  minutesToTimeEstimateString,
+  timeEstimateStringToMinutes,
+} from "@/lib/utils";
+import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
+import { HTTPException } from "hono/http-exception";
 
 const app = new Hono()
   .post(
@@ -64,30 +69,45 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-        name: z.string(),
-        projectId: z.string(),
-        status: z.nativeEnum(TaskStatus),
-        workspaceId: z.string(),
+        name: z.string().nullish(),
+        projectId: z.string().nullish(),
+        status: z.nativeEnum(TaskStatus).nullish(),
+        workspaceId: z.string().nullish(),
         assigneeId: z.string().nullish(),
         description: z.string().nullish(),
-        dueDate: z.string().nullish(),
+        dueDate: z.string().or(z.date()).nullish(),
+        timeEstimate: z.string().nullish(),
       })
     ),
     async (c) => {
-      const { name, status, projectId, dueDate, assigneeId, description } =
-        c.req.valid("json");
+      let {
+        name,
+        status,
+        projectId,
+        dueDate,
+        assigneeId,
+        description,
+        timeEstimate,
+      } = c.req.valid("json");
 
       console.log("update task is running", c.req.valid("json"));
       const { taskId } = c.req.param();
 
+      if (dueDate instanceof String) {
+        dueDate = new Date(dueDate);
+      }
+
       //TODO: we should check if the user is a member of the workspace and has permission
       const taskData = {
-        name,
-        status,
-        projectId,
+        ...(name && { name }),
+        ...(status && { status }),
+        ...(projectId && { projectId }),
         ...(dueDate && { dueDate: new Date(dueDate) }),
         ...(assigneeId && { assigneeId }),
         ...(description && { description }),
+        ...(timeEstimate && {
+          timeEstimate: timeEstimateStringToMinutes(timeEstimate),
+        }),
       };
 
       const task = await updateTask(taskId, taskData);
@@ -134,11 +154,12 @@ const app = new Hono()
         workspaceId: z.string(),
         assigneeId: z.string().nullish(),
         description: z.string().nullish(),
-        dueDate: z.string().nullish(),
+        dueDate: z.string().or(z.date()),
+        timeEstimate: z.string().nullish(),
       })
     ),
     async (c) => {
-      const {
+      let {
         name,
         status,
         workspaceId,
@@ -146,6 +167,7 @@ const app = new Hono()
         dueDate,
         assigneeId,
         description,
+        timeEstimate,
       } = c.req.valid("json");
 
       //TODO: we should get the taskstatus passed and check that not just hard code TDOD
@@ -158,20 +180,38 @@ const app = new Hono()
         ? highestPositionTask.position + 1
         : 0;
       //TODO: we should check if the user is a member of the workspace and has permission
+      const member = await getMemberByUserIdAndWorkspaceId(
+        c.get("userId"),
+        workspaceId
+      );
+
+      if (!member) {
+        throw new HTTPException(403, {
+          message: "You are not a member of this workspace",
+        });
+      }
+      if (dueDate instanceof String) {
+        dueDate = new Date(dueDate);
+      }
+
       const taskData = {
         name,
         status,
         workspaceId,
         projectId,
-        dueDate: typeof dueDate === "string" ? new Date(dueDate) : dueDate,
+        dueDate: new Date(dueDate),
         assigneeId: assigneeId ?? null,
         position: newPosition,
         description: description ?? null,
+        createdById: member.id,
+        timeEstimate: timeEstimate
+          ? timeEstimateStringToMinutes(timeEstimate)
+          : null,
       };
 
       const task = await createTask(taskData);
 
-      return c.json(task);
+      return c.json({ data: task });
     }
   );
 

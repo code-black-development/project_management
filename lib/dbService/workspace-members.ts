@@ -1,5 +1,4 @@
 import prisma from "@/prisma/prisma";
-import { Member } from "@prisma/client";
 
 export const getMembersByWorkspaceId = async (workspaceId: string) => {
   return await prisma.member.findMany({
@@ -20,10 +19,25 @@ export const getMemberById = async (id: string) => {
   });
 };
 
+export const getMemberByUserIdAndWorkspaceId = async (
+  userId: string,
+  workspaceId: string
+) => {
+  return await prisma.member.findFirst({
+    where: {
+      userId,
+      workspaceId,
+    },
+  });
+};
+
 /** members get the role: member by default due to db schema */
-export const addMember = async (data: Partial<Member>) => {
+export const addMember = async (userId: string, workspaceId: string) => {
   return await prisma.member.create({
-    data,
+    data: {
+      userId,
+      workspaceId,
+    },
   });
 };
 

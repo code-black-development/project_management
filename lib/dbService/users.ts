@@ -8,3 +8,12 @@ export const authUser = async (email: string, password: string) => {
     },
   });
 };
+
+export const createUser = async (email: string, password: string) => {
+  return await prisma.user.create({
+    data: {
+      email,
+      password,
+    },
+  });
+};
