@@ -135,15 +135,16 @@ model Task {
 }
 
 model Worklog {
-  id         String   @id @default(cuid())
-  taskId     String
-  task       Task     @relation(fields: [taskId], references: [id])
-  memberId   String
-  member     Member   @relation(fields: [memberId], references: [id])
-  timeSpent  Int
-  dateWorked DateTime //when the work was done
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(cuid())
+  taskId          String
+  task            Task     @relation(fields: [taskId], references: [id])
+  memberId        String
+  member          Member   @relation(fields: [memberId], references: [id])
+  timeSpent       Int
+  workDescription String?
+  dateWorked      DateTime //when the work was done
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 enum TaskStatus {

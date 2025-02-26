@@ -1,16 +1,13 @@
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useQueryState, parseAsString } from "nuqs";
 const useCreateTaskWorklogModal = () => {
-  const [isOpen, setIsOpen] = useQueryState(
-    "create-worklog",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
-  const open = () => setIsOpen(true);
-  const close = () => setIsOpen(false);
+  const [taskId, setTaskId] = useQueryState("create-worklog", parseAsString);
+  const open = (id: string) => setTaskId(id);
+  const close = () => setTaskId(null);
   return {
-    isOpen,
+    taskId,
     open,
     close,
-    setIsOpen,
+    setTaskId,
   };
 };
 export default useCreateTaskWorklogModal;

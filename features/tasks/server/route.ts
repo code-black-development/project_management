@@ -17,8 +17,55 @@ import {
 } from "@/lib/utils";
 import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
+import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
 
 const app = new Hono()
+  .post(
+    "/worklog",
+    zValidator(
+      "json",
+      z.object({
+        taskId: z.string(),
+        timeSpent: z.number(),
+        dateWorked: z.union([z.string().datetime(), z.date()]),
+        workDescription: z.string().nullish(),
+        userId: z.string(),
+        workspaceId: z.string(),
+      })
+    ),
+    async (c) => {
+      const {
+        taskId,
+        timeSpent,
+        dateWorked,
+        workDescription,
+        userId,
+        workspaceId,
+      } = c.req.valid("json");
+
+      console.log("worklog is running", c.req.valid("json"));
+
+      const member = await getMemberByUserIdAndWorkspaceId(userId, workspaceId);
+
+      if (!member) {
+        throw new HTTPException(403, {
+          message: "You are not a member of this workspace",
+        });
+      }
+
+      const result = await createTaskWorklog({
+        taskId,
+        timeSpent,
+        //@ts-ignore
+        dateWorked:
+          dateWorked instanceof String ? new Date(dateWorked) : dateWorked,
+        workDescription: workDescription ?? null,
+        memberId: member.id,
+      });
+
+      return c.json({ data: result });
+    }
+  )
   .post(
     "/bulk-update",
     zValidator(

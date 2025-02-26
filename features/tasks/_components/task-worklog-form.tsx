@@ -2,7 +2,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { cn } from "@/lib/utils";
+import {
+  cn,
+  minutesToTimeEstimateString,
+  timeEstimateStringToMinutes,
+} from "@/lib/utils";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,6 +25,11 @@ import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useCreateTaskWorklog } from "../api/use-create-task-worklog";
+import MemberAvatar from "@/features/members/_components/member-avatar";
+import { useSession } from "next-auth/react";
+import { Textarea } from "@/components/ui/textarea";
+import DatePicker from "@/components/date-picker";
+import { time } from "console";
 
 interface TaskWorklogFormProps {
   id: string;
@@ -29,32 +38,34 @@ interface TaskWorklogFormProps {
 
 const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
   const workspaceId = useWorkspaceId();
+  const { data: session } = useSession();
 
   const formSchema = z.object({
-    name: z.string().nonempty("Name is required"),
-    image: z.string().optional(),
+    timeSpent: z.string().nonempty("time is required"),
+    dateWorked: z.date(),
+    workDescription: z.string().optional(),
   });
-
-  const router = useRouter();
 
   const { mutate, isPending } = useCreateTaskWorklog();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      image: undefined,
+      timeSpent: "",
+      dateWorked: new Date(),
+      workDescription: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const formValues = {
-      ...values,
-    };
-
     mutate({
-      form: formValues,
-      param: { taskId: id },
+      json: {
+        ...values,
+        timeSpent: timeEstimateStringToMinutes(values.timeSpent),
+        workspaceId,
+        userId: session?.user?.id!,
+        taskId: id,
+      },
     });
   };
 
@@ -68,22 +79,60 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
           <DottedSeparator />
         </div>
         <CardContent className="p-7">
+          <div className="flex items-center gap-x-2 mb-4">
+            <MemberAvatar
+              className="w-12 h-12"
+              name={session?.user?.name || undefined}
+              image={session?.user?.image || undefined}
+            />
+            <p>{session?.user?.name || session?.user?.email}</p>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="">
               <div className="flex flex-col gap-y-4">
                 <FormField
-                  name="name"
+                  name="dateWorked"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Name</FormLabel>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <DatePicker
+                          {...field}
+                          value={(field.value as Date) ?? undefined}
+                          placeholder="Select Due Date"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="timeSpent"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time worked</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="text"
-                          placeholder="Project Name"
+                          placeholder="6w 3d 4h 2m"
                           className="input"
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="workDescription"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Work Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

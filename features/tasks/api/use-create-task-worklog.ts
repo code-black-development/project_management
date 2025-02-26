@@ -5,8 +5,13 @@ import { client } from "@/lib/rpc";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-type ResponseType = InferResponseType<(typeof client.api.tasks)["$post"], 200>;
-type RequestType = InferRequestType<(typeof client.api.tasks)["$post"]>;
+type ResponseType = InferResponseType<
+  (typeof client.api.tasks)["worklog"]["$post"],
+  200
+>;
+type RequestType = InferRequestType<
+  (typeof client.api.tasks)["worklog"]["$post"]
+>;
 
 export function useCreateTaskWorklog() {
   const router = useRouter();
@@ -14,7 +19,7 @@ export function useCreateTaskWorklog() {
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
-      const response = await client.api.tasks.$post({ json });
+      const response = await client.api.tasks["worklog"].$post({ json });
 
       if (!response.ok) {
         throw new Error("Failed to create worklog");
