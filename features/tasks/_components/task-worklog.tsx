@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { TaskWithUser } from "@/types/types";
 import { PlusIcon } from "lucide-react";
 import useCreateTaskWorklogModal from "../hooks/use-create-task-worklog-modal";
-import { Progress } from "@/components/ui/progress";
 import { timeEstimateStringToMinutes } from "@/lib/utils";
 import ProgressBar from "@/components/progress-bar";
 
@@ -24,7 +23,9 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
     });
   }
   const progressValue =
-    estimateInMinutes > 0 ? (worklogTotal / estimateInMinutes) * 100 : 0;
+    estimateInMinutes > 0
+      ? Math.round((worklogTotal / estimateInMinutes) * 100)
+      : 0;
 
   return (
     <div className="p-4 border rounded-lg">
@@ -47,7 +48,7 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
       </div>
       <div className="flex flex-col gap-8 pt-4 my-4">
         <p>Task Progress</p>
-        <ProgressBar progress={worklogTotal} />
+        <ProgressBar progress={progressValue} />
       </div>
     </div>
   );
