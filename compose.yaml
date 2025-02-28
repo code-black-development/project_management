@@ -17,6 +17,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=postgres://postgres:test@db:5432/codeblack-project
     depends_on:
       db:
         condition: service_healthy
