@@ -8,11 +8,9 @@ import { cn } from "@/lib/utils";
 import useCreateProjectModal from "@/features/projects/hooks/use-create-project-modal";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 
-interface ProjectsProps {}
-
-const Projects = ({}: ProjectsProps) => {
+const Projects = () => {
   const workspaceId = useWorkspaceId();
-  const { data, isLoading } = useGetProjects({ workspaceId });
+  const { data } = useGetProjects({ workspaceId });
   const pathname = usePathname();
   const { open } = useCreateProjectModal();
   return (

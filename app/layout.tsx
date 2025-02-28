@@ -5,12 +5,10 @@ import { cn } from "@/lib/utils";
 
 import { QueryProvider } from "@/components/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { SessionProvider } from "next-auth/react";
-//import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
-import Script from "next/script";
+import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({
   subsets: ["latin"],

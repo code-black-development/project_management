@@ -26,10 +26,9 @@ export function useDeleteMember() {
       }
       return await response.json();
     },
-    onSuccess: ({ data }) => {
+    onSuccess: () => {
       toast.success("members deleted");
       queryClient.invalidateQueries({ queryKey: ["members"] });
-      queryClient.invalidateQueries({ queryKey: ["members", data.id] });
     },
     onError: () => {
       toast.error("Failed to delete members");

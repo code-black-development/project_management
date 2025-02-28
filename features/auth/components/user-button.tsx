@@ -41,8 +41,8 @@ const UserButton = ({}: UserButtonProps) => {
             <p className="text-xs text-neutral-500"> {session?.user?.email}</p>
           </div>
           <DottedSeparator className="mb-1" />
-          <DropdownMenuItem className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer">
-            <Link href="">
+          <DropdownMenuItem className="h-10 flex flex-row gap-2 items-center justify-center font-medium">
+            <Link href="/user/profile" className="flex gap-2">
               <User className="size-4 mr-2" />
               Edit Profile
             </Link>

@@ -3,10 +3,9 @@
 import { Switch } from "@/components/ui/switch";
 import { useState, useLayoutEffect } from "react";
 
-interface DarkModeSwitchProps {}
 type theme = "light" | "dark" | "system";
 
-const DarkModeSwitch = ({}: DarkModeSwitchProps) => {
+const DarkModeSwitch = () => {
   const [activeTheme, setActiveTheme] = useState<theme>("system");
 
   useLayoutEffect(() => {

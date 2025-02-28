@@ -1,8 +1,12 @@
+import { auth } from "@/auth";
 import { TaskIdClient } from "./client";
+import { redirect } from "next/navigation";
 
-interface TaskIdPageProps {}
-
-const TaskIdPage = ({}: TaskIdPageProps) => {
+const TaskIdPage = async () => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/sign-in");
+  }
   return (
     <div>
       <TaskIdClient />

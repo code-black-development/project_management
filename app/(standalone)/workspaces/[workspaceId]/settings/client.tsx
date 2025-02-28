@@ -6,7 +6,7 @@ import WorkspaceForm from "@/features/workspaces/_components/workspace-form";
 import { useGetWorkspace } from "@/features/workspaces/api/use-get-workspace";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 
-export const WorkspaceIdSettingsClient = async () => {
+export const WorkspaceIdSettingsClient = () => {
   const workspaceId = useWorkspaceId();
   const { data: workspace, isLoading } = useGetWorkspace({ workspaceId });
 

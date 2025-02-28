@@ -42,7 +42,7 @@ const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
         name={project.name}
         className="size-6 lg:size-8"
       />
-      <Link href={`/workspaces/${project.workspaceId}/projects/${project.id}`}>
+      <Link href={`/workspaces/${project.workspaceId}/project/${project.id}`}>
         <p className="text-sm lg:text-lg font-semibold text-muted-foreground hover:opacity-75 transition">
           {project.name}
         </p>
