@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "deploy": "vercel build --prod && vercel deploy --prebuilt --prod",
+    "deploy:preview": "vercel build && vercel deploy --prebuilt"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
@@ -17,6 +19,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@hello-pangea/dnd": "^18.0.1",
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-validator": "^0.4.2",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^6.4.1",
@@ -93,7 +96,8 @@
     "storybook": "^8.6.0-alpha.1",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^41.3.0"
   },
   "eslintConfig": {
     "extends": [

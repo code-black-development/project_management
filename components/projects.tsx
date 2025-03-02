@@ -7,6 +7,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import useCreateProjectModal from "@/features/projects/hooks/use-create-project-modal";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
+import { ProjectSafeDate } from "@/types/types";
 
 const Projects = () => {
   const workspaceId = useWorkspaceId();
@@ -25,7 +26,7 @@ const Projects = () => {
         />
       </div>
       <div className="flex flex-col">
-        {data?.map((project) => {
+        {data?.map((project: ProjectSafeDate) => {
           const href = `/workspaces/${workspaceId}/project/${project.id}`;
           const isActive = pathname === href;
           return (

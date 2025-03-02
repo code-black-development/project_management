@@ -14,6 +14,7 @@ import WorkspaceAvatar from "@/features/workspaces/_components/workspace-avatar"
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import useCreateWorkspaceModal from "@/features/workspaces/hooks/use-create-workspace-modal";
+import { WorkspaceSafeDates } from "@/types/types";
 
 const WorkspaceSwitcher = () => {
   const workspaceId = useWorkspaceId();
@@ -39,7 +40,7 @@ const WorkspaceSwitcher = () => {
           <SelectValue placeholder="No workspace selected" />
         </SelectTrigger>
         <SelectContent>
-          {data?.data.map((workspace) => (
+          {data?.data.map((workspace: WorkspaceSafeDates) => (
             <SelectItem key={workspace.id} value={workspace.id}>
               <div className="flex justify-start items-center gap-3 font-medium">
                 <WorkspaceAvatar

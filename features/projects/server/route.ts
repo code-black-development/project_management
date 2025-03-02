@@ -10,13 +10,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
-import { onlyWorkspaceMember } from "@/lib/dbService/db-utils";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import {
   getProjectOverdueTasks,
   getProjectTasksInDateRange,
 } from "@/lib/dbService/tasks";
-import { th } from "date-fns/locale";
 import { TaskStatus } from "@prisma/client";
 
 const app = new Hono()
