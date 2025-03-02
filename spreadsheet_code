@@ -1,0 +1,31 @@
+function onEdit(e) {
+  var sheet = e.source.getActiveSheet();
+  var range = e.range;
+  var rowData = sheet
+    .getRange(range.getRow(), 1, 1, sheet.getLastColumn())
+    .getValues()[0];
+
+  var payload = {
+    row: range.getRow(),
+    data: rowData,
+  };
+
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+  };
+  UrlFetchApp.fetch("https://test.com/api/master", options);
+}
+
+/**
+ * Instructions for use:
+ *
+ * 1. Open the Google Sheet.
+ * 2. Click Extensions → Apps Script.
+ * 3. Delete any existing code and paste the code above.
+ * 4. Choose function -> onEdit
+ * 5. Event Source -> From Spreadsheet
+ * 6. Event Type -> On edit
+ * 7.Failure notification -> Notify me immediately
+ */
