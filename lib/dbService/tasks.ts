@@ -1,7 +1,6 @@
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
-import { error } from "console";
 import { z } from "zod";
 
 export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {

@@ -1,8 +1,6 @@
 import { TaskIdClient } from "./client";
 
-interface TaskIdPageProps {}
-
-const TaskIdPage = ({}: TaskIdPageProps) => {
+const TaskIdPage = () => {
   return (
     <div>
       <TaskIdClient />

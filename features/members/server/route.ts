@@ -19,7 +19,7 @@ const app = new Hono()
     }
   )
   .delete(
-    "/",
+    "/:memberId",
 
     zValidator("param", z.object({ memberId: z.string() })),
     async (c) => {

@@ -18,7 +18,7 @@ import useCreateWorkspaceModal from "@/features/workspaces/hooks/use-create-work
 const WorkspaceSwitcher = () => {
   const workspaceId = useWorkspaceId();
   const router = useRouter();
-  const { data, isLoading } = useGetWorkspaces();
+  const { data } = useGetWorkspaces();
   const { open } = useCreateWorkspaceModal();
 
   const onSelect = (id: string) => {

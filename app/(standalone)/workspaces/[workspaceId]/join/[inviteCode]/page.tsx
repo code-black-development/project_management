@@ -3,10 +3,10 @@ import { getWorkspaceById } from "@/lib/dbService/workspaces";
 import { redirect } from "next/navigation";
 
 interface WorkspaceJoinPageProps {
-  params: {
+  params: Promise<{
     workspaceId: string;
     inviteCode: string;
-  };
+  }>;
 }
 const WorkspaceJoinPage = async ({ params }: WorkspaceJoinPageProps) => {
   const { workspaceId, inviteCode } = await params;

@@ -16,7 +16,6 @@ import {
   getProjectOverdueTasks,
   getProjectTasksInDateRange,
 } from "@/lib/dbService/tasks";
-import { th } from "date-fns/locale";
 import { TaskStatus } from "@prisma/client";
 
 const app = new Hono()
@@ -49,7 +48,7 @@ const app = new Hono()
   )
   .post("/", zValidator("form", createProjectSchema), async (c) => {
     const { name, image, workspaceId } = c.req.valid("form");
-
+    console.log("create project");
     //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
 
     let fileUrl: string | null = null;

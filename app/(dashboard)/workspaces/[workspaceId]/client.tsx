@@ -28,9 +28,7 @@ import Link from "next/link";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 
-interface WorkspaceIdClientProps {}
-
-const WorkspaceIdClient = ({}: WorkspaceIdClientProps) => {
+const WorkspaceIdClient = () => {
   const workspaceId = useWorkspaceId();
   const { data: analytics, isLoading: isLoadingAnalytics } =
     useGetWorkspaceAnalytics({ workspaceId });

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import ProjectIdClient from "./client";
 
 const ProjectIdPage = async () => {

@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
-interface ErrorProps {}
-
-const Error = ({}: ErrorProps) => {
+const Error = () => {
   return (
     <div className="h-screen flex flex-col gap-y-2 items-center justify-center">
       <AlertTriangle />

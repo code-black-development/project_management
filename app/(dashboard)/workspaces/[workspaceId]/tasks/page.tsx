@@ -1,9 +1,6 @@
 import TaskViewSwitcher from "@/features/tasks/_components/task-view-switcher";
-import { redirect } from "next/navigation";
 
-interface TasksPageProps {}
-
-const TasksPage = ({}: TasksPageProps) => {
+const TasksPage = () => {
   return (
     <div className="h-full flex flex-col">
       <TaskViewSwitcher />

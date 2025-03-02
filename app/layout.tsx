@@ -10,11 +10,11 @@ import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
-import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
 });
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Create Next App",
