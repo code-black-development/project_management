@@ -19,6 +19,7 @@ export function useCreateWorkspace() {
 
       if (!response.ok) {
         throw new Error("Failed to create workspace");
+        console.log(response);
       }
       return await response.json();
     },
