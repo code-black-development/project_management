@@ -6,6 +6,8 @@ import CreateTaskWorklogModal from "@/features/tasks/_components/create-task-wor
 import EditTaskModal from "@/features/tasks/_components/edit-task-modal";
 import CreateWorkspaceModal from "@/features/workspaces/_components/create-workspace-modal";
 
+export const dynamic = "force-dynamic";
+
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     // Todo: could make sidebar collapsible in which case the pl of the main tag would be 56 or 0 based on the state of the sidebar
