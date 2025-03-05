@@ -5,13 +5,18 @@ import {
   Project,
   Workspace,
   Worklog,
+  TaskAsset,
 } from "@prisma/client";
 
 export type TaskWithUser = TaskSafeDate & {
   assignee: (MemberSafeDate & { user: UserSafeDate }) | null;
 } & {
   project: ProjectSafeDate;
-} & { worklogs: WorklogType[] };
+} & { worklogs: WorklogType[] } & {
+  children: TaskWithUser[];
+} & {
+  assets: AssetSafeDate[];
+};
 
 export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
   createdAt: string;
@@ -35,6 +40,11 @@ export type MemberSafeDate = Omit<Member, "createdAt" | "updatedAt"> & {
 
 export type UserSafeDate = Omit<User, "emailVerified"> & {
   emailVerified: string | null;
+};
+
+export type AssetSafeDate = Omit<TaskAsset, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt"> & {

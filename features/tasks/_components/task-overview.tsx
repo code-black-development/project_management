@@ -1,13 +1,14 @@
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { TaskWithUser } from "@/types/types";
-import { Badge, PencilIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import TaskOverviewProperty from "./task-overview-property";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
 import { TaskBadge } from "./task-badge";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import useEditTaskModal from "../hooks/use-edit-task-modal";
+import TaskChildren from "./task-children";
 
 interface TaskOverviewProps {
   task: TaskWithUser;
@@ -15,6 +16,7 @@ interface TaskOverviewProps {
 
 const TaskOverview = ({ task }: TaskOverviewProps) => {
   const { open } = useEditTaskModal();
+
   return (
     <div className="flex flex-col gap-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
@@ -50,6 +52,12 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
             </TaskBadge>
           </TaskOverviewProperty>
         </div>
+        <DottedSeparator className="my-4" />
+        <TaskChildren
+          taskId={task.id}
+          projectId={task.projectId}
+          tasks={task.children}
+        />
       </div>
     </div>
   );

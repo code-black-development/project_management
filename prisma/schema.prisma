@@ -116,29 +116,40 @@ model Project {
 }
 
 model Task {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
   description  String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  assignee     Member?    @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  assignee     Member?     @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
   assigneeId   String?
-  project      Project    @relation(fields: [projectId], references: [id])
+  project      Project     @relation(fields: [projectId], references: [id])
   projectId    String
   workspaceId  String
   dueDate      DateTime
-  status       TaskStatus @default(TODO)
+  status       TaskStatus  @default(TODO)
   position     Int
   timeEstimate Int? //store all values in minutes
-  createdBy    Member     @relation(name: "TaskCreator", fields: [createdById], references: [id])
+  createdBy    Member      @relation(name: "TaskCreator", fields: [createdById], references: [id])
   createdById  String
   worklogs     Worklog[]
   //tasks can be linked
-  parent       Task?      @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  parent       Task?       @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   parentId     String?
-  children     Task[]     @relation(name: "TaskHierarchy")
+  children     Task[]      @relation(name: "TaskHierarchy")
+  assets       TaskAsset[]
 
   @@index([parentId]) // Index for faster lookups
+}
+
+model TaskAsset {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  assetType String?
+  assetUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Worklog {

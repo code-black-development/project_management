@@ -62,16 +62,23 @@ export const getTasksByProjectId = async (projectId: string) => {
 };
 
 export const getTaskById = async (taskId: string) => {
-  return await prisma.task.findUnique({
-    where: {
-      id: taskId,
-    },
-    include: {
-      project: true,
-      assignee: { include: { user: true } },
-      worklogs: true,
-    },
-  });
+  try {
+    const result = await prisma.task.findUnique({
+      where: {
+        id: taskId,
+      },
+      include: {
+        project: true,
+        assignee: { include: { user: true } },
+        worklogs: true,
+        children: { include: { children: true } },
+      },
+    });
+    return result;
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw new Error("Failed to get task");
+  }
 };
 
 export const getTasksByWorkspaceId = async (workspaceId: string) => {
@@ -84,7 +91,7 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
 };
 
 export const createTask = async (
-  data: Omit<Task, "createdAt" | "updatedAt" | "id">
+  data: Omit<Task, "createdAt" | "updatedAt" | "id" | "parentId">
 ) => {
   try {
     console.log("create task db", data);
@@ -104,7 +111,6 @@ export const createTask = async (
   position?: number;
 }; */
 export const updateTask = async (taskId: string, data: Partial<Task>) => {
-  console.log("update task db", data);
   try {
     return await prisma.task.update({
       where: {
@@ -194,6 +200,47 @@ export const getWorkspaceOverdueTasks = async (
       dueDate: {
         lt: date,
       },
+    },
+  });
+};
+
+export const getLinkableTasks = async (projectId: string) => {
+  try {
+    const res = await prisma.task.findMany({
+      where: {
+        projectId,
+        parentId: null,
+      },
+    });
+    return res;
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw new Error("Failed to get linkable tasks");
+  }
+};
+
+export const createLinkableTasks = async (
+  parentTask: string,
+  childTask: string
+) => {
+  return await prisma.task.update({
+    where: {
+      id: childTask,
+    },
+    data: {
+      parentId: parentTask,
+    },
+  });
+};
+
+export const deleteLinkableTasks = async (taskId: string) => {
+  return await prisma.task.update({
+    where: {
+      id: taskId,
+      //parentId,
+    },
+    data: {
+      parentId: null,
     },
   });
 };

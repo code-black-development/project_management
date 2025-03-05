@@ -69,11 +69,13 @@ const WorkspaceIdClient = () => {
 };
 
 interface TaskListProps {
-  data: TaskWithUser[];
+  data: Omit<TaskWithUser, "children">[];
 }
 export const TaskList = ({ data }: TaskListProps) => {
   const workspaceId = useWorkspaceId();
+
   const { open: createTask } = useCreateTaskModal();
+
   return (
     <div className="flex flex-col agp-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
