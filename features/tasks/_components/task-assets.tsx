@@ -93,7 +93,7 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
         {task.assets &&
           task.assets.map((asset) => (
             <div key={asset.id} className="flex items-center gap-2">
-              <img src={asset.assetUrl} alt="" className="w-12 h-12" />
+              <img src={`/${asset.assetUrl}`} alt="" className="w-12 h-12" />
             </div>
           ))}
       </div>

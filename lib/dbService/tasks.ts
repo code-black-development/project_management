@@ -74,6 +74,7 @@ export const getTaskById = async (taskId: string) => {
         assignee: { include: { user: true } },
         worklogs: true,
         children: { include: { children: true } },
+        assets: true,
       },
     });
     return result;
