@@ -7,6 +7,10 @@ import Dropzone from "shadcn-dropzone";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { is } from "date-fns/locale";
+import { toast } from "sonner";
+import TaskAssetDisplay from "./task-asset-display";
+import { useCreateAssets } from "../api/use-create-assets";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskAssetsProps {
   task: TaskWithUser;
@@ -22,56 +26,35 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadVisible, setUploadVisible] = useState(false);
 
-  console.log("files: ", uploadFiles);
+  const queryClient = useQueryClient();
+
+  //const{mutate: createAssets} = useCreateAssets();
 
   const onSubmit = async () => {
-    type Payload = {
-      files: { name: string; file: string; type: string }[] | [];
-      taskId?: string;
-    };
-    let jsonPayload: Payload = { files: [] };
+    const formData = new FormData();
+    formData.set("taskId", task.id);
 
-    async function generateDataUrl(file: File) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          resolve({
-            name: file.name,
-            file: reader.result as string,
-            type: file.type,
-          });
-        };
-        reader.onerror = (error) => {
-          console.error("Error: ", error);
-          reject(error);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    if (uploadFiles && uploadFiles.length > 0) {
-      const files = await Promise.all(
-        uploadFiles.map(async (file: any) => generateDataUrl(file))
-      );
-
-      jsonPayload.files = files as TaskAssetFile[];
-      jsonPayload.taskId = task.id;
-    }
-
-    const response = await fetch("/api/tasks/assets", {
-      method: "POST",
-      body: JSON.stringify(jsonPayload),
+    uploadFiles.forEach((file) => {
+      formData.append("files", file);
     });
 
-    if (response.status === 200) {
-      /*   reset();
-      setStatus("Your message has been sent!");
-    } else {
-      setStatus(
-        "Message failed to send. Please try again or contact us directly."
-      );*/
+    console.log("formData", formData.get("files"));
+    try {
+      const response = await fetch("/api/tasks/assets", {
+        method: "POST",
+        body: formData,
+      });
+      toast.success("Assets uploaded successfully");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task"], data: task.id });
+      setUploadFiles([]);
+      setUploadVisible(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload assets");
     }
   };
+
   return (
     <div className="p-4 border rounded-lg">
       <div className="flex items-center justify-between">
@@ -89,12 +72,10 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
         </Button>
       </div>
       <DottedSeparator className="my-4" />
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start flex-wrap justify-between gap-4 my-4">
         {task.assets &&
           task.assets.map((asset) => (
-            <div key={asset.id} className="flex items-center gap-2">
-              <img src={`/${asset.assetUrl}`} alt="" className="w-12 h-12" />
-            </div>
+            <TaskAssetDisplay key={asset.id} taskAsset={asset} />
           ))}
       </div>
       <div

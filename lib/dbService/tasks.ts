@@ -268,3 +268,11 @@ export const createTaskAssets = async (
     throw new Error("Failed to create task assets");
   }
 };
+
+export const deleteTaskAsset = async (assetId: string) => {
+  return await prisma.taskAsset.delete({
+    where: {
+      id: assetId,
+    },
+  });
+};

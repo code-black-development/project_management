@@ -4,6 +4,7 @@ import {
   createTaskAssets,
   deleteLinkableTasks,
   deleteTask,
+  deleteTaskAsset,
   getHighestPositionTask,
   getLinkableTasks,
   getTaskById,
@@ -24,6 +25,7 @@ import { HTTPException } from "hono/http-exception";
 import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
 import { join } from "path";
 import fs from "fs";
+import { TaskAssetFile } from "../_components/task-assets";
 
 const TaskAssetSchema = z.object({
   name: z.string(),
@@ -32,6 +34,11 @@ const TaskAssetSchema = z.object({
 });
 
 const app = new Hono()
+  .delete("/assets/:assetId", async (c) => {
+    const { assetId } = c.req.param();
+    const deletedAsset = await deleteTaskAsset(assetId);
+    return c.json({ data: deletedAsset });
+  })
   .post(
     "/assets",
     /* zValidator(
@@ -42,40 +49,40 @@ const app = new Hono()
       })
     ), */
     async (c) => {
-      console.log("uploading files");
-      const { files, taskId } = await c.req.json(); //("json");
-
       try {
+        const formData = await c.req.formData();
+
+        const taskId = formData.get("taskId") as string;
+        const files = formData.getAll("files") as File[];
+
+        if (!taskId || files.length === 0) {
+          return c.json({ message: "No files or taskId provided" }, 400);
+        }
+
         const uploadDir = `uploaded_files/tasks/${taskId}`;
 
-        // Process each file
-        const savedFiles = files.map((fileObj) => {
-          const { name, file, type } = fileObj;
+        const uploadedFiles: TaskAssetFile[] = [];
 
-          if (!name || !file || !type) {
-            throw new Error("Missing file data");
+        for (const file of files) {
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const filePath = join(process.cwd(), "public", uploadDir);
+
+          // Ensure task directory exists
+          if (!fs.existsSync(filePath)) {
+            fs.mkdirSync(filePath, { recursive: true });
           }
 
-          // Decode Base64 data
-          const base64Data = file.replace(/^data:.+;base64,/, "");
-          const uploadedImage = join(uploadDir, name);
-          const filePath = join(process.cwd(), "public", uploadedImage);
+          fs.writeFileSync(join(filePath, file.name), buffer);
 
-          // Ensure the uploads directory exists
-          if (!fs.existsSync(join(process.cwd(), "public", uploadDir))) {
-            fs.mkdirSync(join(process.cwd(), "public", uploadDir), {
-              recursive: true,
-            });
-          }
+          uploadedFiles.push({
+            name: file.name,
+            file: join(uploadDir, file.name),
+            type: file.type,
+          });
+        }
 
-          // Save file to disk
-          fs.writeFileSync(filePath, base64Data, "base64");
-
-          return { name, file: uploadedImage, type };
-        });
-        console.log("savedFiles", savedFiles);
-        const tasks = await createTaskAssets(taskId, savedFiles);
-        return c.json({ data: tasks });
+        await createTaskAssets(taskId, uploadedFiles);
+        return c.json({ data: taskId });
       } catch (e) {
         console.error(e);
         return c.json({ data: e });
