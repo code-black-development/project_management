@@ -1,6 +1,7 @@
 import {
   createLinkableTasks,
   createTask,
+  createTaskAssets,
   deleteLinkableTasks,
   deleteTask,
   getHighestPositionTask,
@@ -21,8 +22,66 @@ import {
 import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
 import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
+import { join } from "path";
+import fs from "fs";
+
+const TaskAssetSchema = z.object({
+  name: z.string(),
+  file: z.string(),
+  type: z.string(),
+});
 
 const app = new Hono()
+  .post(
+    "/assets",
+    /* zValidator(
+      "json",
+      z.object({
+        files: z.any(), //array(TaskAssetSchema),
+        taskId: z.string(),
+      })
+    ), */
+    async (c) => {
+      console.log("uploading files");
+      const { files, taskId } = await c.req.json(); //("json");
+
+      try {
+        const uploadDir = `uploaded_files/tasks/${taskId}`;
+
+        // Process each file
+        const savedFiles = files.map((fileObj) => {
+          const { name, file, type } = fileObj;
+
+          if (!name || !file || !type) {
+            throw new Error("Missing file data");
+          }
+
+          // Decode Base64 data
+          const base64Data = file.replace(/^data:.+;base64,/, "");
+          const uploadedImage = join(uploadDir, name);
+          const filePath = join(process.cwd(), "public", uploadedImage);
+
+          // Ensure the uploads directory exists
+          if (!fs.existsSync(join(process.cwd(), "public", uploadDir))) {
+            fs.mkdirSync(join(process.cwd(), "public", uploadDir), {
+              recursive: true,
+            });
+          }
+
+          // Save file to disk
+          fs.writeFileSync(filePath, base64Data, "base64");
+
+          return { name, file: uploadedImage, type };
+        });
+        console.log("savedFiles", savedFiles);
+        const tasks = await createTaskAssets(taskId, savedFiles);
+        return c.json({ data: tasks });
+      } catch (e) {
+        console.error(e);
+        return c.json({ data: e });
+      }
+    }
+  )
   .delete(
     "/children",
     zValidator(

@@ -1,22 +1,33 @@
 "use client";
 import DottedSeparator from "@/components/dotted-separator";
 import { TaskWithUser } from "@/types/types";
-import { PlusIcon } from "lucide-react";
+import { Cross, CrossIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Dropzone from "shadcn-dropzone";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { is } from "date-fns/locale";
 
 interface TaskAssetsProps {
   task: TaskWithUser;
 }
 
+export type TaskAssetFile = {
+  name: string;
+  file: string;
+  type: string;
+};
+
 const TaskAssets = ({ task }: TaskAssetsProps) => {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadVisible, setUploadVisible] = useState(false);
+
   console.log("files: ", uploadFiles);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async () => {
     type Payload = {
       files: { name: string; file: string; type: string }[] | [];
+      taskId?: string;
     };
     let jsonPayload: Payload = { files: [] };
 
@@ -37,15 +48,17 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
         reader.readAsDataURL(file);
       });
     }
-    if (data.upload && data.upload.length > 0) {
+
+    if (uploadFiles && uploadFiles.length > 0) {
       const files = await Promise.all(
-        data.upload.map(async (file: any) => generateDataUrl(file))
+        uploadFiles.map(async (file: any) => generateDataUrl(file))
       );
 
-      jsonPayload.files = files;
+      jsonPayload.files = files as TaskAssetFile[];
+      jsonPayload.taskId = task.id;
     }
 
-    const response = await fetch("/api/email", {
+    const response = await fetch("/api/tasks/assets", {
       method: "POST",
       body: JSON.stringify(jsonPayload),
     });
@@ -63,13 +76,32 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
     <div className="p-4 border rounded-lg">
       <div className="flex items-center justify-between">
         <p className="tetx-lg font-semibold">Assets</p>
-        <Button size="sm" variant="secondary" onClick={() => open(task.id)}>
-          <PlusIcon className="size-4 mr-2" />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setUploadVisible((prev) => !prev)}
+        >
+          {!uploadVisible ? (
+            <PlusIcon className="size-4 mr-2" />
+          ) : (
+            <TrashIcon className="size-4 mr-2" />
+          )}
         </Button>
       </div>
       <DottedSeparator className="my-4" />
-      <div className="flex items-center justify-between gap-4"></div>
-      <div className="h-[400px]">
+      <div className="flex items-center justify-between gap-4">
+        {task.assets &&
+          task.assets.map((asset) => (
+            <div key={asset.id} className="flex items-center gap-2">
+              <img src={asset.assetUrl} alt="" className="w-12 h-12" />
+            </div>
+          ))}
+      </div>
+      <div
+        className={cn("h-[400px]", {
+          hidden: !uploadVisible,
+        })}
+      >
         <Dropzone
           onDrop={(acceptedFiles: File[]) => {
             setUploadFiles((prev) => [...prev, ...acceptedFiles]);
@@ -78,6 +110,11 @@ const TaskAssets = ({ task }: TaskAssetsProps) => {
         {uploadFiles.map((file) => (
           <img src={URL.createObjectURL(file)} alt="" className="w-[50px]" />
         ))}
+        <div className="flex items-center justify-end">
+          <Button onClick={onSubmit} className="ml-auto mt-4">
+            upload
+          </Button>
+        </div>
       </div>
     </div>
   );

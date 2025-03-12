@@ -1,6 +1,8 @@
+import { TaskAssetFile } from "@/features/tasks/_components/task-assets";
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
+import { create } from "domain";
 import { z } from "zod";
 
 export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
@@ -243,4 +245,25 @@ export const deleteLinkableTasks = async (taskId: string) => {
       parentId: null,
     },
   });
+};
+
+export const createTaskAssets = async (
+  taskId: string,
+  files: TaskAssetFile[]
+) => {
+  try {
+    const data = files.map((file) => ({
+      taskId,
+      fileName: file.name,
+      assetUrl: file.file,
+      assetType: file.type,
+    }));
+    console.log("data", data);
+    const res = await prisma.taskAsset.createMany({
+      data,
+    });
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw new Error("Failed to create task assets");
+  }
 };

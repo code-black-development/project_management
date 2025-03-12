@@ -148,6 +148,7 @@ model TaskAsset {
   task      Task     @relation(fields: [taskId], references: [id])
   assetType String?
   assetUrl  String
+  fileName  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
