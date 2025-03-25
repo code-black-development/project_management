@@ -34,7 +34,6 @@ export async function sendEmail(to: string, subject: string, html: string) {
 }
 
 export function generateEmailTemplate(
-  name: string,
   verificationLink: string,
   invitorName: string
 ) {
@@ -48,9 +47,12 @@ export function generateEmailTemplate(
   let emailHtml = fs.readFileSync(templatePath, "utf8");
 
   emailHtml = emailHtml
-    .replace(/{{name}}/g, name)
     .replace(/{{verificationLink}}/g, verificationLink)
     .replace(/{{invitorName}}/g, invitorName);
 
   return emailHtml;
+}
+
+export function generateInviteLink(code: string) {
+  return `${process.env.INVITE_EMAIL_ADDRESS}?inviteCode=${code}`;
 }

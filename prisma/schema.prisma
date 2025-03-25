@@ -43,7 +43,7 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String    @unique
   password      String?
   emailVerified DateTime? @map("email_verified")
   image         String?
@@ -92,16 +92,16 @@ model Member {
 }
 
 model WorkspaceInvites {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  userId      String
-  code        String    @unique
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime  @default(dbgenerated("now() + interval '7 days'"))
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  inviteeEmail String
+  code         String    @unique
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime  @default(dbgenerated("now() + interval '7 days'"))
+  updatedAt    DateTime  @updatedAt
 
-  @@unique([workspaceId, userId])
+  @@unique([workspaceId, inviteeEmail])
 }
 
 model Project {

@@ -192,7 +192,7 @@ export const MemberList = ({ data }: MemberListProps) => {
               <Card className="shadow-none rounded-lg overflow-hidden">
                 <CardContent className="p-3 flex flex-col items-center gap-x-2">
                   <MemberAvatar
-                    name={member.user.name || undefined}
+                    name={member.user.name ?? member.user.email}
                     image={member.user.image || undefined}
                     className="size-12"
                     fallbackClassName="text-lg"

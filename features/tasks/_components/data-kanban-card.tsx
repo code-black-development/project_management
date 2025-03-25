@@ -23,7 +23,10 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
       <DottedSeparator />
       <div className="flex items-center gap-x-1.5">
         <MemberAvatar
-          name={task.assignee?.user?.name || "unassigned"}
+          name={
+            (task.assignee?.user?.name ?? task.assignee?.user.email) ||
+            "unassigned"
+          }
           fallbackClassName="text-[10px]"
         />
         <div className="size-1 rounded-full bg-neutral-300" />

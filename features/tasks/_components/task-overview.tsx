@@ -36,11 +36,15 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
         <div className="flex flex-col gap-y-4">
           <TaskOverviewProperty label="Assignee">
             <MemberAvatar
-              name={task.assignee?.user.name ?? undefined}
+              name={
+                (task.assignee?.user.name ?? task.assignee?.user.name) ||
+                undefined
+              }
               className="size-6"
             />
             <p className="text-sm font-medium">
-              {task.assignee?.user.name ?? "unassigned"}
+              {(task.assignee?.user.name ?? task.assignee?.user.email) ||
+                "unassigned"}
             </p>
           </TaskOverviewProperty>
           <TaskOverviewProperty label="Due Date">

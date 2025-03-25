@@ -82,7 +82,7 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
           <div className="flex items-center gap-x-2 mb-4">
             <MemberAvatar
               className="w-12 h-12"
-              name={session?.user?.name || undefined}
+              name={(session?.user?.name ?? session?.user?.name) || undefined}
               image={session?.user?.image || undefined}
             />
             <p>{session?.user?.name || session?.user?.email}</p>

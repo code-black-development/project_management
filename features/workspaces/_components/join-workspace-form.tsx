@@ -47,21 +47,12 @@ const JoinWorkspaceForm = ({ initialValues }: JoinWorkspaceFormProps) => {
         <CardTitle className="text-xl font-bold">Join Workspace</CardTitle>
         <CardDescription>
           You've been invited to join the workspace - <strong>{name}</strong>.
-          Enter the code below to join.
         </CardDescription>
       </CardHeader>
       <div className="">
         <DottedSeparator />
       </div>
       <CardContent className="p-7">
-        {/* <form>
-          <input
-            type="text"
-            placeholder="Enter workspace code"
-            className="className"
-          />
-          <button className="className">Join Workspace</button>
-        </form> */}
         <div className="flex flex-col lg:flex-row gap-2 items-center justify-between">
           <Button
             className="w-full lg:w-fit"

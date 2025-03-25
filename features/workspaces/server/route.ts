@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { createWorkspaceSchema, updateWorkspaceSchema } from "../schemas";
+import {
+  createWorkspaceInvitesSchema,
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+} from "../schemas";
 import { HTTPException } from "hono/http-exception";
 import {
   createWorkspace,
@@ -9,15 +13,8 @@ import {
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
-import { z } from "zod";
-import {
-  createWorkspaceInvite,
-  getWorkspaceInvite,
-} from "@/lib/dbService/workspace-invites";
-import {
-  addMember,
-  checkIfUserIsAdmin,
-} from "@/lib/dbService/workspace-members";
+import { createWorkspaceInvites } from "@/lib/dbService/workspace-invites";
+import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
 import { uploadImageToLocalStorage } from "@/lib/image-upload";
 import { TaskStatus } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
@@ -25,6 +22,12 @@ import {
   getWorkspaceOverdueTasks,
   getWorkspaceTasksInDateRange,
 } from "@/lib/dbService/tasks";
+import {
+  generateEmailTemplate,
+  generateInviteLink,
+  sendEmail,
+} from "@/lib/mailing-functions";
+import { getUserById } from "@/lib/dbService/users";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -84,11 +87,11 @@ const app = new Hono()
   })
   .post(
     "/:workspaceId/invite",
-    zValidator("json", z.object({ invitedUserId: z.string() })),
+    zValidator("json", createWorkspaceInvitesSchema),
     async (c) => {
       const userId = c.get("userId");
       const { workspaceId } = c.req.param();
-      const { invitedUserId } = c.req.valid("json");
+      const { invites } = c.req.valid("json");
 
       const isWorkspaceAdmin = await checkIfUserIsAdmin(userId, workspaceId);
       if (!isWorkspaceAdmin) {
@@ -96,13 +99,28 @@ const app = new Hono()
           message: "You are not authorized to invite users",
         });
       }
-      const invite = await createWorkspaceInvite(workspaceId, invitedUserId);
+      const dbInvites = await createWorkspaceInvites(workspaceId, invites);
+      const inviter = await getUserById(userId);
+      //send email to the user with the invite link
+      for (const invite of dbInvites) {
+        const emailTemplate = generateEmailTemplate(
+          generateInviteLink(invite.code),
+          inviter!.name!
+        );
+        //send email
+        sendEmail(
+          invite.inviteeEmail,
+          "You have been invited to CodeFlow Pro",
+          emailTemplate
+        );
+        console.log("email template", emailTemplate);
+      }
+      console.log("invites", dbInvites);
 
-      //TODO - send email to the user with the invite link
-      return c.json({ data: invite });
+      return c.json({ data: dbInvites });
     }
   )
-  .post(
+  /*   .post(
     "/:workspaceId/join",
     zValidator("json", z.object({ code: z.string() })),
     async (c) => {
@@ -119,7 +137,7 @@ const app = new Hono()
       //by as the invite is tied to a user it cannot be reused by anyone else. Invite will be deleted after 7 days by a CRON job
       return c.json({ data: member });
     }
-  )
+  ) */
   .get("/:workspaceId", async (c) => {
     const { workspaceId } = c.req.param();
     //TODO: check if the user is a member of the workspace

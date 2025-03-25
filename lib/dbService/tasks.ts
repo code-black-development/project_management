@@ -51,6 +51,7 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
       project: true,
       assignee: { include: { user: true } },
       worklogs: true,
+      assets: true,
     },
   });
 };
