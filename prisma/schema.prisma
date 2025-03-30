@@ -133,6 +133,12 @@ model Task {
   createdBy    Member     @relation(name: "TaskCreator", fields: [createdById], references: [id])
   createdById  String
   worklogs     Worklog[]
+  //tasks can be linked
+  parent       Task?      @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId     String?
+  children     Task[]     @relation(name: "TaskHierarchy")
+
+  @@index([parentId]) // Index for faster lookups
 }
 
 model Worklog {
