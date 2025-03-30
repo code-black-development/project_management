@@ -2,7 +2,6 @@ import { TaskAssetFile } from "@/features/tasks/_components/task-assets";
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
-import { create } from "domain";
 import { z } from "zod";
 
 export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
@@ -261,7 +260,7 @@ export const createTaskAssets = async (
       assetType: file.type,
     }));
     console.log("data", data);
-    const res = await prisma.taskAsset.createMany({
+    await prisma.taskAsset.createMany({
       data,
     });
   } catch (e) {

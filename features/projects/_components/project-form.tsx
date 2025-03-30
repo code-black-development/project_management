@@ -121,7 +121,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   ? onCancel
                   : () =>
                       router.push(
-                        `/workspaces/${initialValues.workspaceId}/project/${initialValues.id}`
+                        `/workspaces/${initialValues.workspaceId}/projects/${initialValues.id}`
                       )
               }
             >

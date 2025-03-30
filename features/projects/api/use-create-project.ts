@@ -27,7 +27,7 @@ export function useCreateProject() {
     onSuccess: ({ data }) => {
       toast.success("Project created");
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      router.push(`/workspaces/${data.workspaceId}/project/${data.id}`);
+      router.push(`/workspaces/${data.workspaceId}/projects/${data.id}`);
     },
     onError: () => {
       toast.error("Failed to create project");
