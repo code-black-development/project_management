@@ -8,7 +8,7 @@ import TaskDate from "./task-date";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 
 interface DataKanbanCardProps {
-  task: TaskWithUser;
+  task: Omit<TaskWithUser, "children">;
 }
 
 const DataKanbanCard = ({ task }: DataKanbanCardProps) => {

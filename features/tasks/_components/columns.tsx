@@ -11,7 +11,7 @@ import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
 import { TaskWithUser } from "@/types/types";
 
-export const columns: ColumnDef<TaskWithUser>[] = [
+export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {

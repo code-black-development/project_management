@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 
-import { useJoinWorkspace } from "../api/use-join-workspace";
+//import { useJoinWorkspace } from "../api/use-join-workspace";
 import { useRouter } from "next/navigation";
 
 interface JoinWorkspaceFormProps {
@@ -23,12 +23,12 @@ interface JoinWorkspaceFormProps {
 }
 
 const JoinWorkspaceForm = ({ initialValues }: JoinWorkspaceFormProps) => {
-  const { mutate } = useJoinWorkspace();
+  //const { mutate } = useJoinWorkspace();
   const { inviteCode, name, workspaceId } = initialValues;
   const router = useRouter();
 
   const onSubmit = () => {
-    mutate(
+    /* mutate(
       {
         param: { workspaceId },
         json: { code: inviteCode },
@@ -38,7 +38,7 @@ const JoinWorkspaceForm = ({ initialValues }: JoinWorkspaceFormProps) => {
           router.push(`/workspaces/${data.workspaceId}`);
         },
       }
-    );
+    ); */
   };
 
   return (

@@ -120,7 +120,10 @@ const app = new Hono()
       return c.json({ data: dbInvites });
     }
   )
-  /*   .post(
+  /* 
+  * this may not be used anymore - now this is done via useSignUp - we may need to bring this back though and edit it for when an existing member is invited
+  * useSignUp
+  .post(
     "/:workspaceId/join",
     zValidator("json", z.object({ code: z.string() })),
     async (c) => {
