@@ -8,6 +8,7 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./features/**/*.{js,ts,jsx,tsx,mdx}",
     "./hooks/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/shadcn-dropzone/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {

@@ -21,11 +21,11 @@ const boards: TaskStatus[] = [
 ];
 
 type TasksState = {
-  [key in TaskStatus]: TaskWithUser[];
+  [key in TaskStatus]: Omit<TaskWithUser, "children">[];
 };
 
 interface DataKanbanProps {
-  data: TaskWithUser[];
+  data: Omit<TaskWithUser, "children">[];
   onChange: (
     tasks: { id: string; position: number; status: TaskStatus }[]
   ) => void;

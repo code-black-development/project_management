@@ -4,7 +4,7 @@ import WorkspaceSwitcher from "./workspace-switcher";
 import Logo from "./logo";
 import Projects from "./projects";
 
-const Sidebar = async () => {
+const Sidebar = () => {
   return (
     <aside className="h-full bg-neutral-100 dark:bg-neutral-800 p-4 w-full">
       <Logo />

@@ -34,7 +34,7 @@ import EventCard from "./event-card";
 import { Button } from "@/components/ui/button";
 
 interface DataCalendarProps {
-  data: TaskWithUser[];
+  data: Omit<TaskWithUser, "children">[];
 }
 
 interface CustomToolbarProps {

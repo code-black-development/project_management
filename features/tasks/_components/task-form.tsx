@@ -47,7 +47,6 @@ import type {
   TaskWithUser,
   UserSafeDate,
 } from "@/types/types";
-import { defaultShouldDehydrateMutation } from "@tanstack/react-query";
 
 interface TaskFormProps {
   initialValues?: TaskWithUser;
@@ -65,6 +64,7 @@ const TaskForm = ({
   memberOptions,
 }: TaskFormProps) => {
   const workspaceId = useWorkspaceId();
+  console.log("users: ", memberOptions);
 
   const formSchema = initialValues ? updateTaskSchema : createTaskSchema;
 
@@ -160,7 +160,7 @@ const TaskForm = ({
                   ? onCancel
                   : () =>
                       router.push(
-                        `/workspaces/${initialValues.workspaceId}/project/${initialValues.id}`
+                        `/workspaces/${initialValues.workspaceId}/projects/${initialValues.id}`
                       )
               }
             >
@@ -243,9 +243,9 @@ const TaskForm = ({
                               <div className="flex items-center gap-x-2">
                                 <MemberAvatar
                                   className="size-6"
-                                  name={member.user.name!}
+                                  name={member.user.name ?? member.user.email!}
                                 />
-                                {member.user.name}
+                                {member.user.name || member.user.email!}
                               </div>
                             </SelectItem>
                           ))}

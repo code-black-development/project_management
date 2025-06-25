@@ -43,7 +43,7 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String    @unique
   password      String?
   emailVerified DateTime? @map("email_verified")
   image         String?
@@ -92,16 +92,16 @@ model Member {
 }
 
 model WorkspaceInvites {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  userId      String
-  code        String    @unique
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime  @default(dbgenerated("now() + interval '7 days'"))
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  inviteeEmail String
+  code         String    @unique
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime  @default(dbgenerated("now() + interval '7 days'"))
+  updatedAt    DateTime  @updatedAt
 
-  @@unique([workspaceId, userId])
+  @@unique([workspaceId, inviteeEmail])
 }
 
 model Project {
@@ -116,29 +116,41 @@ model Project {
 }
 
 model Task {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
   description  String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  assignee     Member?    @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  assignee     Member?     @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
   assigneeId   String?
-  project      Project    @relation(fields: [projectId], references: [id])
+  project      Project     @relation(fields: [projectId], references: [id])
   projectId    String
   workspaceId  String
   dueDate      DateTime
-  status       TaskStatus @default(TODO)
+  status       TaskStatus  @default(TODO)
   position     Int
   timeEstimate Int? //store all values in minutes
-  createdBy    Member     @relation(name: "TaskCreator", fields: [createdById], references: [id])
+  createdBy    Member      @relation(name: "TaskCreator", fields: [createdById], references: [id])
   createdById  String
   worklogs     Worklog[]
   //tasks can be linked
-  parent       Task?      @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  parent       Task?       @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   parentId     String?
-  children     Task[]     @relation(name: "TaskHierarchy")
+  children     Task[]      @relation(name: "TaskHierarchy")
+  assets       TaskAsset[]
 
   @@index([parentId]) // Index for faster lookups
+}
+
+model TaskAsset {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  assetType String?
+  assetUrl  String
+  fileName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Worklog {

@@ -27,7 +27,7 @@ const Projects = () => {
       </div>
       <div className="flex flex-col">
         {data?.map((project: ProjectSafeDate) => {
-          const href = `/workspaces/${workspaceId}/project/${project.id}`;
+          const href = `/workspaces/${workspaceId}/projects/${project.id}`;
           const isActive = pathname === href;
           return (
             <Link href={href} key={project.id}>

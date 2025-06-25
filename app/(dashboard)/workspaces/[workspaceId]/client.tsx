@@ -69,11 +69,13 @@ const WorkspaceIdClient = () => {
 };
 
 interface TaskListProps {
-  data: TaskWithUser[];
+  data: Omit<TaskWithUser, "children">[];
 }
 export const TaskList = ({ data }: TaskListProps) => {
   const workspaceId = useWorkspaceId();
+
   const { open: createTask } = useCreateTaskModal();
+
   return (
     <div className="flex flex-col agp-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
@@ -190,7 +192,7 @@ export const MemberList = ({ data }: MemberListProps) => {
               <Card className="shadow-none rounded-lg overflow-hidden">
                 <CardContent className="p-3 flex flex-col items-center gap-x-2">
                   <MemberAvatar
-                    name={member.user.name || undefined}
+                    name={member.user.name ?? member.user.email}
                     image={member.user.image || undefined}
                     className="size-12"
                     fallbackClassName="text-lg"

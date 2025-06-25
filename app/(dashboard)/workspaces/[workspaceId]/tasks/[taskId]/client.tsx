@@ -3,6 +3,7 @@
 import DottedSeparator from "@/components/dotted-separator";
 import PageError from "@/components/page-error";
 import PageLoader from "@/components/page-loader";
+import TaskAssets from "@/features/tasks/_components/task-assets";
 import TaskBreadcrumbs from "@/features/tasks/_components/task-breadcrumbs";
 import TaskDescription from "@/features/tasks/_components/task-description";
 import TaskOverview from "@/features/tasks/_components/task-overview";
@@ -30,6 +31,7 @@ export const TaskIdClient = () => {
         <TaskOverview task={data} />
         <TaskDescription task={data} />
         <TaskWorklog task={data} />
+        <TaskAssets task={data} />
       </div>
     </div>
   );
