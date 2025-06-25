@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import JoinWorkspaceForm from "@/features/workspaces/_components/join-workspace-form";
+//import JoinWorkspaceForm from "@/features/workspaces/_components/join-workspace-form";
 import { getWorkspaceById } from "@/lib/dbService/workspaces";
 import { redirect } from "next/navigation";
 
@@ -14,7 +14,7 @@ const WorkspaceJoinPage = async ({ params }: WorkspaceJoinPageProps) => {
   if (!session?.user?.id) {
     redirect("/sign-in");
   }
-  const { workspaceId, inviteCode } = await params;
+  const { workspaceId } = await params;
   const workspace = await getWorkspaceById(workspaceId);
 
   if (!workspace) {
@@ -23,9 +23,10 @@ const WorkspaceJoinPage = async ({ params }: WorkspaceJoinPageProps) => {
 
   return (
     <div className="w-full lg:max-w-xl">
-      <JoinWorkspaceForm
+      {/*<JoinWorkspaceForm
         initialValues={{ name: workspace.name, workspaceId, inviteCode }}
       />
+      */}
     </div>
   );
 };

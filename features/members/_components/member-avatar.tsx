@@ -14,6 +14,7 @@ const MemberAvatar = ({
   name = "unassigned",
   fallbackClassName,
 }: MemberAvatarProps) => {
+  console.log("name: ", name);
   if (image) {
     return (
       <div

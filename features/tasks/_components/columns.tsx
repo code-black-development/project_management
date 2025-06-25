@@ -11,7 +11,7 @@ import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
 import { TaskWithUser } from "@/types/types";
 
-export const columns: ColumnDef<TaskWithUser>[] = [
+export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -75,10 +75,16 @@ export const columns: ColumnDef<TaskWithUser>[] = [
         <div className="flex items-center gap-x-2 text-sm">
           <MemberAvatar
             className="size-6"
-            name={row.original.assignee?.user?.name ?? "Unassigned"}
+            name={
+              (row.original.assignee?.user?.name ??
+                row.original.assignee?.user?.email) ||
+              "Unassigned"
+            }
             image={row.original.assignee?.user?.image || undefined}
           />
-          {row.original.assignee?.user.name || "Unassigned"}
+          {(row.original.assignee?.user.name ??
+            row.original.assignee?.user.email) ||
+            "Unassigned"}
         </div>
       );
     },

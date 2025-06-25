@@ -30,6 +30,8 @@ import { useUpdateWorkspace } from "../api/use-update-workspace";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteWorkspace } from "../api/use-delete-workspace";
 import { WorkspaceSafeDates } from "@/types/types";
+import { EmailInput } from "@/components/ui/emalInput";
+import WorkspaceInviteForm from "./workspace-invites-form";
 
 interface WorkspaceFormProps {
   initialValues?: Partial<WorkspaceSafeDates>;
@@ -110,8 +112,6 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
       form.setValue("image", file, { shouldDirty: true });
     }
   };
-
-  const handleCopyInviteLink = () => {};
 
   const action = initialValues ? "Update" : "Create";
 
@@ -276,40 +276,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
       {initialValues && (
         <div className="flex flex-col gap-y-4">
           <DeleteDialog />
-          <Card className="w-full h-full border-none shadow-none">
-            <CardContent className="p-7">
-              <div className="flex flex-col">
-                <h3 className="font-bold">Invite Members</h3>
-                <p className="text-sm text-muted-foreground">
-                  Invite others to collaborate on your projects in this
-                  workspace.
-                  <br /> (Invites will expire after 7 days).
-                </p>
-                <div className="mt-4">
-                  <div className="flex items-center gap-x-2">
-                    <Input disabled value="" />
-                    <Button
-                      onClick={handleCopyInviteLink}
-                      variant="secondary"
-                      className="size-10"
-                    >
-                      <CopyIcon className="size-5" />
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  className="mt-6 w-fit ml-auto"
-                  size="sm"
-                  variant="primary"
-                  type="button"
-                  disabled={isPending}
-                  onClick={handleDelete}
-                >
-                  Send Invite
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <WorkspaceInviteForm />
           <Card className="w-full h-full border-none shadow-none">
             <CardContent className="p-7">
               <div className="flex flex-col">

@@ -18,3 +18,9 @@ export const updateWorkspaceSchema = z.object({
     ])
     .optional(),
 });
+
+export const createWorkspaceInvitesSchema = z.object({
+  invites: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one email is required" }),
+});
