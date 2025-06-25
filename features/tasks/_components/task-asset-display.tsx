@@ -26,7 +26,10 @@ const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
   const isPDF = taskAsset.assetType === "application/pdf";
 
   return (
-    <div className="relative flex flex-col justify-between basis-1/3 h-36">
+    <div
+      key={taskAsset.id}
+      className="relative flex flex-col justify-between basis-1/3 h-36"
+    >
       <ConfirmDialog />
       {isImage ? (
         <img
