@@ -101,21 +101,35 @@ const app = new Hono()
       }
       const dbInvites = await createWorkspaceInvites(workspaceId, invites);
       const inviter = await getUserById(userId);
+
       //send email to the user with the invite link
       for (const invite of dbInvites) {
-        const emailTemplate = generateEmailTemplate(
-          generateInviteLink(invite.code),
-          inviter!.name!
-        );
-        //send email
-        sendEmail(
-          invite.inviteeEmail,
-          "You have been invited to CodeFlow Pro",
-          emailTemplate
-        );
-        console.log("email template", emailTemplate);
+        try {
+          const emailTemplate = await generateEmailTemplate(
+            generateInviteLink(invite.code),
+            inviter!.name!
+          );
+
+          //send email
+          await sendEmail(
+            invite.inviteeEmail,
+            "You have been invited to CodeFlow Pro",
+            emailTemplate
+          );
+          console.log(
+            "Invitation email sent successfully to:",
+            invite.inviteeEmail
+          );
+        } catch (error) {
+          console.error(
+            "Failed to send invitation email to:",
+            invite.inviteeEmail,
+            error
+          );
+          // Continue with other invitations even if one fails
+        }
       }
-      console.log("invites", dbInvites);
+      console.log("invites processed:", dbInvites.length);
 
       return c.json({ data: dbInvites });
     }
