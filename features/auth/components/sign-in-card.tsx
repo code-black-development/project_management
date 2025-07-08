@@ -14,14 +14,22 @@ import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
+
 const SignInCard = () => {
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+
   const formSchema = z.object({
     email: z.string().trim().min(1, "required").email(),
     password: z.string().min(8).max(256),
   });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -30,12 +38,33 @@ const SignInCard = () => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirectTo: "/",
-    });
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      setIsPending(true);
+
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false, // Don't redirect automatically
+      });
+
+      if (result?.error) {
+        console.log("Sign-in error:", result.error);
+        toast.error(
+          "The credentials provided were not correct. Please try again."
+        );
+      } else if (result?.ok) {
+        toast.success("Successfully signed in!");
+        router.push("/"); // Redirect on success
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      console.error("Sign-in exception:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -73,8 +102,13 @@ const SignInCard = () => {
                 </FormItem>
               )}
             />
-            <Button size="lg" className="w-full" type="submit">
-              Log In
+            <Button
+              size="lg"
+              className="w-full"
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending ? "Signing In..." : "Log In"}
             </Button>
           </form>
         </Form>
