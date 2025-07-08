@@ -12,10 +12,9 @@ type RequestType = InferRequestType<
 >;
 
 export function useSignUp() {
-  //const queryClient = useQueryClient();
-
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
+      console.log("json", json);
       const response = await client.api.users.register.$post({
         json,
       });
@@ -25,7 +24,7 @@ export function useSignUp() {
       }
       return await response.json();
     },
-    onSuccess: ({ data }) => {},
+    //onSuccess: ({ data }) => {},
   });
   return mutation;
 }

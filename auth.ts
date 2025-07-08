@@ -3,7 +3,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "./prisma/prisma";
 import Credentials from "next-auth/providers/credentials";
 import { signInSchema } from "./features/auth/schema";
-import { authUser } from "./lib/dbService/users";
+import { getUserByEmail } from "./lib/dbService/users";
+import bcrypt from "bcrypt";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -18,20 +19,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         const { email, password } = await signInSchema.parseAsync(credentials);
 
-        // logic to salt and hash password
-        const pwHash = password; //saltAndHashPassword(credentials.password);
-
         // logic to verify if the user exists
-        const user = await authUser(email, pwHash);
+        const user = await getUserByEmail(email);
 
-        if (!user) {
-          // No user found, so this is their first attempt to login
-          // Optionally, this is also the place you could do a user registration
-          throw new Error("Invalid credentials.");
+        if (
+          user &&
+          user.password &&
+          (await bcrypt.compare(password, user.password))
+        ) {
+          return user;
         }
 
-        // return user object with their profile data
-        return user;
+        return null;
       },
     }),
   ],

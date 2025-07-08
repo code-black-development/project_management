@@ -1,10 +1,18 @@
 import prisma from "@/prisma/prisma";
 
-export const authUser = async (email: string, password: string) => {
+/* export const authUser = async (email: string, password: string) => {
   return await prisma.user.findFirst({
     where: {
       email,
       password,
+    },
+  });
+}; */
+
+export const getUserByEmail = async (email: string) => {
+  return await prisma.user.findUnique({
+    where: {
+      email,
     },
   });
 };

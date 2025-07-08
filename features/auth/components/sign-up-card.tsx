@@ -16,12 +16,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { useSignUp } from "../api/use-sign-up";
-import { useSearchParam } from "react-use";
-import { notFound, useSearchParams } from "next/navigation";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 const SignUpCard = () => {
   const inviteCode = useSearchParams().get("inviteCode");
   const { mutate: registerNewUser } = useSignUp();
+  const router = useRouter();
   const formSchema = z
     .object({
       password: z.string().min(8).max(256),
@@ -41,16 +42,27 @@ const SignUpCard = () => {
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    try {
-      //console.log("data", data);
-      if (!inviteCode) {
-        notFound();
-      }
-      registerNewUser({ json: { password: data.password, inviteCode } });
-    } catch (error) {
-      console.error;
-      console.error(error);
+    if (!inviteCode) {
+      notFound();
+      return;
     }
+
+    registerNewUser(
+      {
+        json: { password: data.password, inviteCode },
+      },
+      {
+        onSuccess: (response) => {
+          console.log("Registration successful:", response);
+          toast?.success("Account created successfully!");
+          router.push("/");
+        },
+        onError: (error) => {
+          console.error("Registration failed:", error);
+          toast?.error("Failed to create account. Please try again.");
+        },
+      }
+    );
   };
 
   return (
@@ -92,7 +104,7 @@ const SignUpCard = () => {
               )}
             />
             <Button size="lg" className="w-full" type="submit">
-              Log In
+              Log In x
             </Button>
           </form>
         </Form>

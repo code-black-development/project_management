@@ -10,7 +10,7 @@ const SignUp = async ({ searchParams }: SignUpProps) => {
   const { inviteCode } = await searchParams;
 
   const invite = await getWorkspaceInvite(inviteCode);
-  console.log("invite", invite);
+
   if (!invite) {
     return (
       <p>

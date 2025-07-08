@@ -38,9 +38,9 @@ const app = new Hono()
   .post("/", zValidator("form", createWorkspaceSchema), async (c) => {
     const { name, image } = c.req.valid("form");
     const userId = c.get("userId");
-    console.log("name", name);
-    console.log("image", image);
-    console.log("user id", userId);
+    // console.log("name", name);
+    //console.log("image", image);
+    // console.log("user id", userId);
     let fileUrl: string | null = null;
     if (image instanceof File) {
       fileUrl = await uploadImageToLocalStorage(image);
@@ -92,6 +92,7 @@ const app = new Hono()
       const userId = c.get("userId");
       const { workspaceId } = c.req.param();
       const { invites } = c.req.valid("json");
+      console.log("userId", userId);
 
       const isWorkspaceAdmin = await checkIfUserIsAdmin(userId, workspaceId);
       if (!isWorkspaceAdmin) {
@@ -101,6 +102,7 @@ const app = new Hono()
       }
       const dbInvites = await createWorkspaceInvites(workspaceId, invites);
       const inviter = await getUserById(userId);
+      console.log("inviter", inviter);
 
       //send email to the user with the invite link
       for (const invite of dbInvites) {

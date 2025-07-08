@@ -43,6 +43,8 @@ export async function generateEmailTemplate(
   invitorName: string
 ) {
   try {
+    console.log("verificationLink:", verificationLink);
+    console.log("invitorName:", invitorName);
     // Get the base URL for the application
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
