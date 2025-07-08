@@ -4,8 +4,8 @@ import { AppType } from "@/app/api/[[...route]]/route";
 // Function to get the API base URL
 function getApiBaseUrl(): string {
   // Check if we have a custom API URL set
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
   }
 
   // Check if we're on the client side
@@ -18,11 +18,6 @@ function getApiBaseUrl(): string {
   if (process.env.VERCEL_URL) {
     // Vercel deployment
     return `https://${process.env.VERCEL_URL}`;
-  }
-
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    // Custom app URL
-    return `${process.env.NEXT_PUBLIC_APP_URL}`;
   }
 
   // Development fallback
