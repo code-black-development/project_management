@@ -17,23 +17,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
       authorize: async (credentials) => {
-        const { email, password } = await signInSchema.parseAsync(credentials);
+        try {
+          console.log("🔐 Auth attempt started");
+          console.log("📧 Credentials received:", {
+            email: credentials?.email,
+            hasPassword: !!credentials?.password,
+          });
 
-        // logic to verify if the user exists
-        const user = await getUserByEmail(email);
+          const { email, password } =
+            await signInSchema.parseAsync(credentials);
+          console.log("✅ Schema validation passed");
 
-        if (
-          user &&
-          user.password &&
-          (await bcrypt.compare(password, user.password))
-        ) {
-          return user;
+          // logic to verify if the user exists
+          const user = await getUserByEmail(email);
+          console.log("👤 User lookup result:", {
+            found: !!user,
+            hasPassword: !!user?.password,
+            userId: user?.id,
+          });
+
+          if (!user) {
+            console.log("❌ No user found with email:", email);
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("❌ User has no password set");
+            return null;
+          }
+
+          console.log("🔒 Comparing passwords...");
+          const passwordMatch = await bcrypt.compare(password, user.password);
+          console.log("🔑 Password comparison result:", passwordMatch);
+
+          if (passwordMatch) {
+            console.log("✅ Authentication successful for user:", user.id);
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+            };
+          } else {
+            console.log("❌ Password mismatch for user:", email);
+            return null;
+          }
+        } catch (error) {
+          console.error("💥 Auth error:", error);
+          return null;
         }
-
-        return null;
       },
     }),
   ],
+  pages: {
+    signIn: "/sign-in",
+    error: "/sign-in", // Redirect errors back to sign-in page
+  },
   trustHost: true,
   secret: "BkP6Zj/Z+NXVfAhrwDWF5ESA2ImFgsT8YRL+kXqxvfc=",
   session: {
