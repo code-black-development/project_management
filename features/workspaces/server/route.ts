@@ -166,12 +166,12 @@ const app = new Hono()
             console.log("Creating invite for new user:", email);
             console.log("Workspace ID:", workspaceId);
             console.log("Email array:", [email]);
-            
+
             const dbInvites = await createWorkspaceInvites(workspaceId, [
               email,
             ]);
             const invite = dbInvites[0];
-            
+
             console.log("Created invite:", invite);
 
             // Send invite email to new user
@@ -202,27 +202,6 @@ const app = new Hono()
       return c.json({ data: results });
     }
   )
-  /* 
-  * this may not be used anymore - now this is done via useSignUp - we may need to bring this back though and edit it for when an existing member is invited
-  * useSignUp
-  .post(
-    "/:workspaceId/join",
-    zValidator("json", z.object({ code: z.string() })),
-    async (c) => {
-      const { workspaceId } = c.req.param();
-      const { code } = c.req.valid("json");
-      //check if invite code is valid and if the user is already a member
-      //if not add user to workspace
-      const isInvited = await getWorkspaceInvite(code);
-      if (!isInvited) {
-        throw new HTTPException(404, { message: "Invalid invite code" });
-      }
-      //TODO: this is notimplemented at all  - redo this
-      const member = await addMember(isInvited.userId, workspaceId);
-      //by as the invite is tied to a user it cannot be reused by anyone else. Invite will be deleted after 7 days by a CRON job
-      return c.json({ data: member });
-    }
-  ) */
   .get("/:workspaceId", async (c) => {
     const { workspaceId } = c.req.param();
     //TODO: check if the user is a member of the workspace

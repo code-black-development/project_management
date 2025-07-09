@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { getWorkspaceInvitesByUserId } from "@/lib/dbService/workspace-invites";
+import { getWorkspaceInvitesByEmail } from "@/lib/dbService/workspace-invites";
 import { getWorkspaceByUserId } from "@/lib/dbService/workspaces";
 import { redirect } from "next/navigation";
 
@@ -11,7 +11,7 @@ const DashboardPage = async () => {
   }
 
   const workspaces = await getWorkspaceByUserId(session.user.id);
-  const invites = await getWorkspaceInvitesByUserId(session.user.id);
+  const invites = await getWorkspaceInvitesByEmail(session.user.email!);
 
   if (workspaces.length > 0) {
     return redirect(`/workspaces/${workspaces[0].id}`);

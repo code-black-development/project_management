@@ -5,22 +5,16 @@ export const createWorkspaceInvites = async (
   workspaceId: string,
   invites: string[]
 ) => {
-  console.log("createWorkspaceInvites called with:", { workspaceId, invites });
-  
-  const data = invites.map((invite) => ({
-    code: generateCode(10),
-    workspaceId,
-    inviteeEmail: invite,
-  }));
-  
-  console.log("Prepared data for database:", data);
-  
   return await prisma.workspaceInvites.createManyAndReturn({
-    data,
+    data: invites.map((invite) => ({
+      code: generateCode(10),
+      workspaceId,
+      inviteeEmail: invite,
+    })),
   });
 };
 
-export const getWorkspaceInvitesByUserId = async (inviteeEmail: string) => {
+export const getWorkspaceInvitesByEmail = async (inviteeEmail: string) => {
   return await prisma.workspaceInvites.findMany({
     where: {
       inviteeEmail,
@@ -29,7 +23,6 @@ export const getWorkspaceInvitesByUserId = async (inviteeEmail: string) => {
 };
 
 export const getWorkspaceInvite = async (code: string) => {
-  console.log("code", code);
   try {
     const res = await prisma.workspaceInvites.findUnique({
       where: {
