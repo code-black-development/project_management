@@ -113,9 +113,11 @@ export const TaskList = ({ data }: TaskListProps) => {
             No tasks found
           </li>
         </ul>
-        <Button variant="muted" className="m-4 w-full" asChild>
-          <Link href={`/workspaces/${workspaceId}/tasks`}>Show all</Link>
-        </Button>
+        <div className="mt-4 flex justify-center">
+          <Button variant="muted" className="w-full" asChild>
+            <Link href={`/workspaces/${workspaceId}/tasks`}>Show all</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
