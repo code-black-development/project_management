@@ -5,12 +5,18 @@ export const createWorkspaceInvites = async (
   workspaceId: string,
   invites: string[]
 ) => {
+  console.log("createWorkspaceInvites called with:", { workspaceId, invites });
+  
+  const data = invites.map((invite) => ({
+    code: generateCode(10),
+    workspaceId,
+    inviteeEmail: invite,
+  }));
+  
+  console.log("Prepared data for database:", data);
+  
   return await prisma.workspaceInvites.createManyAndReturn({
-    data: invites.map((invite) => ({
-      code: generateCode(10),
-      workspaceId,
-      inviteeEmail: invite,
-    })),
+    data,
   });
 };
 

@@ -163,10 +163,16 @@ const app = new Hono()
             console.log("Added existing user to workspace:", email);
           } else {
             // Create invite for new user
+            console.log("Creating invite for new user:", email);
+            console.log("Workspace ID:", workspaceId);
+            console.log("Email array:", [email]);
+            
             const dbInvites = await createWorkspaceInvites(workspaceId, [
               email,
             ]);
             const invite = dbInvites[0];
+            
+            console.log("Created invite:", invite);
 
             // Send invite email to new user
             const emailTemplate = await generateEmailTemplate(
