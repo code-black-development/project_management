@@ -232,6 +232,7 @@ const app = new Hono()
         description: z.string().nullish(),
         dueDate: z.string().or(z.date()).nullish(),
         timeEstimate: z.string().nullish(),
+        categoryId: z.string().nullish(),
       })
     ),
     async (c) => {
@@ -243,6 +244,7 @@ const app = new Hono()
         assigneeId,
         description,
         timeEstimate,
+        categoryId,
       } = c.req.valid("json");
 
       const { taskId } = c.req.param();
@@ -262,9 +264,11 @@ const app = new Hono()
         ...(timeEstimate && {
           timeEstimate: timeEstimateStringToMinutes(timeEstimate),
         }),
+        ...(categoryId !== undefined && { categoryId: categoryId || null }),
       };
 
       const task = await updateTask(taskId, taskData);
+
       const result = {
         ...task,
         timeEstimate: task?.timeEstimate

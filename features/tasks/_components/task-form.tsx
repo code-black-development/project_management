@@ -67,7 +67,8 @@ const TaskForm = ({
   const workspaceId = useWorkspaceId();
   console.log("users: ", memberOptions);
 
-  const { data: categories, isLoading: categoriesLoading } = useGetTaskCategories();
+  const { data: categories, isLoading: categoriesLoading } =
+    useGetTaskCategories();
 
   const formSchema = initialValues ? updateTaskSchema : createTaskSchema;
 

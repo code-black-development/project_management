@@ -51,6 +51,7 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
       assignee: { include: { user: true } },
       worklogs: true,
       assets: true,
+      category: true,
     },
   });
 };
@@ -75,8 +76,10 @@ export const getTaskById = async (taskId: string) => {
         worklogs: true,
         children: { include: { children: true } },
         assets: true,
+        category: true,
       },
     });
+
     return result;
   } catch (e) {
     console.log(JSON.stringify(e));
@@ -89,7 +92,11 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
     where: {
       workspaceId,
     },
-    include: { project: true, assignee: { include: { user: true } } },
+    include: {
+      project: true,
+      assignee: { include: { user: true } },
+      category: true,
+    },
   });
 };
 
@@ -280,7 +287,7 @@ export const deleteTaskAsset = async (assetId: string) => {
 export const getTaskCategories = async () => {
   return await prisma.taskCategory.findMany({
     orderBy: {
-      name: 'asc',
+      name: "asc",
     },
   });
 };
