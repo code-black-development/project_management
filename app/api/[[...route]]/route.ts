@@ -19,7 +19,13 @@ const app = new Hono().basePath("/api");
   })
 ); */
 
-app.use("*", authMiddleware);
+app.use("*", (c, next) => {
+  // Skip auth for registration endpoint
+  if (c.req.url.endsWith("/users/register")) {
+    return next();
+  }
+  return authMiddleware(c, next);
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app

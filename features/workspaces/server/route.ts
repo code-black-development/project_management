@@ -160,19 +160,12 @@ const app = new Hono()
             );
 
             results.existingUserAdded.push(email);
-            console.log("Added existing user to workspace:", email);
           } else {
             // Create invite for new user
-            console.log("Creating invite for new user:", email);
-            console.log("Workspace ID:", workspaceId);
-            console.log("Email array:", [email]);
-
             const dbInvites = await createWorkspaceInvites(workspaceId, [
               email,
             ]);
             const invite = dbInvites[0];
-
-            console.log("Created invite:", invite);
 
             // Send invite email to new user
             const emailTemplate = await generateEmailTemplate(
@@ -187,7 +180,6 @@ const app = new Hono()
             );
 
             results.newUserInvites.push(email);
-            console.log("Sent invitation to new user:", email);
           }
         } catch (error) {
           console.error(`Failed to process invite for ${email}:`, error);
@@ -198,7 +190,6 @@ const app = new Hono()
         }
       }
 
-      console.log("Invitation processing completed:", results);
       return c.json({ data: results });
     }
   )

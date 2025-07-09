@@ -14,13 +14,12 @@ type RequestType = InferRequestType<
 export function useSignUp() {
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
-      console.log("json", json);
       const response = await client.api.users.register.$post({
         json,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update project");
+        throw new Error("Failed to register user");
       }
       return await response.json();
     },
