@@ -16,6 +16,8 @@ export type TaskWithUser = TaskSafeDate & {
   children: TaskWithUser[];
 } & {
   assets: AssetSafeDate[];
+} & {
+  category?: { id: string; name: string } | null;
 };
 
 export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {

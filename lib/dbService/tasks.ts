@@ -276,3 +276,11 @@ export const deleteTaskAsset = async (assetId: string) => {
     },
   });
 };
+
+export const getTaskCategories = async () => {
+  return await prisma.taskCategory.findMany({
+    orderBy: {
+      name: 'asc',
+    },
+  });
+};

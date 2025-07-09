@@ -6,6 +6,10 @@ export const createTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  categoryId: z
+    .string()
+    .optional()
+    .transform((val) => val || null),
   timeEstimate: z
     .string()
     .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" }) // 1w 2d 3h 4m
@@ -27,6 +31,10 @@ export const updateTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  categoryId: z
+    .string()
+    .optional()
+    .transform((val) => val || null),
   timeEstimate: z
     .string()
     .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" })
@@ -36,11 +44,11 @@ export const updateTaskSchema = z.object({
   assigneeId: z
     .string()
     .optional()
-    .transform((val) => val ?? null),
+    .transform((val) => val || null),
   description: z
     .string()
     .optional()
-    .transform((val) => val ?? null),
+    .transform((val) => val || null),
 });
 
 export const taskSearchSchema = z.object({

@@ -30,6 +30,7 @@ import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useUpdateTask } from "../api/use-update-task";
 import { useCreateTask } from "../api/use-create-task";
 import { useDeleteTask } from "../api/use-delete-task";
+import { useGetTaskCategories } from "../hooks/use-get-task-categories";
 import DatePicker from "@/components/date-picker";
 import {
   Select,
@@ -66,6 +67,8 @@ const TaskForm = ({
   const workspaceId = useWorkspaceId();
   console.log("users: ", memberOptions);
 
+  const { data: categories, isLoading: categoriesLoading } = useGetTaskCategories();
+
   const formSchema = initialValues ? updateTaskSchema : createTaskSchema;
 
   const router = useRouter();
@@ -94,6 +97,7 @@ const TaskForm = ({
       status: initialValues?.status ?? TaskStatus.TODO,
       projectId: initialValues?.projectId ?? "",
       timeEstimate: initialValues?.timeEstimate ?? "",
+      categoryId: initialValues?.categoryId ?? "",
     },
   });
 
@@ -315,6 +319,33 @@ const TaskForm = ({
                                 />
                                 {project.name}
                               </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="categoryId"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        defaultValue={field.value ?? undefined}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category"></SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <FormMessage />
+                        <SelectContent>
+                          {categories?.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
