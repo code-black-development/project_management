@@ -8,6 +8,7 @@ import {
   getHighestPositionTask,
   getLinkableTasks,
   getTaskById,
+  getTaskCategories,
   searchTasks,
   updateTask,
 } from "@/lib/dbService/tasks";
@@ -34,6 +35,10 @@ const TaskAssetSchema = z.object({
 });
 
 const app = new Hono()
+  .get("/categories", async (c) => {
+    const categories = await getTaskCategories();
+    return c.json({ data: categories });
+  })
   .delete("/assets/:assetId", async (c) => {
     const { assetId } = c.req.param();
     const deletedAsset = await deleteTaskAsset(assetId);
@@ -227,6 +232,7 @@ const app = new Hono()
         description: z.string().nullish(),
         dueDate: z.string().or(z.date()).nullish(),
         timeEstimate: z.string().nullish(),
+        categoryId: z.string().nullish(),
       })
     ),
     async (c) => {
@@ -238,6 +244,7 @@ const app = new Hono()
         assigneeId,
         description,
         timeEstimate,
+        categoryId,
       } = c.req.valid("json");
 
       const { taskId } = c.req.param();
@@ -257,9 +264,11 @@ const app = new Hono()
         ...(timeEstimate && {
           timeEstimate: timeEstimateStringToMinutes(timeEstimate),
         }),
+        ...(categoryId !== undefined && { categoryId: categoryId || null }),
       };
 
       const task = await updateTask(taskId, taskData);
+
       const result = {
         ...task,
         timeEstimate: task?.timeEstimate
@@ -313,6 +322,7 @@ const app = new Hono()
         description: z.string().nullish(),
         dueDate: z.string().or(z.date()),
         timeEstimate: z.string().nullish(),
+        categoryId: z.string().nullish(),
       })
     ),
     async (c) => {
@@ -325,6 +335,7 @@ const app = new Hono()
         assigneeId,
         description,
         timeEstimate,
+        categoryId,
       } = c.req.valid("json");
 
       //TODO: we should get the taskstatus passed and check that not just hard code TDOD
@@ -364,6 +375,7 @@ const app = new Hono()
         timeEstimate: timeEstimate
           ? timeEstimateStringToMinutes(timeEstimate)
           : null,
+        categoryId: categoryId ?? null,
       };
 
       const task = await createTask(taskData);

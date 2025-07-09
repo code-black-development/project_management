@@ -31,7 +31,7 @@ export function useDeleteLinkedTask() {
     onSuccess: ({ data }) => {
       toast.success("task unlinked");
       queryClient.invalidateQueries({ queryKey: ["linkable-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", data] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", data] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: () => {

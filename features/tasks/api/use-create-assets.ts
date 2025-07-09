@@ -27,7 +27,7 @@ export function useCreateAssets() {
     onSuccess: ({ data }) => {
       console.log(data);
       toast.success("Assets created");
-      queryClient.invalidateQueries({ queryKey: ["task"], data });
+      queryClient.invalidateQueries({ queryKey: ["tasks", data] });
     },
     onError: () => {
       toast.error("Failed to create assets");

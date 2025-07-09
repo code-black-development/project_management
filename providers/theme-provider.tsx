@@ -18,14 +18,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    
+
     // Get theme from localStorage or system preference
     const savedTheme = localStorage.getItem("theme") as Theme;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+
     const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
     setTheme(initialTheme);
-    
+
     // Apply theme to document root immediately
     applyTheme(initialTheme);
   }, []);
@@ -39,16 +41,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement;
-    
+
     // Remove existing theme classes
     root.classList.remove("light", "dark");
-    
+
     // Add new theme class
     root.classList.add(newTheme);
-    
+
     // Also set data attribute for CSS targeting
     root.setAttribute("data-theme", newTheme);
-    
+
     // Force repaint in Firefox
     root.style.colorScheme = newTheme;
   };
@@ -66,15 +68,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Prevent hydration mismatch by showing consistent content
   if (!mounted) {
-    return (
-      <div suppressHydrationWarning>
-        {children}
-      </div>
-    );
+    return <div suppressHydrationWarning>{children}</div>;
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, setTheme: handleSetTheme, toggleTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   );

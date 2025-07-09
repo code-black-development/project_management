@@ -1,7 +1,8 @@
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { TaskWithUser } from "@/types/types";
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, Tag } from "lucide-react";
 import TaskOverviewProperty from "./task-overview-property";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
@@ -54,6 +55,14 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
             <TaskBadge variant={task.status}>
               {snakeCaseToTitleCase(task.status)}
             </TaskBadge>
+          </TaskOverviewProperty>
+
+          <TaskOverviewProperty label="Category">
+            <Badge variant="outline" className="gap-x-2">
+              <p className="text-sm font-medium">
+                {task.category?.name || "-"}
+              </p>
+            </Badge>
           </TaskOverviewProperty>
         </div>
         <DottedSeparator className="my-4" />
