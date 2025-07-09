@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { useSignUp } from "../api/use-sign-up";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react";
 
 const SignUpCard = () => {
   const inviteCode = useSearchParams().get("inviteCode");
@@ -41,7 +42,7 @@ const SignUpCard = () => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (!inviteCode) {
       notFound();
       return;
@@ -52,10 +53,33 @@ const SignUpCard = () => {
         json: { password: data.password, inviteCode },
       },
       {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
           console.log("Registration successful:", response);
           toast?.success("Account created successfully!");
-          router.push("/");
+
+          // Use the email from the registration response
+          const email = response.data.email;
+          if (!email) {
+            toast?.error("Unable to auto-login. Please sign in manually.");
+            router.push("/sign-in");
+            return;
+          }
+
+          // Automatically sign in the user
+          const signInResult = await signIn("credentials", {
+            email: email,
+            password: data.password,
+            redirect: false,
+          });
+
+          if (signInResult?.error) {
+            console.error("Auto sign-in failed:", signInResult.error);
+            toast?.error("Registration successful, but auto-login failed. Please sign in.");
+            router.push("/sign-in");
+          } else {
+            toast?.success("Welcome! You're now signed in.");
+            router.push("/");
+          }
         },
         onError: (error) => {
           console.error("Registration failed:", error);
@@ -104,7 +128,7 @@ const SignUpCard = () => {
               )}
             />
             <Button size="lg" className="w-full" type="submit">
-              Log In x
+              Create Account
             </Button>
           </form>
         </Form>

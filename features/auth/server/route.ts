@@ -48,7 +48,12 @@ const app = new Hono().post(
 
       return user;
     });
-    return c.json({ data: user });
+    return c.json({ 
+      data: { 
+        user,
+        email: invitee.inviteeEmail // Include email for auto-login
+      } 
+    });
   }
 );
 
