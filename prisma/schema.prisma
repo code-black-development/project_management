@@ -41,15 +41,16 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String             @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String             @unique
   password      String?
-  emailVerified DateTime? @map("email_verified")
+  emailVerified DateTime?          @map("email_verified")
   image         String?
   accounts      Account[]
   sessions      Session[]
   members       Member[]
+  invites       WorkspaceInvites[] // Invites for this user
 
   @@map("users")
 }
@@ -96,6 +97,8 @@ model WorkspaceInvites {
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId  String
   inviteeEmail String
+  userId       String?   // For existing users
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   code         String    @unique
   createdAt    DateTime  @default(now())
   expiresAt    DateTime  @default(dbgenerated("now() + interval '7 days'"))
@@ -118,8 +121,6 @@ model Project {
 model TaskCategory {
   id    String @id @default(cuid())
   name  String
-  
-  // One category can have many tasks
   tasks Task[]
   
   @@map("task_categories")

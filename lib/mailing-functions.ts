@@ -129,3 +129,55 @@ export async function generateEmailTemplate(
 export function generateInviteLink(code: string) {
   return `${process.env.INVITE_EMAIL_ADDRESS}?inviteCode=${code}`;
 }
+
+export async function generateExistingUserWelcomeTemplate(
+  workspaceName: string,
+  inviterName: string
+) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Welcome to ${workspaceName}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to ${workspaceName}!</h1>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #667eea;">
+            <h2 style="color: #667eea; margin-top: 0;">You've been added to a workspace</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              Good news! <strong>${inviterName}</strong> has added you to the <strong>${workspaceName}</strong> workspace.
+            </p>
+            <p style="font-size: 16px; margin-bottom: 25px;">
+              You can now collaborate on projects and manage tasks together with your team.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${baseUrl}/sign-in" 
+                 style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Sign In to Access Workspace
+              </a>
+            </div>
+            
+            <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
+              If you have any questions, feel free to reach out to ${inviterName} or your team administrator.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+  } catch (error) {
+    console.error("Error generating existing user welcome template:", error);
+    return `
+      <p>Welcome to ${workspaceName}!</p>
+      <p>${inviterName} has added you to the workspace.</p>
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/sign-in">Sign in to access your workspace</a></p>
+    `;
+  }
+}

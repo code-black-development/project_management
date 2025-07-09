@@ -24,10 +24,12 @@ import {
 } from "@/lib/dbService/tasks";
 import {
   generateEmailTemplate,
+  generateExistingUserWelcomeTemplate,
   generateInviteLink,
   sendEmail,
 } from "@/lib/mailing-functions";
-import { getUserById } from "@/lib/dbService/users";
+import { getUserById, getUserByEmail } from "@/lib/dbService/users";
+import { addMember, getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -92,7 +94,6 @@ const app = new Hono()
       const userId = c.get("userId");
       const { workspaceId } = c.req.param();
       const { invites } = c.req.valid("json");
-      console.log("userId", userId);
 
       const isWorkspaceAdmin = await checkIfUserIsAdmin(userId, workspaceId);
       if (!isWorkspaceAdmin) {
@@ -100,40 +101,96 @@ const app = new Hono()
           message: "You are not authorized to invite users",
         });
       }
-      const dbInvites = await createWorkspaceInvites(workspaceId, invites);
+
       const inviter = await getUserById(userId);
-      console.log("inviter", inviter);
+      const workspace = await getWorkspaceById(workspaceId);
+      
+      if (!inviter || !workspace) {
+        throw new HTTPException(404, {
+          message: "Inviter or workspace not found",
+        });
+      }
 
-      //send email to the user with the invite link
-      for (const invite of dbInvites) {
+      const results: {
+        newUserInvites: string[];
+        existingUserAdded: string[];
+        alreadyMembers: string[];
+        errors: { email: string; error: string }[];
+      } = {
+        newUserInvites: [],
+        existingUserAdded: [],
+        alreadyMembers: [],
+        errors: []
+      };
+
+      // Process each invite
+      for (const email of invites) {
         try {
-          const emailTemplate = await generateEmailTemplate(
-            generateInviteLink(invite.code),
-            inviter!.name!
-          );
-
-          //send email
-          await sendEmail(
-            invite.inviteeEmail,
-            "You have been invited to CodeFlow Pro",
-            emailTemplate
-          );
-          console.log(
-            "Invitation email sent successfully to:",
-            invite.inviteeEmail
-          );
+          // Check if user already exists
+          const existingUser = await getUserByEmail(email);
+          
+          if (existingUser) {
+            // Check if already a member
+            const existingMember = await getMemberByUserIdAndWorkspaceId(
+              existingUser.id, 
+              workspaceId
+            );
+            
+            if (existingMember) {
+              results.alreadyMembers.push(email);
+              continue;
+            }
+            
+            // Add existing user as member
+            const newMember = await addMember(existingUser.id, workspaceId);
+            
+            // Send welcome email to existing user
+            const welcomeTemplate = await generateExistingUserWelcomeTemplate(
+              workspace.name,
+              inviter.name || inviter.email
+            );
+            
+            await sendEmail(
+              email,
+              `Welcome to ${workspace.name}`,
+              welcomeTemplate
+            );
+            
+            results.existingUserAdded.push(email);
+            console.log("Added existing user to workspace:", email);
+            
+          } else {
+            // Create invite for new user
+            const dbInvites = await createWorkspaceInvites(workspaceId, [email]);
+            const invite = dbInvites[0];
+            
+            // Send invite email to new user
+            const emailTemplate = await generateEmailTemplate(
+              generateInviteLink(invite.code),
+              inviter.name || inviter.email
+            );
+            
+            await sendEmail(
+              email,
+              "You have been invited to CodeFlow Pro",
+              emailTemplate
+            );
+            
+            results.newUserInvites.push(email);
+            console.log("Sent invitation to new user:", email);
+          }
+          
         } catch (error) {
-          console.error(
-            "Failed to send invitation email to:",
-            invite.inviteeEmail,
-            error
-          );
-          // Continue with other invitations even if one fails
+          console.error(`Failed to process invite for ${email}:`, error);
+          results.errors.push({ 
+            email, 
+            error: error instanceof Error ? error.message : "Unknown error" 
+          });
         }
       }
-      console.log("invites processed:", dbInvites.length);
 
-      return c.json({ data: dbInvites });
+      console.log("Invitation processing completed:", results);
+      return c.json({ data: results });
     }
   )
   /* 
