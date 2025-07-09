@@ -30,6 +30,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(initialTheme);
   }, []);
 
+  // Also apply theme whenever it changes
+  useEffect(() => {
+    if (mounted) {
+      applyTheme(theme);
+    }
+  }, [theme, mounted]);
+
   const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement;
     
@@ -60,7 +67,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Prevent hydration mismatch by showing consistent content
   if (!mounted) {
     return (
-      <div className="light" suppressHydrationWarning>
+      <div suppressHydrationWarning>
         {children}
       </div>
     );
@@ -68,9 +75,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, toggleTheme }}>
-      <div className={theme} data-theme={theme}>
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   );
 }
