@@ -1,11 +1,12 @@
-import Image from "next/image";
-import Link from "next/link";
+import React from "react";
 
 const Logo = () => {
   return (
-    <Link href="/">
-      <Image src="/logo.svg" alt="Logo" width={154} height={27} />
-    </Link>
+    <h1 className="font-syncopate text-xl">
+      <span className="text-foreground">CODEFLOW</span>{" "}
+      <span className="text-blue-500 font-bold">PRO</span>
+    </h1>
   );
 };
+
 export default Logo;

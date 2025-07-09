@@ -29,7 +29,10 @@ import {
   sendEmail,
 } from "@/lib/mailing-functions";
 import { getUserById, getUserByEmail } from "@/lib/dbService/users";
-import { addMember, getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
+import {
+  addMember,
+  getMemberByUserIdAndWorkspaceId,
+} from "@/lib/dbService/workspace-members";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -104,7 +107,7 @@ const app = new Hono()
 
       const inviter = await getUserById(userId);
       const workspace = await getWorkspaceById(workspaceId);
-      
+
       if (!inviter || !workspace) {
         throw new HTTPException(404, {
           message: "Inviter or workspace not found",
@@ -120,7 +123,7 @@ const app = new Hono()
         newUserInvites: [],
         existingUserAdded: [],
         alreadyMembers: [],
-        errors: []
+        errors: [],
       };
 
       // Process each invite
@@ -128,63 +131,63 @@ const app = new Hono()
         try {
           // Check if user already exists
           const existingUser = await getUserByEmail(email);
-          
+
           if (existingUser) {
             // Check if already a member
             const existingMember = await getMemberByUserIdAndWorkspaceId(
-              existingUser.id, 
+              existingUser.id,
               workspaceId
             );
-            
+
             if (existingMember) {
               results.alreadyMembers.push(email);
               continue;
             }
-            
+
             // Add existing user as member
             const newMember = await addMember(existingUser.id, workspaceId);
-            
+
             // Send welcome email to existing user
             const welcomeTemplate = await generateExistingUserWelcomeTemplate(
               workspace.name,
               inviter.name || inviter.email
             );
-            
+
             await sendEmail(
               email,
               `Welcome to ${workspace.name}`,
               welcomeTemplate
             );
-            
+
             results.existingUserAdded.push(email);
             console.log("Added existing user to workspace:", email);
-            
           } else {
             // Create invite for new user
-            const dbInvites = await createWorkspaceInvites(workspaceId, [email]);
+            const dbInvites = await createWorkspaceInvites(workspaceId, [
+              email,
+            ]);
             const invite = dbInvites[0];
-            
+
             // Send invite email to new user
             const emailTemplate = await generateEmailTemplate(
               generateInviteLink(invite.code),
               inviter.name || inviter.email
             );
-            
+
             await sendEmail(
               email,
               "You have been invited to CodeFlow Pro",
               emailTemplate
             );
-            
+
             results.newUserInvites.push(email);
             console.log("Sent invitation to new user:", email);
           }
-          
         } catch (error) {
           console.error(`Failed to process invite for ${email}:`, error);
-          results.errors.push({ 
-            email, 
-            error: error instanceof Error ? error.message : "Unknown error" 
+          results.errors.push({
+            email,
+            error: error instanceof Error ? error.message : "Unknown error",
           });
         }
       }
