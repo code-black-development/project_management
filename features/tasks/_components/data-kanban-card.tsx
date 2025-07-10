@@ -1,4 +1,3 @@
-import { Task } from "@prisma/client";
 import TaskActions from "./task-actions";
 import { MoreHorizontal, Tag } from "lucide-react";
 import DottedSeparator from "@/components/dotted-separator";
@@ -7,12 +6,14 @@ import { TaskWithUser } from "@/types/types";
 import TaskDate from "./task-date";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import { Badge } from "@/components/ui/badge";
+import DynamicIcon from "@/components/dynamic-icon";
 
 interface DataKanbanCardProps {
   task: Omit<TaskWithUser, "children">;
 }
 
 const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
+  console.log("DataKanbanCard task icon:", task.category?.icon);
   return (
     <div className="p-2.5 mb-1.5 rounded shadow-sm space-y-3">
       <div className="flex items-start justify-between gap-x-2">
@@ -25,7 +26,10 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
       {/* Category Badge */}
       {task.category && (
         <div className="flex items-center gap-x-1">
-          <Tag className="size-3 text-muted-foreground" />
+          <DynamicIcon
+            iconName={task.category.icon}
+            className="size-4 text-muted-foreground"
+          />
           <Badge variant="secondary" className="text-xs">
             {task.category.name}
           </Badge>
