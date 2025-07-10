@@ -13,7 +13,6 @@ interface DataKanbanCardProps {
 }
 
 const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
-  console.log("DataKanbanCard task icon:", task.category?.icon);
   return (
     <div className="p-2.5 mb-1.5 rounded shadow-sm space-y-3">
       <div className="flex items-start justify-between gap-x-2">
@@ -27,7 +26,7 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
       {task.category && (
         <div className="flex items-center gap-x-1">
           <DynamicIcon
-            iconName={task.category.icon}
+            iconName={task.category.icon || "tag"}
             className="size-4 text-muted-foreground"
           />
           <Badge variant="secondary" className="text-xs">

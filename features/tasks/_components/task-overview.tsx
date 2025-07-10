@@ -10,6 +10,7 @@ import { TaskBadge } from "./task-badge";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import useEditTaskModal from "../hooks/use-edit-task-modal";
 import TaskChildren from "./task-children";
+import DynamicIcon from "@/components/dynamic-icon";
 
 interface TaskOverviewProps {
   task: TaskWithUser;
@@ -58,11 +59,19 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
           </TaskOverviewProperty>
 
           <TaskOverviewProperty label="Category">
-            <Badge variant="outline" className="gap-x-2">
-              <p className="text-sm font-medium">
-                {task.category?.name || "-"}
-              </p>
-            </Badge>
+            {task.category ? (
+              <Badge variant="outline" className="gap-x-2">
+                <DynamicIcon
+                  iconName={task.category.icon || "tag"}
+                  className="size-4"
+                />
+                <p className="text-sm font-medium">{task.category.name}</p>
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="gap-x-2">
+                <p className="text-sm font-medium">-</p>
+              </Badge>
+            )}
           </TaskOverviewProperty>
         </div>
         <DottedSeparator className="my-4" />

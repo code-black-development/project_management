@@ -10,6 +10,8 @@ import { snakeCaseToTitleCase } from "@/lib/utils";
 import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
 import { TaskWithUser } from "@/types/types";
+import DynamicIcon from "@/components/dynamic-icon";
+import { Badge } from "@/components/ui/badge";
 
 export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
   {
@@ -106,6 +108,37 @@ export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
     cell: ({ row }) => {
       const dueDate = row.original.dueDate;
       return <TaskDate value={dueDate!} />;
+    },
+  },
+  {
+    accessorKey: "category",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const category = row.original.category;
+      if (!category) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+      return (
+        <div className="flex items-center gap-x-2">
+          <DynamicIcon
+            iconName={category.icon || "tag"}
+            className="size-4 text-muted-foreground"
+          />
+          <Badge variant="secondary" className="text-xs">
+            {category.name}
+          </Badge>
+        </div>
+      );
     },
   },
   {

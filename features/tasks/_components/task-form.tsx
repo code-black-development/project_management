@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
+import DynamicIcon from "@/components/dynamic-icon";
 
 import type {
   MemberSafeDate,
@@ -346,7 +347,13 @@ const TaskForm = ({
                         <SelectContent>
                           {categories?.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
-                              {category.name}
+                              <div className="flex items-center gap-x-2">
+                                <DynamicIcon
+                                  iconName={category.icon || "tag"}
+                                  className="size-4"
+                                />
+                                {category.name}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>

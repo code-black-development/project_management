@@ -135,7 +135,7 @@ export async function generateExistingUserWelcomeTemplate(
   inviterName: string
 ) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
     return `
       <!DOCTYPE html>
@@ -177,7 +177,7 @@ export async function generateExistingUserWelcomeTemplate(
     return `
       <p>Welcome to ${workspaceName}!</p>
       <p>${inviterName} has added you to the workspace.</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/sign-in">Sign in to access your workspace</a></p>
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/sign-in">Sign in to access your workspace</a></p>
     `;
   }
 }

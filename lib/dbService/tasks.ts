@@ -44,7 +44,7 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
     };
   }
 
-  return await prisma.task.findMany({
+  const tasks = await prisma.task.findMany({
     where,
     include: {
       project: true,
@@ -54,6 +54,8 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
       category: true,
     },
   });
+  
+  return tasks;
 };
 
 export const getTasksByProjectId = async (projectId: string) => {
