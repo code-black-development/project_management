@@ -50,7 +50,13 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
             </p>
           </TaskOverviewProperty>
           <TaskOverviewProperty label="Due Date">
-            <TaskDate value={task.dueDate} className="text-sm font-medium" />
+            {task.dueDate ? (
+              <TaskDate value={task.dueDate} className="text-sm font-medium" />
+            ) : (
+              <span className="text-sm font-medium text-muted-foreground">
+                No due date
+              </span>
+            )}
           </TaskOverviewProperty>
           <TaskOverviewProperty label="Status">
             <TaskBadge variant={task.status}>

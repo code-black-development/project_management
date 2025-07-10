@@ -44,8 +44,12 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
           }
           fallbackClassName="text-[10px]"
         />
-        <div className="size-1 rounded-full bg-muted" />
-        <TaskDate value={task.dueDate!} className="text-xs" />
+        {task.dueDate && (
+          <>
+            <div className="size-1 rounded-full bg-muted" />
+            <TaskDate value={task.dueDate} className="text-xs" />
+          </>
+        )}
       </div>
       <div className="flex items-center gap-x-1.5">
         <ProjectAvatar

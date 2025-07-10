@@ -23,7 +23,9 @@ const DynamicIcon = ({ iconName, className = "size-4" }: IconProps) => {
   const pascalCaseIconName = toPascalCase(iconName);
 
   // Get the icon component from lucide-react
-  const IconComponent = (LucideIcons as any)[pascalCaseIconName] as LucideIcon;
+  const IconComponent = (LucideIcons as unknown as Record<string, LucideIcon>)[
+    pascalCaseIconName
+  ];
 
   // If icon doesn't exist, fallback to Tag icon
   if (!IconComponent) {

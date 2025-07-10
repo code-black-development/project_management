@@ -14,20 +14,32 @@ export function useCreateTask() {
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
+      console.log("useCreateTask - Sending data:", json);
       const response = await client.api.tasks.$post({ json });
 
+      console.log("useCreateTask - Response status:", response.status);
+      console.log("useCreateTask - Response ok:", response.ok);
+
       if (!response.ok) {
-        throw new Error("Failed to create task");
+        const errorData = await response.text();
+        console.log("useCreateTask - Error response:", errorData);
+        throw new Error(
+          `Failed to create task: ${response.status} - ${errorData}`
+        );
       }
-      return await response.json();
+      const result = await response.json();
+      console.log("useCreateTask - Success result:", result);
+      return result;
     },
     onSuccess: ({ data }) => {
+      console.log("useCreateTask - Success:", data);
       toast.success("Task created");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       //router.push(`/workspaces/${data.workspaceId}/task/${data.id}`);
     },
-    onError: () => {
-      toast.error("Failed to create task");
+    onError: (error) => {
+      console.error("useCreateTask - Error:", error);
+      toast.error(`Failed to create task: ${error.message}`);
     },
   });
   return mutation;

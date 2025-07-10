@@ -212,12 +212,19 @@ const TaskForm = ({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Due Date</FormLabel>
+                      <FormLabel>
+                        Due Date{" "}
+                        <span className="text-muted-foreground text-sm">
+                          (optional)
+                        </span>
+                      </FormLabel>
                       <FormControl>
                         <DatePicker
                           {...field}
-                          value={(field.value as Date) ?? undefined}
-                          placeholder="Select Due Date"
+                          value={
+                            field.value ? new Date(field.value) : undefined
+                          }
+                          placeholder="Select Due Date (optional)"
                         />
                       </FormControl>
                       <FormMessage />
@@ -366,13 +373,18 @@ const TaskForm = ({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Time Estimate</FormLabel>
+                      <FormLabel>
+                        Time Estimate{" "}
+                        <span className="text-muted-foreground text-sm">
+                          (optional)
+                        </span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           value={field.value ?? ""}
                           type="text"
-                          placeholder="2w 3d 4h 3m"
+                          placeholder="2w 3d 4h 3m (optional)"
                           className="input"
                         />
                       </FormControl>

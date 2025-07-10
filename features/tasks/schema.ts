@@ -8,22 +8,32 @@ export const createTaskSchema = z.object({
   projectId: z.string().nonempty("Project is required"),
   categoryId: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   timeEstimate: z
     .string()
-    .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" }) // 1w 2d 3h 4m
+    .nullable()
     .optional()
-    .transform((val) => val ?? null),
-  dueDate: z.string().or(z.date()),
+    .refine((val) => !val || val === "" || /^(\d+[wdhm]\s?)+$/.test(val), {
+      message: "invalid format (use: 1w 2d 3h 4m)",
+    })
+    .transform((val) => (!val || val === "" ? null : val)),
+  dueDate: z
+    .union([z.string(), z.date()])
+    .nullable()
+    .optional()
+    .transform((val) => (!val || val === "" ? null : val)),
   assigneeId: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   description: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
 });
 
 export const updateTaskSchema = z.object({
@@ -37,16 +47,57 @@ export const updateTaskSchema = z.object({
     .transform((val) => val || null),
   timeEstimate: z
     .string()
-    .regex(/^(\d+[wdhm]\s?)+$/, { message: "invalid format" })
     .optional()
-    .transform((val) => val ?? null),
-  dueDate: z.string().or(z.date()),
+    .refine((val) => !val || /^(\d+[wdhm]\s?)+$/.test(val), {
+      message: "invalid format (use: 1w 2d 3h 4m)",
+    })
+    .transform((val) => val || null),
+  dueDate: z
+    .string()
+    .or(z.date())
+    .optional()
+    .transform((val) => val || null),
   assigneeId: z
     .string()
     .optional()
     .transform((val) => val || null),
   description: z
     .string()
+    .optional()
+    .transform((val) => val || null),
+});
+
+export const patchTaskSchema = z.object({
+  name: z.string().trim().optional(),
+  status: z.nativeEnum(TaskStatus).optional(),
+  workspaceId: z.string().optional(),
+  projectId: z.string().optional(),
+  categoryId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val || null),
+  timeEstimate: z
+    .string()
+    .nullable()
+    .optional()
+    .refine((val) => !val || /^(\d+[wdhm]\s?)+$/.test(val), {
+      message: "invalid format (use: 1w 2d 3h 4m)",
+    })
+    .transform((val) => val || null),
+  dueDate: z
+    .union([z.string(), z.date()])
+    .nullable()
+    .optional()
+    .transform((val) => val || null),
+  assigneeId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val || null),
+  description: z
+    .string()
+    .nullable()
     .optional()
     .transform((val) => val || null),
 });

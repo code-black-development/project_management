@@ -13,7 +13,7 @@ import {
   updateTask,
 } from "@/lib/dbService/tasks";
 import { Hono } from "hono";
-import { taskSearchSchema } from "../schema";
+import { taskSearchSchema, createTaskSchema, patchTaskSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { string, z } from "zod";
@@ -218,67 +218,57 @@ const app = new Hono()
     };
     return c.json({ data: result });
   })
-  .patch(
-    "/:taskId",
-    //TODO: we should find out why we can't use the createTaskSchema here (400 Bad Request when we do)
-    zValidator(
-      "json",
-      z.object({
-        name: z.string().nullish(),
-        projectId: z.string().nullish(),
-        status: z.nativeEnum(TaskStatus).nullish(),
-        workspaceId: z.string().nullish(),
-        assigneeId: z.string().nullish(),
-        description: z.string().nullish(),
-        dueDate: z.string().or(z.date()).nullish(),
-        timeEstimate: z.string().nullish(),
-        categoryId: z.string().nullish(),
-      })
-    ),
-    async (c) => {
-      let {
-        name,
-        status,
-        projectId,
-        dueDate,
-        assigneeId,
-        description,
-        timeEstimate,
-        categoryId,
-      } = c.req.valid("json");
+  .patch("/:taskId", zValidator("json", patchTaskSchema), async (c) => {
+    let {
+      name,
+      status,
+      projectId,
+      dueDate,
+      assigneeId,
+      description,
+      timeEstimate,
+      categoryId,
+    } = c.req.valid("json");
 
-      const { taskId } = c.req.param();
+    const { taskId } = c.req.param();
 
-      if (dueDate instanceof String) {
-        dueDate = new Date(dueDate);
+    // Handle dueDate conversion properly
+    let dueDateValue: Date | null | undefined = undefined;
+    if (dueDate !== undefined) {
+      if (dueDate === null) {
+        dueDateValue = null;
+      } else if (dueDate instanceof Date) {
+        dueDateValue = dueDate;
+      } else if (typeof dueDate === "string") {
+        dueDateValue = new Date(dueDate);
       }
-
-      //TODO: we should check if the user is a member of the workspace and has permission
-      const taskData = {
-        ...(name && { name }),
-        ...(status && { status }),
-        ...(projectId && { projectId }),
-        ...(dueDate && { dueDate: new Date(dueDate) }),
-        ...(assigneeId && { assigneeId }),
-        ...(description && { description }),
-        ...(timeEstimate && {
-          timeEstimate: timeEstimateStringToMinutes(timeEstimate),
-        }),
-        ...(categoryId !== undefined && { categoryId: categoryId || null }),
-      };
-
-      const task = await updateTask(taskId, taskData);
-
-      const result = {
-        ...task,
-        timeEstimate: task?.timeEstimate
-          ? minutesToTimeEstimateString(task?.timeEstimate)
-          : null,
-      };
-
-      return c.json({ data: result });
     }
-  )
+
+    //TODO: we should check if the user is a member of the workspace and has permission
+    const taskData = {
+      ...(name && { name }),
+      ...(status && { status }),
+      ...(projectId && { projectId }),
+      ...(dueDateValue !== undefined && { dueDate: dueDateValue }),
+      ...(assigneeId !== undefined && { assigneeId }),
+      ...(description !== undefined && { description }),
+      ...(timeEstimate && {
+        timeEstimate: timeEstimateStringToMinutes(timeEstimate),
+      }),
+      ...(categoryId !== undefined && { categoryId: categoryId || null }),
+    };
+
+    const task = await updateTask(taskId, taskData);
+
+    const result = {
+      ...task,
+      timeEstimate: task?.timeEstimate
+        ? minutesToTimeEstimateString(task?.timeEstimate)
+        : null,
+    };
+
+    return c.json({ data: result });
+  })
   .delete("/:taskId", async (c) => {
     const user = c.get("userId");
     const { taskId } = c.req.param();
@@ -308,24 +298,10 @@ const app = new Hono()
       return c.json({ data: result });
     }
   )
-  .post(
-    "/",
-    //TODO: we should find out why we can't use the createTaskSchema here (400 Bad Request when we do)
-    zValidator(
-      "json",
-      z.object({
-        name: z.string(),
-        projectId: z.string(),
-        status: z.nativeEnum(TaskStatus),
-        workspaceId: z.string(),
-        assigneeId: z.string().nullish(),
-        description: z.string().nullish(),
-        dueDate: z.string().or(z.date()),
-        timeEstimate: z.string().nullish(),
-        categoryId: z.string().nullish(),
-      })
-    ),
-    async (c) => {
+  .post("/", zValidator("json", createTaskSchema), async (c) => {
+    try {
+      console.log("=== POST /api/tasks - Request started ===");
+
       let {
         name,
         status,
@@ -337,6 +313,18 @@ const app = new Hono()
         timeEstimate,
         categoryId,
       } = c.req.valid("json");
+
+      console.log("Validated data:", {
+        name,
+        status,
+        workspaceId,
+        projectId,
+        dueDate,
+        assigneeId,
+        description,
+        timeEstimate,
+        categoryId,
+      });
 
       //TODO: we should get the taskstatus passed and check that not just hard code TDOD
       const highestPositionTask = await getHighestPositionTask(
@@ -358,8 +346,15 @@ const app = new Hono()
           message: "You are not a member of this workspace",
         });
       }
-      if (dueDate instanceof String) {
-        dueDate = new Date(dueDate);
+
+      // Handle dueDate conversion properly
+      let dueDateValue: Date | null = null;
+      if (dueDate) {
+        if (dueDate instanceof Date) {
+          dueDateValue = dueDate;
+        } else if (typeof dueDate === "string") {
+          dueDateValue = new Date(dueDate);
+        }
       }
 
       const taskData = {
@@ -367,7 +362,7 @@ const app = new Hono()
         status,
         workspaceId,
         projectId,
-        dueDate: new Date(dueDate),
+        dueDate: dueDateValue,
         assigneeId: assigneeId ?? null,
         position: newPosition,
         description: description ?? null,
@@ -381,7 +376,17 @@ const app = new Hono()
       const task = await createTask(taskData);
 
       return c.json({ data: task });
+    } catch (error) {
+      console.error("=== POST /api/tasks - Error occurred ===");
+      console.error("Error details:", error);
+      return c.json(
+        {
+          error: "Internal server error",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+        500
+      );
     }
-  );
+  });
 
 export default app;

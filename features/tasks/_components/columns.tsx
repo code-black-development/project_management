@@ -107,7 +107,12 @@ export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
     },
     cell: ({ row }) => {
       const dueDate = row.original.dueDate;
-      return <TaskDate value={dueDate!} />;
+      if (!dueDate) {
+        return (
+          <span className="text-muted-foreground text-sm">No due date</span>
+        );
+      }
+      return <TaskDate value={dueDate} />;
     },
   },
   {

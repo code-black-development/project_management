@@ -71,13 +71,18 @@ const CustomToolbar = ({ date, onNavigate }: CustomToolbarProps) => {
 };
 
 const DataCalendar = ({ data }: DataCalendarProps) => {
+  // Filter out tasks with null dueDate
+  const tasksWithDueDates = data.filter((task) => task.dueDate !== null);
+
   const [value, setValue] = useState(
-    data.length > 0 ? new Date(data[0].dueDate) : new Date()
+    tasksWithDueDates.length > 0
+      ? new Date(tasksWithDueDates[0].dueDate!)
+      : new Date()
   );
 
-  const events = data.map((task) => ({
-    start: new Date(task.dueDate),
-    end: new Date(task.dueDate),
+  const events = tasksWithDueDates.map((task) => ({
+    start: new Date(task.dueDate!),
+    end: new Date(task.dueDate!),
     title: task.name,
     project: task.project,
     assignee: task.assignee,
