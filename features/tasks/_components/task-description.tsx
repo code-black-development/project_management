@@ -4,7 +4,9 @@ import { TaskWithUser } from "@/types/types";
 import { useUpdateTask } from "../api/use-update-task";
 import { Button } from "@/components/ui/button";
 import DottedSeparator from "@/components/dotted-separator";
-import { Textarea } from "@/components/ui/textarea";
+122333;
+import { Editor } from "@/components/editor";
+import { Preview } from "@/components/preview";
 
 interface TaskDescriptionProps {
   task: TaskWithUser;
@@ -50,13 +52,8 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
       <DottedSeparator className="my-4" />
       {isEditing ? (
         <div className="flex flex-col gap-y-4">
-          <Textarea
-            placeholder="Add a task description"
-            value={value}
-            rows={4}
-            onChange={(e) => setValue(e.target.value)}
-            disabled={isPending}
-          />
+          <Editor value={value} onChange={(e) => setValue(e)} />
+
           <Button
             size="sm"
             className="w-fit ml-auto"
@@ -67,7 +64,7 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
           </Button>
         </div>
       ) : (
-        <div>{task.description || <span>No description</span>}</div>
+        <Preview value={value} />
       )}
     </div>
   );
