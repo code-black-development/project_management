@@ -136,7 +136,7 @@ model Task {
   project      Project       @relation(fields: [projectId], references: [id])
   projectId    String
   workspaceId  String
-  dueDate      DateTime
+  dueDate      DateTime?
   status       TaskStatus    @default(TODO)
   position     Int
   timeEstimate Int? //store all values in minutes

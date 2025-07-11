@@ -245,18 +245,20 @@ const app = new Hono()
     }
 
     //TODO: we should check if the user is a member of the workspace and has permission
-    const taskData = {
-      ...(name && { name }),
-      ...(status && { status }),
-      ...(projectId && { projectId }),
-      ...(dueDateValue !== undefined && { dueDate: dueDateValue }),
-      ...(assigneeId !== undefined && { assigneeId }),
-      ...(description !== undefined && { description }),
-      ...(timeEstimate && {
-        timeEstimate: timeEstimateStringToMinutes(timeEstimate),
-      }),
-      ...(categoryId !== undefined && { categoryId: categoryId || null }),
-    };
+    const taskData: any = {};
+
+    if (name !== undefined) taskData.name = name;
+    if (status !== undefined) taskData.status = status;
+    if (projectId !== undefined) taskData.projectId = projectId;
+    if (dueDateValue !== undefined) taskData.dueDate = dueDateValue;
+    if (assigneeId !== undefined) taskData.assigneeId = assigneeId;
+    if (description !== undefined) taskData.description = description;
+    if (timeEstimate !== undefined) {
+      taskData.timeEstimate = timeEstimate
+        ? timeEstimateStringToMinutes(timeEstimate)
+        : null;
+    }
+    if (categoryId !== undefined) taskData.categoryId = categoryId;
 
     const task = await updateTask(taskId, taskData);
 

@@ -43,28 +43,32 @@ export const updateTaskSchema = z.object({
   projectId: z.string().nonempty("Project is required"),
   categoryId: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   timeEstimate: z
     .string()
+    .nullable()
     .optional()
-    .refine((val) => !val || /^(\d+[wdhm]\s?)+$/.test(val), {
+    .refine((val) => !val || val === "" || /^(\d+[wdhm]\s?)+$/.test(val), {
       message: "invalid format (use: 1w 2d 3h 4m)",
     })
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   dueDate: z
-    .string()
-    .or(z.date())
+    .union([z.string(), z.date()])
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   assigneeId: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
   description: z
     .string()
+    .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (!val || val === "" ? null : val)),
 });
 
 export const patchTaskSchema = z.object({
