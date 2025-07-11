@@ -12,6 +12,7 @@ import TaskActions from "./task-actions";
 import { TaskWithUser } from "@/types/types";
 import DynamicIcon from "@/components/dynamic-icon";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
   {
@@ -29,7 +30,17 @@ export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
     },
     cell: ({ row }) => {
       const name = row.original.name;
-      return <p className="line-clamp-1">{name}</p>;
+      const taskId = row.original.id;
+      const workspaceId = row.original.workspaceId;
+      
+      return (
+        <Link 
+          href={`/workspaces/${workspaceId}/tasks/${taskId}`}
+          className="line-clamp-1 hover:underline hover:text-blue-600 transition-colors cursor-pointer"
+        >
+          {name}
+        </Link>
+      );
     },
   },
   {
