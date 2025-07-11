@@ -5,6 +5,7 @@ import CreateTaskModal from "@/features/tasks/_components/create-task-modal";
 import CreateTaskWorklogModal from "@/features/tasks/_components/create-task-worklog-modal";
 import EditTaskModal from "@/features/tasks/_components/edit-task-modal";
 import CreateWorkspaceModal from "@/features/workspaces/_components/create-workspace-modal";
+import UserSettingsModal from "@/features/auth/components/user-settings-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <CreateTaskModal />
       <EditTaskModal />
       <CreateTaskWorklogModal />
+      <UserSettingsModal />
       <div className="flex w-full h-full">
         <div className="fixed left-0 top-0 hidden lg:block h-full lg:w-[264px] overflow-y-auto">
           <Sidebar />

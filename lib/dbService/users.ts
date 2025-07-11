@@ -1,14 +1,5 @@
 import prisma from "@/prisma/prisma";
 
-/* export const authUser = async (email: string, password: string) => {
-  return await prisma.user.findFirst({
-    where: {
-      email,
-      password,
-    },
-  });
-}; */
-
 export const getUserByEmail = async (email: string) => {
   return await prisma.user.findUnique({
     where: {
@@ -30,6 +21,18 @@ export const getUserById = async (id: string) => {
   return await prisma.user.findUnique({
     where: {
       id,
+    },
+  });
+};
+
+export const updateUser = async (id: string, data: { name?: string }) => {
+  return await prisma.user.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      name: true,
+      email: true,
     },
   });
 };
