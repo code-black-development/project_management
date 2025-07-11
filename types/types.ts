@@ -11,6 +11,8 @@ import {
 export type TaskWithUser = TaskSafeDate & {
   assignee: (MemberSafeDate & { user: UserSafeDate }) | null;
 } & {
+  createdBy: MemberSafeDate & { user: UserSafeDate };
+} & {
   project: ProjectSafeDate;
 } & { worklogs: WorklogType[] } & {
   children: TaskWithUser[];

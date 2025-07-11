@@ -49,6 +49,17 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 "unassigned"}
             </p>
           </TaskOverviewProperty>
+          <TaskOverviewProperty label="Created By">
+            <MemberAvatar
+              name={task.createdBy?.user.name || undefined}
+              className="size-6"
+            />
+            <p className="text-sm font-medium">
+              {task.createdBy?.user.name ||
+                task.createdBy?.user.email ||
+                "Unknown"}
+            </p>
+          </TaskOverviewProperty>
           <TaskOverviewProperty label="Due Date">
             {task.dueDate ? (
               <TaskDate value={task.dueDate} className="text-sm font-medium" />

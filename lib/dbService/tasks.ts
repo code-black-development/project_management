@@ -44,18 +44,17 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
     };
   }
 
-  const tasks = await prisma.task.findMany({
+  return await prisma.task.findMany({
     where,
     include: {
       project: true,
       assignee: { include: { user: true } },
+      createdBy: { include: { user: true } },
       worklogs: true,
       assets: true,
       category: true,
     },
   });
-  
-  return tasks;
 };
 
 export const getTasksByProjectId = async (projectId: string) => {
@@ -75,6 +74,7 @@ export const getTaskById = async (taskId: string) => {
       include: {
         project: true,
         assignee: { include: { user: true } },
+        createdBy: { include: { user: true } },
         worklogs: true,
         children: { include: { children: true } },
         assets: true,
@@ -97,6 +97,7 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
     include: {
       project: true,
       assignee: { include: { user: true } },
+      createdBy: { include: { user: true } },
       category: true,
     },
   });
