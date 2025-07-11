@@ -11,12 +11,13 @@ import {
 import { signOut } from "next-auth/react";
 import DottedSeparator from "@/components/dotted-separator";
 import { LogOut, User } from "lucide-react";
-import Link from "next/link";
+import useUserSettingsModal from "../hooks/use-user-settings-modal";
 
 interface UserButtonProps {}
 
 const UserButton = ({}: UserButtonProps) => {
   const { data: session } = useSession();
+  const { open } = useUserSettingsModal();
 
   return (
     <DropdownMenu modal={false}>
@@ -41,11 +42,12 @@ const UserButton = ({}: UserButtonProps) => {
             <p className="text-xs text-neutral-500"> {session?.user?.email}</p>
           </div>
           <DottedSeparator className="mb-1" />
-          <DropdownMenuItem className="h-10 flex flex-row gap-2 items-center justify-center font-medium">
-            <Link href="/user/profile" className="flex gap-2">
-              <User className="size-4 mr-2" />
-              Edit Profile
-            </Link>
+          <DropdownMenuItem
+            className="h-10 flex flex-row gap-2 items-center justify-center font-medium cursor-pointer"
+            onClick={open}
+          >
+            <User className="size-4 mr-2" />
+            Edit Profile
           </DropdownMenuItem>
           <DropdownMenuItem
             className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer"

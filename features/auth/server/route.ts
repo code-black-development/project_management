@@ -6,55 +6,92 @@ import bcrypt from "bcrypt";
 
 import { z } from "zod";
 
-const app = new Hono().post(
-  "/register",
-  zValidator(
-    "json",
-    z.object({
-      password: z.string(),
-      inviteCode: z.string(),
-    })
-  ),
-  async (c) => {
-    const { password, inviteCode } = c.req.valid("json");
-    // check for invitation code
-    const invitee = await getWorkspaceInvite(inviteCode);
-    if (!invitee) {
-      return c.json({ error: "Invalid invite code" }, 400);
+const app = new Hono()
+  .post(
+    "/register",
+    zValidator(
+      "json",
+      z.object({
+        password: z.string(),
+        inviteCode: z.string(),
+      })
+    ),
+    async (c) => {
+      const { password, inviteCode } = c.req.valid("json");
+      // check for invitation code
+      const invitee = await getWorkspaceInvite(inviteCode);
+      if (!invitee) {
+        return c.json({ error: "Invalid invite code" }, 400);
+      }
+      const user = await prisma.$transaction(async (tx) => {
+        //add user to users table
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await tx.user.create({
+          data: {
+            email: invitee.inviteeEmail,
+            password: hashedPassword,
+          },
+        });
+        //add user to workspace members table
+        await tx.member.create({
+          data: {
+            userId: user.id,
+            workspaceId: invitee.workspaceId,
+          },
+        });
+
+        //remove entry from invites table
+        await tx.workspaceInvites.delete({
+          where: {
+            code: inviteCode,
+          },
+        });
+
+        return user;
+      });
+      return c.json({ data: user });
     }
-    const user = await prisma.$transaction(async (tx) => {
-      //add user to users table
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await tx.user.create({
-        data: {
-          email: invitee.inviteeEmail,
-          password: hashedPassword,
-        },
-      });
-      //add user to workspace members table
-      await tx.member.create({
-        data: {
-          userId: user.id,
-          workspaceId: invitee.workspaceId,
-        },
-      });
+  )
+  .patch(
+    "/profile",
+    zValidator(
+      "json",
+      z.object({
+        name: z.string().min(1, "Name is required"),
+      })
+    ),
+    async (c) => {
+      console.log("=== PROFILE PATCH ENDPOINT ===");
+      const { name } = c.req.valid("json");
+      console.log("Request name:", name);
+      
+      const userId = c.get("userId");
+      console.log("User ID from context:", userId);
 
-      //remove entry from invites table
-      await tx.workspaceInvites.delete({
-        where: {
-          code: inviteCode,
-        },
-      });
+      if (!userId) {
+        console.log("No userId in context, returning 401");
+        return c.json({ error: "Unauthorized" }, 401);
+      }
 
-      return user;
-    });
-    return c.json({ 
-      data: { 
-        user,
-        email: invitee.inviteeEmail // Include email for auto-login
-      } 
-    });
-  }
-);
+      try {
+        console.log("Attempting to update user in database...");
+        const user = await prisma.user.update({
+          where: { id: userId },
+          data: { name },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        });
+
+        console.log("User updated successfully:", user);
+        return c.json({ data: user });
+      } catch (error) {
+        console.error("Failed to update user profile:", error);
+        return c.json({ error: "Failed to update profile" }, 500);
+      }
+    }
+  );
 
 export default app;
