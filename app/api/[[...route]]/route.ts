@@ -5,6 +5,7 @@ import members from "@/features/members/server/route";
 import projects from "@/features/projects/server/route";
 import tasks from "@/features/tasks/server/route";
 import auth from "@/features/auth/server/route";
+import reports from "@/features/reports/server/route";
 import { authMiddleware } from "@/features/auth/server/authMiddleware";
 
 //export const runtime = "nodejs";
@@ -33,7 +34,8 @@ const routes = app
   .route("/members", members)
   .route("/projects", projects)
   .route("/tasks", tasks)
-  .route("/users", auth);
+  .route("/users", auth)
+  .route("/reports", reports);
 
 export const POST = handle(app);
 export const GET = handle(app);

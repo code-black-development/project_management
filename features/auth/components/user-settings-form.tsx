@@ -57,13 +57,13 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
       {
         onSuccess: async () => {
           toast.success("Profile updated successfully");
-          
+
           // Update the session with new data - this will trigger the jwt callback
           await update({ name: values.name });
-          
+
           // Reset form to clear dirty state
           form.reset({ name: values.name });
-          
+
           // Close the modal
           onCancel?.();
         },

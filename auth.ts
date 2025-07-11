@@ -81,14 +81,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub; // ✅ Add `id` from token
-        
+
         // Fetch the latest user data from the database to ensure session is up-to-date
         try {
           const user = await prisma.user.findUnique({
             where: { id: token.sub },
             select: { id: true, email: true, name: true },
           });
-          
+
           if (user) {
             session.user.name = user.name;
             session.user.email = user.email;
@@ -103,7 +103,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.sub = user.id; // ✅ Store `id` in token
       }
-      
+
       // When session is updated, refresh the token with latest user data
       if (trigger === "update" && session?.name) {
         try {
@@ -111,7 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { id: token.sub },
             select: { id: true, email: true, name: true },
           });
-          
+
           if (dbUser) {
             token.name = dbUser.name;
             token.email = dbUser.email;
@@ -120,7 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.error("Error updating token with user data:", error);
         }
       }
-      
+
       return token;
     },
   },
