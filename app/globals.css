@@ -105,3 +105,66 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Dark mode styles for Quill editor */
+.dark .ql-editor {
+  color: #ffffff !important;
+  background-color: #111827 !important;
+}
+
+.dark .ql-toolbar {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .ql-container {
+  border-color: #374151 !important;
+  background-color: #111827 !important;
+}
+
+.dark .ql-snow .ql-stroke {
+  stroke: #d1d5db !important;
+}
+
+.dark .ql-snow .ql-fill {
+  fill: #d1d5db !important;
+}
+
+.dark .ql-snow .ql-picker-label {
+  color: #d1d5db !important;
+}
+
+.dark .ql-snow .ql-picker-options {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .ql-snow .ql-picker-item {
+  color: #d1d5db !important;
+}
+
+.dark .ql-snow .ql-picker-item:hover {
+  background-color: #374151 !important;
+}
+
+.dark .ql-snow .ql-tooltip {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+.dark .ql-snow .ql-tooltip input {
+  background-color: #111827 !important;
+  color: #ffffff !important;
+  border-color: #374151 !important;
+}
+
+/* Bubble theme dark mode */
+.dark .ql-bubble .ql-editor {
+  color: #ffffff !important;
+}
+
+.dark .ql-bubble .ql-tooltip {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
