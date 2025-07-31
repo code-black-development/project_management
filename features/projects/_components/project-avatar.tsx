@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { usePresignedUrl } from "@/hooks/use-presigned-url";
 
 interface ProjectAvatarProps {
   image?: string;
@@ -14,13 +15,23 @@ const ProjectAvatar = ({
   name,
   fallbackClassName,
 }: ProjectAvatarProps) => {
-  if (image) {
+  const { presignedUrl, loading } = usePresignedUrl(image);
+
+  if (image && presignedUrl && !loading) {
     return (
       <div
         className={cn("size-5 relative rounded-md overflow-hidden", className)}
       >
-        {<Image src={`/${image}`} alt={name} fill className="object-cover" />}
+        <Image src={presignedUrl} alt={name} fill className="object-cover" />
       </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div
+        className={cn("size-5 relative rounded-md overflow-hidden bg-gray-200 animate-pulse", className)}
+      />
     );
   }
   return (

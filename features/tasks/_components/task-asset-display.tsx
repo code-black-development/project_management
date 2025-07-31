@@ -2,6 +2,7 @@ import { AssetSafeDate } from "@/types/types";
 import { File, TrashIcon } from "lucide-react";
 import { useDeleteAsset } from "../api/use-delete-asset";
 import { useConfirm } from "@/hooks/use-confirm";
+import { usePresignedUrl } from "@/hooks/use-presigned-url";
 
 interface TaskAssetDisplayProps {
   taskAsset: AssetSafeDate;
@@ -9,6 +10,7 @@ interface TaskAssetDisplayProps {
 
 const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
   const { mutate: deleteAsset } = useDeleteAsset();
+  const { presignedUrl, loading } = usePresignedUrl(taskAsset.assetUrl);
 
   const [ConfirmDialog, confirm] = useConfirm(
     "Delete File",
@@ -32,12 +34,16 @@ const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
     >
       <ConfirmDialog />
       {isImage ? (
-        <img
-          src={`/${taskAsset.assetUrl}`}
-          alt=""
-          className="w-24 h-24 cursor-pointer hover:opacity-50"
-          onClick={() => {}}
-        />
+        loading ? (
+          <div className="w-24 h-24 bg-gray-200 animate-pulse rounded" />
+        ) : (
+          <img
+            src={presignedUrl || ''}
+            alt=""
+            className="w-24 h-24 cursor-pointer hover:opacity-50 object-cover rounded"
+            onClick={() => {}}
+          />
+        )
       ) : (
         <File className="w-24 h-24 cursor-pointer hover:opacity-50" />
       )}
