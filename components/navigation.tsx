@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { SettingsIcon, UsersIcon, BarChart3Icon } from "lucide-react";
+import { SettingsIcon, UsersIcon, BarChart3Icon, FileTextIcon } from "lucide-react";
 import Link from "next/link";
 import {
   GoCheckCircle,
@@ -19,6 +19,12 @@ const routes = [
     activeIcon: GoCheckCircleFill,
     label: "My Tasks",
     href: "/tasks",
+  },
+  {
+    icon: FileTextIcon,
+    activeIcon: FileTextIcon,
+    label: "Documents",
+    href: "/documents",
   },
   {
     icon: SettingsIcon,

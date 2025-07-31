@@ -45,11 +45,11 @@ const app = new Hono()
     const userId = c.get("userId");
 
     let fileUrl: string | null = null;
-    
+
     // Upload image to S3 if provided
     if (image instanceof File && image.size > 0) {
       try {
-        const uploadResult = await uploadToS3(image, 'workspaces', image.name);
+        const uploadResult = await uploadToS3(image, "workspaces", image.name);
         fileUrl = uploadResult.url;
       } catch (error) {
         console.error("Failed to upload image:", error);
@@ -94,7 +94,11 @@ const app = new Hono()
           }
 
           // Upload new image to S3
-          const uploadResult = await uploadToS3(image, 'workspaces', image.name);
+          const uploadResult = await uploadToS3(
+            image,
+            "workspaces",
+            image.name
+          );
           fileUrl = uploadResult.url;
         } catch (error) {
           console.error("Failed to upload image:", error);
@@ -129,7 +133,7 @@ const app = new Hono()
 
     // Get existing workspace to check for image cleanup
     const existingWorkspace = await getWorkspaceById(workspaceId);
-    
+
     // Delete image from S3 if it exists
     if (existingWorkspace?.image) {
       try {
