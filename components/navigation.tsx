@@ -1,6 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { SettingsIcon, UsersIcon, BarChart3Icon, FileTextIcon } from "lucide-react";
+import {
+  SettingsIcon,
+  UsersIcon,
+  BarChart3Icon,
+  FileTextIcon,
+} from "lucide-react";
 import Link from "next/link";
 import {
   GoCheckCircle,

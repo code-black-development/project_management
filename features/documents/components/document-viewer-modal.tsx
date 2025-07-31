@@ -32,7 +32,11 @@ interface DocumentViewerModalProps {
   } | null;
 }
 
-const DocumentViewerModal = ({ isOpen, onClose, document }: DocumentViewerModalProps) => {
+const DocumentViewerModal = ({
+  isOpen,
+  onClose,
+  document,
+}: DocumentViewerModalProps) => {
   const { presignedUrl, loading } = usePresignedUrl(document?.assetUrl);
 
   if (!document) return null;
@@ -95,7 +99,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document }: DocumentViewerModalP
             <Badge variant="secondary">Task</Badge>
             <span>{document.task.name}</span>
           </div>
-          
+
           {document.task.project && (
             <div className="flex items-center gap-2">
               <ProjectAvatar
@@ -106,9 +110,10 @@ const DocumentViewerModal = ({ isOpen, onClose, document }: DocumentViewerModalP
               <span>{document.task.project.name}</span>
             </div>
           )}
-          
+
           <div>
-            Uploaded: {format(new Date(document.createdAt), "MMM d, yyyy 'at' h:mm a")}
+            Uploaded:{" "}
+            {format(new Date(document.createdAt), "MMM d, yyyy 'at' h:mm a")}
           </div>
         </div>
 
@@ -142,7 +147,9 @@ const DocumentViewerModal = ({ isOpen, onClose, document }: DocumentViewerModalP
                 </video>
               ) : (
                 <div className="flex flex-col items-center justify-center h-96 text-gray-500">
-                  <p className="mb-4">Preview not available for this file type.</p>
+                  <p className="mb-4">
+                    Preview not available for this file type.
+                  </p>
                   <div className="flex gap-2">
                     <Button onClick={handleDownload}>Download to view</Button>
                     <Button variant="outline" onClick={handleOpenInNewTab}>

@@ -30,11 +30,12 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
 
   const getFileIcon = (mimeType: string | null) => {
     if (!mimeType) return FileIcon;
-    
+
     if (mimeType.startsWith("image/")) return ImageIcon;
     if (mimeType.startsWith("video/")) return VideoIcon;
-    if (mimeType.includes("pdf") || mimeType.includes("text")) return FileTextIcon;
-    
+    if (mimeType.includes("pdf") || mimeType.includes("text"))
+      return FileTextIcon;
+
     return FileIcon;
   };
 
@@ -42,7 +43,10 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
   const FileIconComponent = getFileIcon(document.assetType);
 
   return (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="space-y-3">
           {/* Thumbnail */}
@@ -62,7 +66,10 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
 
           {/* File name */}
           <div>
-            <h3 className="font-medium text-sm truncate" title={document.fileName}>
+            <h3
+              className="font-medium text-sm truncate"
+              title={document.fileName}
+            >
               {document.fileName}
             </h3>
           </div>
@@ -73,11 +80,14 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
               <Badge variant="secondary" className="text-xs">
                 Task
               </Badge>
-              <span className="text-xs text-gray-600 truncate" title={document.task.name}>
+              <span
+                className="text-xs text-gray-600 truncate"
+                title={document.task.name}
+              >
                 {document.task.name}
               </span>
             </div>
-            
+
             {document.task.project && (
               <div className="flex items-center gap-2">
                 <ProjectAvatar
@@ -85,7 +95,10 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
                   name={document.task.project.name}
                   className="size-4"
                 />
-                <span className="text-xs text-gray-600 truncate" title={document.task.project.name}>
+                <span
+                  className="text-xs text-gray-600 truncate"
+                  title={document.task.project.name}
+                >
                   {document.task.project.name}
                 </span>
               </div>

@@ -3,7 +3,10 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { authMiddleware } from "@/features/auth/server/authMiddleware";
 import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
-import { getWorkspaceDocuments, getDocumentById } from "@/lib/dbService/documents";
+import {
+  getWorkspaceDocuments,
+  getDocumentById,
+} from "@/lib/dbService/documents";
 
 const app = new Hono()
   .get(

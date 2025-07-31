@@ -16,10 +16,11 @@ const DocumentsClient = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredDocuments = documents?.filter((doc) =>
-    doc.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.task.project?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDocuments = documents?.filter(
+    (doc) =>
+      doc.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.task.project?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -93,10 +94,9 @@ const DocumentsClient = () => {
               {searchTerm ? "No documents found" : "No documents uploaded yet"}
             </h3>
             <p className="text-gray-500 text-center max-w-md">
-              {searchTerm 
+              {searchTerm
                 ? "Try adjusting your search terms or clear the search to see all documents."
-                : "Documents uploaded to tasks will appear here. Upload files to tasks to get started."
-              }
+                : "Documents uploaded to tasks will appear here. Upload files to tasks to get started."}
             </p>
           </CardContent>
         </Card>
