@@ -61,20 +61,14 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      console.log("=== PROFILE PATCH ENDPOINT ===");
       const { name } = c.req.valid("json");
-      console.log("Request name:", name);
-      
       const userId = c.get("userId");
-      console.log("User ID from context:", userId);
 
       if (!userId) {
-        console.log("No userId in context, returning 401");
         return c.json({ error: "Unauthorized" }, 401);
       }
 
       try {
-        console.log("Attempting to update user in database...");
         const user = await prisma.user.update({
           where: { id: userId },
           data: { name },
@@ -85,7 +79,6 @@ const app = new Hono()
           },
         });
 
-        console.log("User updated successfully:", user);
         return c.json({ data: user });
       } catch (error) {
         console.error("Failed to update user profile:", error);

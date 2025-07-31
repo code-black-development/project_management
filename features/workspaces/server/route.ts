@@ -15,7 +15,7 @@ import {
 } from "@/lib/dbService/workspaces";
 import { createWorkspaceInvites } from "@/lib/dbService/workspace-invites";
 import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
-import { uploadImageToLocalStorage } from "@/lib/image-upload";
+import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import { TaskStatus } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import {
@@ -43,13 +43,20 @@ const app = new Hono()
   .post("/", zValidator("form", createWorkspaceSchema), async (c) => {
     const { name, image } = c.req.valid("form");
     const userId = c.get("userId");
-    // console.log("name", name);
-    //console.log("image", image);
-    // console.log("user id", userId);
+
     let fileUrl: string | null = null;
-    if (image instanceof File) {
-      fileUrl = await uploadImageToLocalStorage(image);
+    
+    // Upload image to S3 if provided
+    if (image instanceof File && image.size > 0) {
+      try {
+        const uploadResult = await uploadToS3(image, 'workspaces', image.name);
+        fileUrl = uploadResult.url;
+      } catch (error) {
+        console.error("Failed to upload image:", error);
+        return c.json({ error: "Failed to upload image" }, 500);
+      }
     }
+
     console.log("file url", fileUrl);
     const workspace = await createWorkspace(name, fileUrl, userId!);
 
@@ -65,20 +72,52 @@ const app = new Hono()
 
       console.log("name", name);
       console.log("image", image);
-
       console.log("user id", userId);
 
-      let fileUrl: string | null;
+      // Get existing workspace to check for old image
+      const existingWorkspace = await getWorkspaceById(workspaceId);
+      if (!existingWorkspace) {
+        return c.json({ error: "Workspace not found" }, 404);
+      }
 
-      if (image instanceof File) {
-        fileUrl = await uploadImageToLocalStorage(image);
-      } else {
+      let fileUrl: string | null = existingWorkspace.image;
+
+      // Handle image update
+      if (image instanceof File && image.size > 0) {
+        try {
+          // Delete old image from S3 if it exists
+          if (existingWorkspace.image) {
+            const oldKey = extractS3KeyFromUrl(existingWorkspace.image);
+            if (oldKey) {
+              await deleteFromS3(oldKey);
+            }
+          }
+
+          // Upload new image to S3
+          const uploadResult = await uploadToS3(image, 'workspaces', image.name);
+          fileUrl = uploadResult.url;
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          return c.json({ error: "Failed to upload image" }, 500);
+        }
+      } else if (!image) {
+        // If no image provided, remove existing image
+        if (existingWorkspace.image) {
+          try {
+            const oldKey = extractS3KeyFromUrl(existingWorkspace.image);
+            if (oldKey) {
+              await deleteFromS3(oldKey);
+            }
+          } catch (error) {
+            console.error("Failed to delete old image:", error);
+          }
+        }
         fileUrl = null;
       }
 
       const response = await updateWorkspace(userId, workspaceId, {
         name,
-        ...((image instanceof File || !image) && { image: fileUrl }),
+        image: fileUrl,
       });
 
       return c.json({ data: response });
@@ -87,6 +126,23 @@ const app = new Hono()
   .delete("/:workspaceId", async (c) => {
     const userId = c.get("userId");
     const { workspaceId } = c.req.param();
+
+    // Get existing workspace to check for image cleanup
+    const existingWorkspace = await getWorkspaceById(workspaceId);
+    
+    // Delete image from S3 if it exists
+    if (existingWorkspace?.image) {
+      try {
+        const key = extractS3KeyFromUrl(existingWorkspace.image);
+        if (key) {
+          await deleteFromS3(key);
+        }
+      } catch (error) {
+        console.error("Failed to delete image from S3:", error);
+        // Don't fail the deletion if S3 cleanup fails
+      }
+    }
+
     const workspace = await deleteWorkspace(workspaceId, userId);
     return c.json({ data: workspace });
   })

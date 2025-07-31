@@ -287,6 +287,14 @@ export const deleteTaskAsset = async (assetId: string) => {
   });
 };
 
+export const getTaskAssetById = async (assetId: string) => {
+  return await prisma.taskAsset.findUnique({
+    where: {
+      id: assetId,
+    },
+  });
+};
+
 export const getTaskCategories = async () => {
   return await prisma.taskCategory.findMany({
     orderBy: {

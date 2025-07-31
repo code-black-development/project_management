@@ -5,6 +5,7 @@ import {
   deleteLinkableTasks,
   deleteTask,
   deleteTaskAsset,
+  getTaskAssetById,
   getHighestPositionTask,
   getLinkableTasks,
   getTaskById,
@@ -24,8 +25,7 @@ import {
 import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
 import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
-import { join } from "path";
-import fs from "fs";
+import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import { TaskAssetFile } from "../_components/task-assets";
 
 const TaskAssetSchema = z.object({
@@ -41,18 +41,26 @@ const app = new Hono()
   })
   .delete("/assets/:assetId", async (c) => {
     const { assetId } = c.req.param();
+    
+    // Get the asset to find the S3 key before deleting
+    const asset = await getTaskAssetById(assetId);
+    if (asset?.assetUrl) {
+      try {
+        const key = extractS3KeyFromUrl(asset.assetUrl);
+        if (key) {
+          await deleteFromS3(key);
+        }
+      } catch (error) {
+        console.error("Failed to delete asset from S3:", error);
+        // Don't fail the deletion if S3 cleanup fails
+      }
+    }
+    
     const deletedAsset = await deleteTaskAsset(assetId);
     return c.json({ data: deletedAsset });
   })
   .post(
     "/assets",
-    /* zValidator(
-      "json",
-      z.object({
-        files: z.any(), //array(TaskAssetSchema),
-        taskId: z.string(),
-      })
-    ), */
     async (c) => {
       try {
         const formData = await c.req.formData();
@@ -64,26 +72,22 @@ const app = new Hono()
           return c.json({ message: "No files or taskId provided" }, 400);
         }
 
-        const uploadDir = `uploaded_files/tasks/${taskId}`;
-
         const uploadedFiles: TaskAssetFile[] = [];
 
         for (const file of files) {
-          const buffer = Buffer.from(await file.arrayBuffer());
-          const filePath = join(process.cwd(), "public", uploadDir);
-
-          // Ensure task directory exists
-          if (!fs.existsSync(filePath)) {
-            fs.mkdirSync(filePath, { recursive: true });
+          try {
+            // Upload file to S3
+            const uploadResult = await uploadToS3(file, 'task-assets', file.name);
+            
+            uploadedFiles.push({
+              name: file.name,
+              file: uploadResult.url,
+              type: file.type,
+            });
+          } catch (error) {
+            console.error(`Failed to upload file ${file.name}:`, error);
+            return c.json({ error: `Failed to upload file ${file.name}` }, 500);
           }
-
-          fs.writeFileSync(join(filePath, file.name), buffer);
-
-          uploadedFiles.push({
-            name: file.name,
-            file: join(uploadDir, file.name),
-            type: file.type,
-          });
         }
 
         await createTaskAssets(taskId, uploadedFiles);
