@@ -41,7 +41,7 @@ const app = new Hono()
   })
   .delete("/assets/:assetId", async (c) => {
     const { assetId } = c.req.param();
-    
+
     // Get the asset to find the S3 key before deleting
     const asset = await getTaskAssetById(assetId);
     if (asset?.assetUrl) {
@@ -55,49 +55,46 @@ const app = new Hono()
         // Don't fail the deletion if S3 cleanup fails
       }
     }
-    
+
     const deletedAsset = await deleteTaskAsset(assetId);
     return c.json({ data: deletedAsset });
   })
-  .post(
-    "/assets",
-    async (c) => {
-      try {
-        const formData = await c.req.formData();
+  .post("/assets", async (c) => {
+    try {
+      const formData = await c.req.formData();
 
-        const taskId = formData.get("taskId") as string;
-        const files = formData.getAll("files") as File[];
+      const taskId = formData.get("taskId") as string;
+      const files = formData.getAll("files") as File[];
 
-        if (!taskId || files.length === 0) {
-          return c.json({ message: "No files or taskId provided" }, 400);
-        }
-
-        const uploadedFiles: TaskAssetFile[] = [];
-
-        for (const file of files) {
-          try {
-            // Upload file to S3
-            const uploadResult = await uploadToS3(file, 'task-assets', file.name);
-            
-            uploadedFiles.push({
-              name: file.name,
-              file: uploadResult.url,
-              type: file.type,
-            });
-          } catch (error) {
-            console.error(`Failed to upload file ${file.name}:`, error);
-            return c.json({ error: `Failed to upload file ${file.name}` }, 500);
-          }
-        }
-
-        await createTaskAssets(taskId, uploadedFiles);
-        return c.json({ data: taskId });
-      } catch (e) {
-        console.error(e);
-        return c.json({ data: e });
+      if (!taskId || files.length === 0) {
+        return c.json({ message: "No files or taskId provided" }, 400);
       }
+
+      const uploadedFiles: TaskAssetFile[] = [];
+
+      for (const file of files) {
+        try {
+          // Upload file to S3
+          const uploadResult = await uploadToS3(file, "task-assets", file.name);
+
+          uploadedFiles.push({
+            name: file.name,
+            file: uploadResult.url,
+            type: file.type,
+          });
+        } catch (error) {
+          console.error(`Failed to upload file ${file.name}:`, error);
+          return c.json({ error: `Failed to upload file ${file.name}` }, 500);
+        }
+      }
+
+      await createTaskAssets(taskId, uploadedFiles);
+      return c.json({ data: taskId });
+    } catch (e) {
+      console.error(e);
+      return c.json({ data: e });
     }
-  )
+  })
   .delete(
     "/children",
     zValidator(
