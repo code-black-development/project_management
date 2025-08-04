@@ -8,9 +8,15 @@ import { useRouter } from "next/navigation";
 type ResponseType = InferResponseType<(typeof client.api.tasks)["$post"], 200>;
 type RequestType = InferRequestType<(typeof client.api.tasks)["$post"]>;
 
-export function useCreateTask() {
+interface UseCreateTaskOptions {
+  redirectOnSuccess?: boolean;
+  onSuccess?: () => void;
+}
+
+export function useCreateTask(options: UseCreateTaskOptions = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { redirectOnSuccess = true, onSuccess } = options;
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
@@ -32,10 +38,22 @@ export function useCreateTask() {
       return result;
     },
     onSuccess: ({ data }) => {
-      console.log("useCreateTask - Success:", data);
       toast.success("Task created");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      //router.push(`/workspaces/${data.workspaceId}/task/${data.id}`);
+      
+      // Call the provided onSuccess callback first
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Redirect to task detail page for new tasks
+      if (redirectOnSuccess) {
+        const redirectUrl = `/workspaces/${data.workspaceId}/tasks/${data.id}`;
+        // Small delay to ensure modal closes first
+        setTimeout(() => {
+          router.push(redirectUrl);
+        }, 100);
+      }
     },
     onError: (error) => {
       console.error("useCreateTask - Error:", error);

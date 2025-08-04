@@ -75,9 +75,17 @@ const TaskForm = ({
 
   const router = useRouter();
 
+  const handleFormSuccess = () => {
+    form.reset();
+    onCancel?.();
+  };
+
   const { mutate, isPending } = initialValues
     ? useUpdateTask()
-    : useCreateTask();
+    : useCreateTask({ 
+        redirectOnSuccess: true,
+        onSuccess: handleFormSuccess
+      });
 
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask();
 
@@ -134,13 +142,10 @@ const TaskForm = ({
     mutate(
       //@ts-ignore
       payload,
-
-      {
-        onSuccess: () => {
-          form.reset();
-          onCancel?.();
-        },
-      }
+      // Only add onSuccess for updates since creates are handled in the hook
+      initialValues ? {
+        onSuccess: handleFormSuccess
+      } : undefined
     );
   };
 
