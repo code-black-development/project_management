@@ -15,7 +15,6 @@ const MemberAvatar = ({
   name = "unassigned",
   fallbackClassName,
 }: MemberAvatarProps) => {
-  console.log("name: ", name);
   const { presignedUrl, loading } = usePresignedUrl(image);
 
   if (image && presignedUrl && !loading) {

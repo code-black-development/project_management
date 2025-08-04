@@ -24,6 +24,7 @@ const UserButton = ({}: UserButtonProps) => {
       <DropdownMenuTrigger className="outline-none relative">
         <MemberAvatar
           name={session?.user?.name || "U"}
+          image={session?.user?.image || undefined}
           className="size-10 hover:opacity-75 transition"
         />
       </DropdownMenuTrigger>
@@ -34,7 +35,10 @@ const UserButton = ({}: UserButtonProps) => {
         sideOffset={10}
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <MemberAvatar name={session?.user?.name || "U"} />
+          <MemberAvatar 
+            name={session?.user?.name || "U"} 
+            image={session?.user?.image || undefined}
+          />
           <div className="flex flex-col items-center justify-center">
             <p className="text-sm text-neutral-900 font-medium">
               {session?.user?.name || "User"}

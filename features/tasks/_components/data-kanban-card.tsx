@@ -36,26 +36,38 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
       )}
 
       <DottedSeparator />
+      {/* Due Date */}
+      {task.dueDate && (
+        <div className="flex items-center gap-x-1.5">
+          <span className="text-xs text-muted-foreground">Due date:</span>
+          <TaskDate value={task.dueDate} className="text-xs" />
+        </div>
+      )}
+      
+      {/* Assignee */}
       <div className="flex items-center gap-x-1.5">
         <MemberAvatar
           name={
             (task.assignee?.user?.name ?? task.assignee?.user.email) ||
             "unassigned"
           }
+          image={task.assignee?.user?.image || undefined}
           fallbackClassName="text-[10px]"
+          className="size-5"
         />
-        {task.dueDate && (
-          <>
-            <div className="size-1 rounded-full bg-muted" />
-            <TaskDate value={task.dueDate} className="text-xs" />
-          </>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {(task.assignee?.user?.name ?? task.assignee?.user.email) ||
+            "Unassigned"}
+        </span>
       </div>
+      
+      {/* Project */}
       <div className="flex items-center gap-x-1.5">
         <ProjectAvatar
           name={task.project.name || "unassigned"}
           image={task.project.image || undefined}
           fallbackClassName="text-[10px]"
+          className="size-5"
         />
         <span className="text-xs text-muted-foreground">
           {task.project.name}

@@ -3,6 +3,7 @@ import prisma from "@/prisma/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import bcrypt from "bcrypt";
+import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 
 import { z } from "zod";
 
@@ -54,14 +55,7 @@ const app = new Hono()
   )
   .patch(
     "/profile",
-    zValidator(
-      "json",
-      z.object({
-        name: z.string().min(1, "Name is required"),
-      })
-    ),
     async (c) => {
-      const { name } = c.req.valid("json");
       const userId = c.get("userId");
 
       if (!userId) {
@@ -69,13 +63,68 @@ const app = new Hono()
       }
 
       try {
+        const formData = await c.req.formData();
+        const name = formData.get("name") as string;
+        const imageFile = formData.get("image") as File | null;
+
+        if (!name || name.trim().length === 0) {
+          return c.json({ error: "Name is required" }, 400);
+        }
+
+        // Get current user data to check for existing image
+        const currentUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { image: true },
+        });
+
+        let imageUrl: string | null = currentUser?.image || null;
+
+        // Handle image upload/update
+        if (imageFile && imageFile.size > 0) {
+          // Delete old image from S3 if it exists
+          if (currentUser?.image) {
+            try {
+              const oldKey = extractS3KeyFromUrl(currentUser.image);
+              if (oldKey) {
+                await deleteFromS3(oldKey);
+              }
+            } catch (error) {
+              console.error("Failed to delete old profile image from S3:", error);
+              // Don't fail the update if S3 cleanup fails
+            }
+          }
+
+          // Upload new image to S3
+          const uploadResult = await uploadToS3(imageFile, "profile-images", imageFile.name);
+          imageUrl = uploadResult.key; // Store S3 key instead of full URL
+        }
+
+        // Handle image removal (when empty string is sent)
+        const imageValue = formData.get("image");
+        if (imageValue === "" && currentUser?.image) {
+          // Delete old image from S3
+          try {
+            const oldKey = extractS3KeyFromUrl(currentUser.image);
+            if (oldKey) {
+              await deleteFromS3(oldKey);
+            }
+          } catch (error) {
+            console.error("Failed to delete profile image from S3:", error);
+          }
+          imageUrl = null;
+        }
+
         const user = await prisma.user.update({
           where: { id: userId },
-          data: { name },
+          data: { 
+            name: name.trim(),
+            ...(imageFile || imageValue === "" ? { image: imageUrl } : {})
+          },
           select: {
             id: true,
             name: true,
             email: true,
+            image: true,
           },
         });
 

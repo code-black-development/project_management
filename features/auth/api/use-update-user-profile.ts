@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 interface UpdateUserProfileRequest {
   name: string;
+  image?: File | string;
 }
 
 interface UpdateUserProfileResponse {
@@ -12,6 +13,7 @@ interface UpdateUserProfileResponse {
     id: string;
     name: string;
     email: string;
+    image?: string | null;
   };
 }
 
@@ -21,15 +23,23 @@ export const useUpdateUserProfile = () => {
   const mutation = useMutation<
     UpdateUserProfileResponse,
     Error,
-    { json: UpdateUserProfileRequest }
+    { form: UpdateUserProfileRequest }
   >({
-    mutationFn: async ({ json }) => {
+    mutationFn: async ({ form: formValues }) => {
+      const formData = new FormData();
+      formData.append("name", formValues.name);
+
+      if (formValues.image !== undefined) {
+        if (formValues.image instanceof File) {
+          formData.append("image", formValues.image);
+        } else {
+          formData.append("image", formValues.image || "");
+        }
+      }
+
       const response = await fetch("/api/users/profile", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(json),
+        body: formData,
       });
 
       if (!response.ok) {

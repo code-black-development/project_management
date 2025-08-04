@@ -23,6 +23,7 @@ export interface UserTimeReport {
   id: string;
   name: string | null;
   email: string;
+  image: string | null;
   totalLoggedMinutes: number;
   tasksWorkedOn: number;
 }
@@ -146,6 +147,7 @@ export const getUserTimeReports = async (
           id: true,
           name: true,
           email: true,
+          image: true,
         },
       },
       Worklog: {
@@ -170,6 +172,7 @@ export const getUserTimeReports = async (
       id: member.user.id,
       name: member.user.name,
       email: member.user.email,
+      image: member.user.image,
       totalLoggedMinutes,
       tasksWorkedOn: uniqueTaskIds.size,
     };

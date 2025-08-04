@@ -35,6 +35,7 @@ export const UserTimeTable = ({ users }: UserTimeTableProps) => {
                 <div className="flex items-center gap-3">
                   <MemberAvatar
                     name={user.name || user.email}
+                    image={user.image || undefined}
                     className="size-10"
                   />
                   <div>

@@ -47,6 +47,7 @@ const EventCard = ({
         <div className="flex items-center gap-x-1">
           <MemberAvatar
             name={(assignee?.user?.name ?? assignee?.user.name) || "unassigned"}
+            image={assignee?.user?.image || undefined}
           />
           <div className="size-1 rounded-full bg-neutral-300" />
           <ProjectAvatar

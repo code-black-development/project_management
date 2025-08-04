@@ -262,6 +262,7 @@ const TaskForm = ({
                                 <MemberAvatar
                                   className="size-6"
                                   name={member.user.name ?? member.user.email!}
+                                  image={member.user.image || undefined}
                                 />
                                 {member.user.name || member.user.email!}
                               </div>

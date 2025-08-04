@@ -1,4 +1,4 @@
-import { object, string } from "zod";
+import { object, string, union, instanceof as zodInstanceof } from "zod";
 
 export const signInSchema = object({
   email: string({ required_error: "Email is required" })
@@ -8,4 +8,9 @@ export const signInSchema = object({
     .min(1, "Password is required")
     .min(8, "Password must be more than 8 characters")
     .max(32, "Password must be less than 32 characters"),
+});
+
+export const updateUserProfileSchema = object({
+  name: string().min(1, "Name is required"),
+  image: union([zodInstanceof(File), string()]).optional(),
 });

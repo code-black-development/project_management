@@ -42,6 +42,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 (task.assignee?.user.name ?? task.assignee?.user.name) ||
                 undefined
               }
+              image={task.assignee?.user.image || undefined}
               className="size-6"
             />
             <p className="text-sm font-medium">
@@ -52,6 +53,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
           <TaskOverviewProperty label="Created By">
             <MemberAvatar
               name={task.createdBy?.user.name || undefined}
+              image={task.createdBy?.user.image || undefined}
               className="size-6"
             />
             <p className="text-sm font-medium">
