@@ -58,15 +58,25 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutate({
-      json: {
-        ...values,
-        timeSpent: timeEstimateStringToMinutes(values.timeSpent),
-        workspaceId,
-        userId: session?.user?.id!,
-        taskId: id,
+    mutate(
+      {
+        json: {
+          ...values,
+          timeSpent: timeEstimateStringToMinutes(values.timeSpent),
+          workspaceId,
+          userId: session?.user?.id!,
+          taskId: id,
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          // Close the modal after successful worklog creation
+          if (onCancel) {
+            onCancel();
+          }
+        },
+      }
+    );
   };
 
   return (
