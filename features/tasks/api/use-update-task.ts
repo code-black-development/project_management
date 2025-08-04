@@ -32,7 +32,7 @@ export function useUpdateTask() {
     onSuccess: ({ data }) => {
       toast.success("task updated");
       router.refresh();
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", data.workspaceId] });
       queryClient.invalidateQueries({ queryKey: ["tasks", data.id] });
     },
     onError: () => {

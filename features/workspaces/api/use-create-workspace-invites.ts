@@ -34,42 +34,46 @@ export function useCreateWorkspaceInvites() {
       }
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       const result = data.data as InviteResultData;
-      
+      const workspaceId = variables.param.workspaceId;
+
       // Show success messages for each type of result
       if (result.newUserInvites.length > 0) {
         toast.success(
-          `Invitations sent to ${result.newUserInvites.length} new user${result.newUserInvites.length > 1 ? 's' : ''}: ${result.newUserInvites.join(', ')}`
+          `Invitations sent to ${result.newUserInvites.length} new user${result.newUserInvites.length > 1 ? "s" : ""}: ${result.newUserInvites.join(", ")}`
         );
       }
-      
+
       if (result.existingUserAdded.length > 0) {
         toast.success(
-          `${result.existingUserAdded.length} existing user${result.existingUserAdded.length > 1 ? 's' : ''} added to workspace: ${result.existingUserAdded.join(', ')}`
+          `${result.existingUserAdded.length} existing user${result.existingUserAdded.length > 1 ? "s" : ""} added to workspace: ${result.existingUserAdded.join(", ")}`
         );
       }
-      
+
       // Show info messages for users already in workspace
       if (result.alreadyMembers.length > 0) {
         toast.info(
-          `${result.alreadyMembers.length} user${result.alreadyMembers.length > 1 ? 's are' : ' is'} already a member: ${result.alreadyMembers.join(', ')}`
+          `${result.alreadyMembers.length} user${result.alreadyMembers.length > 1 ? "s are" : " is"} already a member: ${result.alreadyMembers.join(", ")}`
         );
       }
-      
+
       // Show error messages for failed invites
       if (result.errors.length > 0) {
         result.errors.forEach(({ email, error }) => {
           toast.error(`Failed to invite ${email}: ${error}`);
         });
       }
-      
+
       // Show overall success if any invites were processed successfully
-      const totalSuccessful = result.newUserInvites.length + result.existingUserAdded.length;
+      const totalSuccessful =
+        result.newUserInvites.length + result.existingUserAdded.length;
       if (totalSuccessful > 0) {
-        toast.success(`Successfully processed ${totalSuccessful} invite${totalSuccessful > 1 ? 's' : ''}`);
+        toast.success(
+          `Successfully processed ${totalSuccessful} invite${totalSuccessful > 1 ? "s" : ""}`
+        );
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["workspace-members"] });
     },
