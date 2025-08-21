@@ -17,6 +17,7 @@ import { TaskStatus } from "@prisma/client";
 import { useBulkUpdateTasks } from "../api/use-bulk-update-task";
 import DataCalendar from "./data-calendar";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
+import { useProjectAutoHide } from "@/features/projects/hooks/use-project-auto-hide";
 
 interface TaskViewSwitcherProps {
   hideProjectFilter?: boolean;
@@ -28,6 +29,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
+  const { autoHideCompletedTasks } = useProjectAutoHide(paramProjectId || projectId || undefined);
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
     status,
@@ -71,6 +73,13 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
         <DottedSeparator className="my-4" />
         <DataFilters hideProjectFilter={hideProjectFilter} />
         <DottedSeparator className="my-4" />
+        {autoHideCompletedTasks && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Hide done: on
+            </p>
+          </div>
+        )}
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
             <Loader2 className="animate-spin" />{" "}

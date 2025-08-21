@@ -4,7 +4,10 @@ import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
-export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
+export const searchTasks = async (
+  data: z.infer<typeof taskSearchSchema>,
+  excludeCompleted?: boolean
+) => {
   const where: Prisma.TaskWhereInput = {};
 
   if (data.workspaceId) {
@@ -21,6 +24,21 @@ export const searchTasks = async (data: z.infer<typeof taskSearchSchema>) => {
 
   if (data.status) {
     where.status = data.status;
+  }
+
+  // Add logic to exclude completed tasks
+  if (excludeCompleted) {
+    if (where.status) {
+      // If status filter already exists, we need to combine it with the NOT DONE condition
+      const existingStatus = where.status;
+      where.status = {
+        in: typeof existingStatus === 'object' && 'in' in existingStatus 
+          ? (existingStatus.in as TaskStatus[]).filter(s => s !== TaskStatus.DONE)
+          : existingStatus !== TaskStatus.DONE ? [existingStatus as TaskStatus] : []
+      };
+    } else {
+      where.status = { not: TaskStatus.DONE };
+    }
   }
 
   if (data.search) {

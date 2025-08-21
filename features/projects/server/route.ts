@@ -43,11 +43,15 @@ const app = new Hono()
   })
   .patch(
     "/:projectId",
-    zValidator("form", updateProjectSchema),
+    zValidator("form", z.object({ 
+      name: z.string().optional(), 
+      image: z.union([z.instanceof(File), z.string()]).optional(),
+      autoHideCompletedTasks: z.string().transform((val) => val === "true").optional()
+    })),
 
     async (c) => {
       const { projectId } = c.req.param();
-      const { name, image } = c.req.valid("form");
+      const { name, image, autoHideCompletedTasks } = c.req.valid("form");
       //TODO: check if the user is a member of the workspace
       
       // Get existing project to check for old image
@@ -91,10 +95,12 @@ const app = new Hono()
         fileUrl = null;
       }
 
-      const project = await updateProject(projectId, {
-        name,
-        image: fileUrl,
-      });
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (fileUrl !== undefined) updateData.image = fileUrl;
+      if (autoHideCompletedTasks !== undefined) updateData.autoHideCompletedTasks = autoHideCompletedTasks;
+
+      const project = await updateProject(projectId, updateData);
 
       return c.json({ data: project });
     }

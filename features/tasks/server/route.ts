@@ -13,6 +13,7 @@ import {
   searchTasks,
   updateTask,
 } from "@/lib/dbService/tasks";
+import { getProjectById } from "@/lib/dbService/projects";
 import { Hono } from "hono";
 import { taskSearchSchema, createTaskSchema, patchTaskSchema } from "../schema";
 import { zValidator } from "@hono/zod-validator";
@@ -287,7 +288,15 @@ const app = new Hono()
     }),
     async (c) => {
       const data = c.req.valid("query");
-      const tasks = await searchTasks(data);
+
+      // Check if project has autoHideCompletedTasks enabled
+      let excludeCompleted = false;
+      if (data.projectId) {
+        const project = await getProjectById(data.projectId);
+        excludeCompleted = project?.autoHideCompletedTasks || false;
+      }
+
+      const tasks = await searchTasks(data, excludeCompleted);
       let result = [];
       for (let task of tasks) {
         result.push({
