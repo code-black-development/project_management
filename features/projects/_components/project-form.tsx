@@ -18,6 +18,7 @@ import DottedSeparator from "@/components/dotted-separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -41,7 +42,9 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
 
   const formSchema = initialValues
     ? updateProjectSchema
-    : createProjectSchema.omit({ workspaceId: true });
+    : createProjectSchema.omit({ workspaceId: true }).extend({
+        autoHideCompletedTasks: z.boolean().optional(),
+      });
 
   const router = useRouter();
 
@@ -65,6 +68,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
     defaultValues: {
       name: initialValues?.name || "",
       image: initialValues?.image || undefined,
+      autoHideCompletedTasks: initialValues?.autoHideCompletedTasks || false,
     },
   });
 
@@ -235,6 +239,28 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                         </div>
                       </div>
                     </div>
+                  )}
+                />
+                <FormField
+                  name="autoHideCompletedTasks"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Auto-hide completed tasks
+                        </FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Hide tasks with "Done" status from table, kanban, and calendar views
+                        </p>
+                      </div>
+                    </FormItem>
                   )}
                 />
               </div>

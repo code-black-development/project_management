@@ -18,4 +18,5 @@ export const updateProjectSchema = z.object({
       z.string().transform((val) => (val === "" ? undefined : val)),
     ])
     .optional(),
+  autoHideCompletedTasks: z.boolean().optional(),
 });
