@@ -43,7 +43,7 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
           <TaskDate value={task.dueDate} className="text-xs" />
         </div>
       )}
-      
+
       {/* Assignee */}
       <div className="flex items-center gap-x-1.5">
         <MemberAvatar
@@ -60,7 +60,7 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
             "Unassigned"}
         </span>
       </div>
-      
+
       {/* Project */}
       <div className="flex items-center gap-x-1.5">
         <ProjectAvatar

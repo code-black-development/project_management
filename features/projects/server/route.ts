@@ -21,10 +21,10 @@ const app = new Hono()
   .delete("/:projectId", async (c) => {
     const { projectId } = c.req.param();
     //TODO: check if the user is an admin of the workspace
-    
+
     // Get existing project to check for image cleanup
     const existingProject = await getProjectById(projectId);
-    
+
     // Delete image from S3 if it exists
     if (existingProject?.image) {
       try {
@@ -43,17 +43,28 @@ const app = new Hono()
   })
   .patch(
     "/:projectId",
-    zValidator("form", z.object({ 
-      name: z.string().optional(), 
-      image: z.union([z.instanceof(File), z.string()]).optional(),
-      autoHideCompletedTasks: z.string().transform((val) => val === "true").optional()
-    })),
+    zValidator(
+      "form",
+      z.object({
+        name: z.string().optional(),
+        image: z.union([z.instanceof(File), z.string()]).optional(),
+        autoHideCompletedTasks: z
+          .string()
+          .transform((val) => val === "true")
+          .optional(),
+        taskAssignmentEmail: z
+          .string()
+          .transform((val) => val === "true")
+          .optional(),
+      })
+    ),
 
     async (c) => {
       const { projectId } = c.req.param();
-      const { name, image, autoHideCompletedTasks } = c.req.valid("form");
+      const { name, image, autoHideCompletedTasks, taskAssignmentEmail } =
+        c.req.valid("form");
       //TODO: check if the user is a member of the workspace
-      
+
       // Get existing project to check for old image
       const existingProject = await getProjectById(projectId);
       if (!existingProject) {
@@ -74,7 +85,7 @@ const app = new Hono()
           }
 
           // Upload new image to S3
-          const uploadResult = await uploadToS3(image, 'projects', image.name);
+          const uploadResult = await uploadToS3(image, "projects", image.name);
           fileUrl = uploadResult.url;
         } catch (error) {
           console.error("Failed to upload image:", error);
@@ -98,7 +109,10 @@ const app = new Hono()
       const updateData: any = {};
       if (name !== undefined) updateData.name = name;
       if (fileUrl !== undefined) updateData.image = fileUrl;
-      if (autoHideCompletedTasks !== undefined) updateData.autoHideCompletedTasks = autoHideCompletedTasks;
+      if (autoHideCompletedTasks !== undefined)
+        updateData.autoHideCompletedTasks = autoHideCompletedTasks;
+      if (taskAssignmentEmail !== undefined)
+        updateData.taskAssignmentEmail = taskAssignmentEmail;
 
       const project = await updateProject(projectId, updateData);
 
@@ -111,11 +125,11 @@ const app = new Hono()
     //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
 
     let fileUrl: string | null = null;
-    
+
     // Upload image to S3 if provided
     if (image instanceof File && image.size > 0) {
       try {
-        const uploadResult = await uploadToS3(image, 'projects', image.name);
+        const uploadResult = await uploadToS3(image, "projects", image.name);
         fileUrl = uploadResult.url;
       } catch (error) {
         console.error("Failed to upload image:", error);

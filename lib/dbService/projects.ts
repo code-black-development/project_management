@@ -35,8 +35,10 @@ export const createProject = async (data: {
 export const updateProject = async (
   projectId: string,
   data: {
-    name: string;
+    name?: string;
     image?: string | null;
+    autoHideCompletedTasks?: boolean;
+    taskAssignmentEmail?: boolean;
   }
 ) => {
   return await prisma.project.update({
