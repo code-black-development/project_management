@@ -32,9 +32,14 @@ export const searchTasks = async (
       // If status filter already exists, we need to combine it with the NOT DONE condition
       const existingStatus = where.status;
       where.status = {
-        in: typeof existingStatus === 'object' && 'in' in existingStatus 
-          ? (existingStatus.in as TaskStatus[]).filter(s => s !== TaskStatus.DONE)
-          : existingStatus !== TaskStatus.DONE ? [existingStatus as TaskStatus] : []
+        in:
+          typeof existingStatus === "object" && "in" in existingStatus
+            ? (existingStatus.in as TaskStatus[]).filter(
+                (s) => s !== TaskStatus.DONE
+              )
+            : existingStatus !== TaskStatus.DONE
+              ? [existingStatus as TaskStatus]
+              : [],
       };
     } else {
       where.status = { not: TaskStatus.DONE };

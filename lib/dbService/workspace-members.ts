@@ -31,6 +31,21 @@ export const getMemberByUserIdAndWorkspaceId = async (
   });
 };
 
+export const getMemberWithUserByUserIdAndWorkspaceId = async (
+  userId: string,
+  workspaceId: string
+) => {
+  return await prisma.member.findFirst({
+    where: {
+      userId,
+      workspaceId,
+    },
+    include: {
+      user: true,
+    },
+  });
+};
+
 /** members get the role: member by default due to db schema */
 export const addMember = async (userId: string, workspaceId: string) => {
   return await prisma.member.create({

@@ -69,15 +69,15 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
           toast.success("Profile updated successfully");
 
           // Update the session with new data - this will trigger the jwt callback
-          await update({ 
+          await update({
             name: values.name,
-            image: data.data.image 
+            image: data.data.image,
           });
 
           // Reset form to clear dirty state
-          form.reset({ 
+          form.reset({
             name: values.name,
-            image: data.data.image || undefined 
+            image: data.data.image || undefined,
           });
 
           // Close the modal
@@ -166,15 +166,17 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
                   JPG, PNG, or JPEG. Max 1mb.
                 </p>
               </div>
-              
+
               <FormField
                 name="image"
                 control={form.control}
                 render={({ field }) => {
                   const { presignedUrl } = usePresignedUrl(
-                    typeof field.value === "string" && field.value ? field.value : null
+                    typeof field.value === "string" && field.value
+                      ? field.value
+                      : null
                   );
-                  
+
                   return (
                     <div className="flex items-center gap-x-5">
                       {field.value ? (

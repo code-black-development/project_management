@@ -19,4 +19,5 @@ export const updateProjectSchema = z.object({
     ])
     .optional(),
   autoHideCompletedTasks: z.boolean().optional(),
+  taskAssignmentEmail: z.boolean().optional(),
 });

@@ -23,11 +23,16 @@ import {
   minutesToTimeEstimateString,
   timeEstimateStringToMinutes,
 } from "@/lib/utils";
-import { getMemberByUserIdAndWorkspaceId } from "@/lib/dbService/workspace-members";
+import {
+  getMemberByUserIdAndWorkspaceId,
+  getMemberWithUserByUserIdAndWorkspaceId,
+} from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
 import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import { TaskAssetFile } from "../_components/task-assets";
+import { sendTaskAssignmentNotification } from "@/lib/mailing-functions";
+import prisma from "@/prisma/prisma";
 
 const TaskAssetSchema = z.object({
   name: z.string(),
@@ -264,6 +269,58 @@ const app = new Hono()
 
     const task = await updateTask(taskId, taskData);
 
+    // Send notification email if assignee changed and project has notifications enabled
+    if (assigneeId !== undefined && task) {
+      try {
+        // Get the existing task to check if assignee actually changed
+        const existingTask = await getTaskById(taskId);
+
+        // Only send notification if assignee actually changed and there's a new assignee
+        if (
+          existingTask &&
+          existingTask.assigneeId !== assigneeId &&
+          assigneeId
+        ) {
+          // Get project settings to check if notifications are enabled
+          const project = await getProjectById(task.projectId);
+
+          if (project?.taskAssignmentEmail) {
+            // Get assignee details with user information (assigneeId is a member ID)
+            const assignee = await prisma.member.findUnique({
+              where: { id: assigneeId },
+              include: { user: true },
+            });
+
+            if (assignee?.user?.email) {
+              // Get assigner details (current user)
+              const assigner = await getMemberWithUserByUserIdAndWorkspaceId(
+                c.get("userId"),
+                task.workspaceId
+              );
+              const assignerName =
+                assigner?.user?.name || assigner?.user?.email || "Someone";
+
+              await sendTaskAssignmentNotification(
+                assignee.user.email,
+                assignee.user.name || assignee.user.email,
+                task.name,
+                task.id,
+                task.workspaceId,
+                assignerName,
+                project.name
+              );
+            }
+          }
+        }
+      } catch (notificationError) {
+        console.error(
+          "Failed to send task assignment notification:",
+          notificationError
+        );
+        // Don't fail the task update if notification fails
+      }
+    }
+
     const result = {
       ...task,
       timeEstimate: task?.timeEstimate
@@ -386,6 +443,48 @@ const app = new Hono()
       };
 
       const task = await createTask(taskData);
+
+      // Send notification email if task is assigned and project has notifications enabled
+      if (assigneeId && task) {
+        try {
+          // Get project settings to check if notifications are enabled
+          const project = await getProjectById(projectId);
+
+          if (project?.taskAssignmentEmail) {
+            // Get assignee details with user information (assigneeId is a member ID)
+            const assignee = await prisma.member.findUnique({
+              where: { id: assigneeId },
+              include: { user: true },
+            });
+
+            if (assignee?.user?.email) {
+              // Get assigner details
+              const assigner = await getMemberWithUserByUserIdAndWorkspaceId(
+                c.get("userId"),
+                workspaceId
+              );
+              const assignerName =
+                assigner?.user?.name || assigner?.user?.email || "Someone";
+
+              await sendTaskAssignmentNotification(
+                assignee.user.email,
+                assignee.user.name || assignee.user.email,
+                name,
+                task.id,
+                workspaceId,
+                assignerName,
+                project.name
+              );
+            }
+          }
+        } catch (notificationError) {
+          console.error(
+            "Failed to send task assignment notification:",
+            notificationError
+          );
+          // Don't fail the task creation if notification fails
+        }
+      }
 
       return c.json({ data: task });
     } catch (error) {

@@ -44,6 +44,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
     ? updateProjectSchema
     : createProjectSchema.omit({ workspaceId: true }).extend({
         autoHideCompletedTasks: z.boolean().optional(),
+        taskAssignmentEmail: z.boolean().optional(),
       });
 
   const router = useRouter();
@@ -69,6 +70,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
       name: initialValues?.name || "",
       image: initialValues?.image || undefined,
       autoHideCompletedTasks: initialValues?.autoHideCompletedTasks || false,
+      taskAssignmentEmail: initialValues?.taskAssignmentEmail ?? true,
     },
   });
 
@@ -253,11 +255,44 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Auto-hide completed tasks
-                        </FormLabel>
+                        <FormLabel>Auto-hide completed tasks</FormLabel>
                         <p className="text-sm text-muted-foreground">
-                          Hide tasks with "Done" status from table, kanban, and calendar views
+                          Hide tasks with "Done" status from table, kanban, and
+                          calendar views
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DottedSeparator className="py-7" />
+
+              {/* Notifications Section */}
+              <div className="flex flex-col gap-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Notifications</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage email notifications for this project
+                  </p>
+                </div>
+
+                <FormField
+                  name="taskAssignmentEmail"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Task assignment email</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Send email notifications when tasks are assigned to
+                          team members
                         </p>
                       </div>
                     </FormItem>

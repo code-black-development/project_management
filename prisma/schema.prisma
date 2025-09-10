@@ -109,6 +109,7 @@ model Project {
   name                   String
   image                  String?
   autoHideCompletedTasks Boolean   @default(false)
+  taskAssignmentEmail    Boolean   @default(true)
   workspace              Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId            String
   createdAt              DateTime  @default(now())
