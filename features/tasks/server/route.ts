@@ -267,22 +267,29 @@ const app = new Hono()
     }
     if (categoryId !== undefined) taskData.categoryId = categoryId;
 
+    // Get the existing task BEFORE updating to check if assignee changed
+    let existingTask = null;
+    if (assigneeId !== undefined) {
+      existingTask = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: {
+          assigneeId: true,
+          projectId: true,
+          workspaceId: true,
+          name: true,
+        },
+      });
+    }
+
     const task = await updateTask(taskId, taskData);
 
     // Send notification email if assignee changed and project has notifications enabled
-    if (assigneeId !== undefined && task) {
+    if (assigneeId !== undefined && task && existingTask) {
       try {
-        // Get the existing task to check if assignee actually changed
-        const existingTask = await getTaskById(taskId);
-
         // Only send notification if assignee actually changed and there's a new assignee
-        if (
-          existingTask &&
-          existingTask.assigneeId !== assigneeId &&
-          assigneeId
-        ) {
+        if (existingTask.assigneeId !== assigneeId && assigneeId) {
           // Get project settings to check if notifications are enabled
-          const project = await getProjectById(task.projectId);
+          const project = await getProjectById(existingTask.projectId);
 
           if (project?.taskAssignmentEmail) {
             // Get assignee details with user information (assigneeId is a member ID)
@@ -295,7 +302,7 @@ const app = new Hono()
               // Get assigner details (current user)
               const assigner = await getMemberWithUserByUserIdAndWorkspaceId(
                 c.get("userId"),
-                task.workspaceId
+                existingTask.workspaceId
               );
               const assignerName =
                 assigner?.user?.name || assigner?.user?.email || "Someone";
@@ -303,9 +310,9 @@ const app = new Hono()
               await sendTaskAssignmentNotification(
                 assignee.user.email,
                 assignee.user.name || assignee.user.email,
-                task.name,
+                existingTask.name,
                 task.id,
-                task.workspaceId,
+                existingTask.workspaceId,
                 assignerName,
                 project.name
               );
