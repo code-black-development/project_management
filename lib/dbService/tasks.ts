@@ -121,7 +121,34 @@ export const getTaskById = async (taskId: string) => {
             dateWorked: "desc",
           },
         },
-        children: { include: { children: true } },
+        children: {
+          include: {
+            assignee: { include: { user: true } },
+            createdBy: { include: { user: true } },
+            project: true,
+            worklogs: {
+              include: {
+                member: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+            assets: true,
+            category: true,
+            children: {
+              include: {
+                assignee: { include: { user: true } },
+                createdBy: { include: { user: true } },
+                project: true,
+                worklogs: true,
+                assets: true,
+                category: true,
+              },
+            },
+          },
+        },
         assets: true,
         category: true,
       },

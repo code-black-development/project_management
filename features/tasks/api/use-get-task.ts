@@ -1,12 +1,11 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
+import { TaskWithUser } from "@/types/types";
 
 interface UseGetTasksProps {
   taskId: string;
 }
-
-import { TaskWithUser } from "@/types/types";
 
 export const useGetTask = ({ taskId }: UseGetTasksProps) => {
   return useQuery({
@@ -20,7 +19,7 @@ export const useGetTask = ({ taskId }: UseGetTasksProps) => {
         throw new Error("Failed to fetch task");
       }
       const { data } = await response.json();
-      return data as TaskWithUser;
+      return data;
     },
   });
 };
