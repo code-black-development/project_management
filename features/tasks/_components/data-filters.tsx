@@ -10,11 +10,14 @@ import {
   SelectSeparator,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import DatePicker from "@/components/date-picker";
-import { FolderIcon, ListCheckIcon, UserIcon } from "lucide-react";
+import { FolderIcon, ListCheckIcon, SearchIcon, UserIcon, TrashIcon } from "lucide-react";
 import { TaskStatus } from "@prisma/client";
 import useTaskFilters from "../api/use-task-filters";
+import { useState } from "react";
 
 interface DataFiltersProps {
   hideProjectFilter?: boolean;
@@ -41,8 +44,10 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
     value: member.id,
   }));
 
-  const [{ status, assigneeId, projectId, dueDate }, setfilters] =
+  const [{ status, assigneeId, projectId, dueDate, search }, setfilters] =
     useTaskFilters();
+
+  const [searchInput, setSearchInput] = useState(search || "");
 
   const onStatusChange = (value: string) => {
     setfilters({ status: value === "all" ? null : (value as TaskStatus) });
@@ -56,12 +61,59 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
     setfilters({ projectId: value === "all" ? null : value });
   };
 
+  const onSearchSubmit = () => {
+    setfilters({ search: searchInput.trim() || null });
+  };
+
+  const onSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      onSearchSubmit();
+    }
+  };
+
+  const hasActiveFilters = Boolean(
+    status || assigneeId || (!hideProjectFilter && projectId) || dueDate || search
+  );
+
+  const onClearFilters = () => {
+    setfilters({
+      status: null,
+      assigneeId: null,
+      projectId: null,
+      dueDate: null,
+      search: null,
+    });
+    setSearchInput("");
+  };
+
   if (isLoading) {
     return null;
   }
 
   return (
     <div className="flex flex-col lg:flex-row gap-2">
+      {/* Search Input */}
+      <div className="flex gap-1 w-full lg:w-auto">
+        <div className="relative flex-1 lg:w-[200px]">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+          <Input
+            placeholder="Search tasks..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={onSearchKeyPress}
+            className="h-8 pl-10"
+          />
+        </div>
+        <Button
+          size="sm"
+          onClick={onSearchSubmit}
+          className="h-8 px-3"
+          variant="primary"
+        >
+          Search
+        </Button>
+      </div>
+
       <Select
         defaultValue={status ?? undefined}
         onValueChange={(value) => onStatusChange(value)}
@@ -136,6 +188,18 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
           setfilters({ dueDate: date ? date.toISOString() : null })
         }
       />
+      
+      {/* Clear Filters Button */}
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onClearFilters}
+        disabled={!hasActiveFilters}
+        className="h-8 px-3"
+        title="Clear all filters"
+      >
+        <TrashIcon className="size-4" />
+      </Button>
     </div>
   );
 };
