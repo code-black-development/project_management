@@ -73,7 +73,18 @@ export const searchTasks = async (
       project: true,
       assignee: { include: { user: true } },
       createdBy: { include: { user: true } },
-      worklogs: true,
+      worklogs: {
+        include: {
+          member: {
+            include: {
+              user: true,
+            },
+          },
+        },
+        orderBy: {
+          dateWorked: "desc",
+        },
+      },
       assets: true,
       category: true,
     },
@@ -98,7 +109,18 @@ export const getTaskById = async (taskId: string) => {
         project: true,
         assignee: { include: { user: true } },
         createdBy: { include: { user: true } },
-        worklogs: true,
+        worklogs: {
+          include: {
+            member: {
+              include: {
+                user: true,
+              },
+            },
+          },
+          orderBy: {
+            dateWorked: "desc",
+          },
+        },
         children: { include: { children: true } },
         assets: true,
         category: true,
@@ -121,6 +143,19 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
       project: true,
       assignee: { include: { user: true } },
       createdBy: { include: { user: true } },
+      worklogs: {
+        include: {
+          member: {
+            include: {
+              user: true,
+            },
+          },
+        },
+        orderBy: {
+          dateWorked: "desc",
+        },
+      },
+      assets: true,
       category: true,
     },
   });
