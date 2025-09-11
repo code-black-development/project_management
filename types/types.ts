@@ -63,6 +63,15 @@ export type WorklogType = Omit<
   createdAt: string;
   updatedAt: string;
   dateWorked: string;
+  member?: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  };
 };
 
 export enum MemberRole {
