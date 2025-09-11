@@ -5,6 +5,7 @@ import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { Loader } from "lucide-react";
 import TaskForm from "./task-form";
 import { useGetTask } from "../api/use-get-task";
+import { TaskWithUser } from "@/types/types";
 
 interface CreateTaskFormWrapperProps {
   onCancel: () => void;
@@ -40,7 +41,7 @@ const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
 
   return (
     <TaskForm
-      initialValues={task || undefined}
+      initialValues={task ? (task as unknown as TaskWithUser) : undefined}
       projectOptions={projects ?? []}
       memberOptions={members?.data ?? []}
       onCancel={onCancel}

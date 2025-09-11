@@ -14,7 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import DatePicker from "@/components/date-picker";
-import { FolderIcon, ListCheckIcon, SearchIcon, UserIcon, TrashIcon } from "lucide-react";
+import {
+  FolderIcon,
+  ListCheckIcon,
+  SearchIcon,
+  UserIcon,
+  TrashIcon,
+} from "lucide-react";
 import { TaskStatus } from "@prisma/client";
 import useTaskFilters from "../api/use-task-filters";
 import { useState } from "react";
@@ -72,7 +78,11 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
   };
 
   const hasActiveFilters = Boolean(
-    status || assigneeId || (!hideProjectFilter && projectId) || dueDate || search
+    status ||
+      assigneeId ||
+      (!hideProjectFilter && projectId) ||
+      dueDate ||
+      search
   );
 
   const onClearFilters = () => {
@@ -188,7 +198,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
           setfilters({ dueDate: date ? date.toISOString() : null })
         }
       />
-      
+
       {/* Clear Filters Button */}
       <Button
         size="sm"
