@@ -8,6 +8,7 @@ interface UseGetTasksProps {
   status?: string | null;
   assigneeId?: string | null;
   dueDate?: string | null;
+  search?: string | null;
 }
 
 export const useGetTasks = ({
@@ -16,9 +17,18 @@ export const useGetTasks = ({
   status,
   assigneeId,
   dueDate,
+  search,
 }: UseGetTasksProps) => {
   return useQuery({
-    queryKey: ["tasks", workspaceId, projectId, status, assigneeId, dueDate],
+    queryKey: [
+      "tasks",
+      workspaceId,
+      projectId,
+      status,
+      assigneeId,
+      dueDate,
+      search,
+    ],
     queryFn: async () => {
       const response = await client.api.tasks.$get({
         query: {
@@ -27,6 +37,7 @@ export const useGetTasks = ({
           status: status ?? undefined,
           assigneeId: assigneeId ?? undefined,
           dueDate: dueDate ?? undefined,
+          search: search ?? undefined,
         },
       });
 

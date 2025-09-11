@@ -41,6 +41,7 @@ const WorkspaceIdClient = () => {
   });
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
+    search: null,
   });
 
   if (

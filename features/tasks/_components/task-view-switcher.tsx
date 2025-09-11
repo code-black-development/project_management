@@ -24,18 +24,21 @@ interface TaskViewSwitcherProps {
 }
 
 const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
-  const [{ status, assigneeId, projectId, dueDate }] = useTaskFilters();
+  const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
-  const { autoHideCompletedTasks } = useProjectAutoHide(paramProjectId || projectId || undefined);
+  const { autoHideCompletedTasks } = useProjectAutoHide(
+    paramProjectId || projectId || undefined
+  );
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
     status,
     assigneeId,
     projectId: paramProjectId || projectId,
     dueDate,
+    search,
   });
 
   const onKanbanChange = useCallback(
@@ -75,9 +78,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
         <DottedSeparator className="my-4" />
         {autoHideCompletedTasks && (
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              Hide done: on
-            </p>
+            <p className="text-sm text-muted-foreground">Hide done: on</p>
           </div>
         )}
         {isLoadingTasks ? (
