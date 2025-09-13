@@ -1,7 +1,7 @@
 "use client";
 import { Suspense } from "react";
 import ResponsiveModal from "@/components/responsive-modal";
-import { useCreateChildTaskModal } from "../contexts/create-child-task-modal-context";
+import useCreateChildTaskModal from "../hooks/use-create-child-task-modal";
 import TaskFormWrapper from "./task-form-wrapper";
 
 const CreateChildTaskModalWrapper = () => {

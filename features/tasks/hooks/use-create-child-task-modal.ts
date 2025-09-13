@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useQueryState, parseAsString } from "nuqs";
 
 interface ParentTaskInfo {
   taskId: string;
@@ -7,21 +7,47 @@ interface ParentTaskInfo {
 }
 
 const useCreateChildTaskModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [parentTaskInfo, setParentTaskInfo] = useState<ParentTaskInfo | null>(
-    null
+  const [parentTaskId, setParentTaskId] = useQueryState(
+    "create-child-task-parent", 
+    parseAsString
   );
+  const [parentProjectId, setParentProjectId] = useQueryState(
+    "create-child-task-project", 
+    parseAsString
+  );
+  const [parentWorkspaceId, setParentWorkspaceId] = useQueryState(
+    "create-child-task-workspace", 
+    parseAsString
+  );
+
+  const isOpen = Boolean(parentTaskId && parentProjectId && parentWorkspaceId);
+
+  const parentTaskInfo: ParentTaskInfo | null = isOpen
+    ? {
+        taskId: parentTaskId!,
+        projectId: parentProjectId!,
+        workspaceId: parentWorkspaceId!,
+      }
+    : null;
 
   const open = (taskInfo: ParentTaskInfo) => {
     console.log("Opening child task modal with info:", taskInfo);
-    setParentTaskInfo(taskInfo);
-    setIsOpen(true);
+    setParentTaskId(taskInfo.taskId);
+    setParentProjectId(taskInfo.projectId);
+    setParentWorkspaceId(taskInfo.workspaceId);
   };
 
   const close = () => {
     console.log("Closing child task modal");
-    setIsOpen(false);
-    setParentTaskInfo(null);
+    setParentTaskId(null);
+    setParentProjectId(null);
+    setParentWorkspaceId(null);
+  };
+
+  const setIsOpen = (open: boolean) => {
+    if (!open) {
+      close();
+    }
   };
 
   return {

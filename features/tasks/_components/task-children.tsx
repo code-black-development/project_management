@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import TaskOverviewProperty from "./task-overview-property";
 import DottedSeparator from "@/components/dotted-separator";
 import TaskChildItem from "./task-child-item";
-import { useCreateChildTaskModal } from "../contexts/create-child-task-modal-context";
+import useCreateChildTaskModal from "../hooks/use-create-child-task-modal";
 import { PlusIcon } from "lucide-react";
 
 interface TaskChildrenProps {
