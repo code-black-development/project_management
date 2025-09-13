@@ -1,7 +1,9 @@
+"use client";
+
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { TaskWithUser } from "@/types/types";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import useCreateTaskWorklogModal from "../hooks/use-create-task-worklog-modal";
 import {
   timeEstimateStringToMinutes,
@@ -9,6 +11,7 @@ import {
 } from "@/lib/utils";
 import ProgressBar from "@/components/progress-bar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
+import { useState } from "react";
 
 interface TaskWorklogProps {
   task: TaskWithUser;
@@ -16,6 +19,8 @@ interface TaskWorklogProps {
 
 const TaskWorklog = ({ task }: TaskWorklogProps) => {
   const { open } = useCreateTaskWorklogModal();
+  const [expandedWorklogs, setExpandedWorklogs] = useState<Set<string>>(new Set());
+  
   const estimateInMinutes = task.timeEstimate
     ? timeEstimateStringToMinutes(task.timeEstimate)
     : 0;
@@ -30,6 +35,16 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
     estimateInMinutes > 0
       ? Math.round((worklogTotal / estimateInMinutes) * 100)
       : 0;
+
+  const toggleWorklogExpansion = (worklogId: string) => {
+    const newExpanded = new Set(expandedWorklogs);
+    if (newExpanded.has(worklogId)) {
+      newExpanded.delete(worklogId);
+    } else {
+      newExpanded.add(worklogId);
+    }
+    setExpandedWorklogs(newExpanded);
+  };
 
   return (
     <div className="p-4 border rounded-lg">
@@ -62,33 +77,59 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
           <div className="space-y-3">
             <p className="font-medium text-sm">Logged Time Entries:</p>
             <div className="space-y-2">
-              {task.worklogs.map((worklog) => (
-                <div
-                  key={worklog.id}
-                  className="flex items-center justify-between p-2 bg-muted rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <MemberAvatar
-                      name={
-                        worklog.member?.user?.name ||
-                        worklog.member?.user?.email ||
-                        "Unknown"
-                      }
-                      image={worklog.member?.user?.image || undefined}
-                      className="size-6"
-                      fallbackClassName="text-xs"
-                    />
-                    <span className="text-sm">
-                      {worklog.member?.user?.name ||
-                        worklog.member?.user?.email ||
-                        "Unknown User"}
-                    </span>
+              {task.worklogs.map((worklog) => {
+                const isExpanded = expandedWorklogs.has(worklog.id);
+                const hasDescription = worklog.workDescription && worklog.workDescription.trim().length > 0;
+                
+                return (
+                  <div key={worklog.id} className="border rounded-md">
+                    <div
+                      className={`flex items-center justify-between p-2 bg-muted rounded-md ${
+                        hasDescription ? 'cursor-pointer hover:bg-muted/80' : ''
+                      }`}
+                      onClick={() => hasDescription && toggleWorklogExpansion(worklog.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {hasDescription && (
+                          <div className="flex-shrink-0">
+                            {isExpanded ? (
+                              <ChevronDownIcon className="size-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRightIcon className="size-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        )}
+                        <MemberAvatar
+                          name={
+                            worklog.member?.user?.name ||
+                            worklog.member?.user?.email ||
+                            "Unknown"
+                          }
+                          image={worklog.member?.user?.image || undefined}
+                          className="size-6"
+                          fallbackClassName="text-xs"
+                        />
+                        <span className="text-sm">
+                          {worklog.member?.user?.name ||
+                            worklog.member?.user?.email ||
+                            "Unknown User"}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {minutesToTimeEstimateString(worklog.timeSpent)}
+                      </span>
+                    </div>
+                    
+                    {hasDescription && isExpanded && (
+                      <div className="px-4 pb-3 pt-1">
+                        <div className="text-sm text-muted-foreground bg-background p-2 rounded border-l-2 border-primary/20">
+                          {worklog.workDescription}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-sm font-medium">
-                    {minutesToTimeEstimateString(worklog.timeSpent)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </>
