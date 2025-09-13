@@ -10,6 +10,7 @@ import { TaskBadge } from "./task-badge";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import useEditTaskModal from "../hooks/use-edit-task-modal";
 import TaskChildren from "./task-children";
+
 import DynamicIcon from "@/components/dynamic-icon";
 
 interface TaskOverviewProps {
@@ -97,6 +98,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
         <TaskChildren
           taskId={task.id}
           projectId={task.projectId}
+          workspaceId={task.workspaceId}
           tasks={task.children}
         />
       </div>

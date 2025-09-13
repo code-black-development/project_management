@@ -30,6 +30,7 @@ import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useUpdateTask } from "../api/use-update-task";
 import { useCreateTask } from "../api/use-create-task";
 import { useDeleteTask } from "../api/use-delete-task";
+import { useCreateChildTask } from "../hooks/use-create-child-task";
 import { useGetTaskCategories } from "../hooks/use-get-task-categories";
 import DatePicker from "@/components/date-picker";
 import {
@@ -57,6 +58,11 @@ interface TaskFormProps {
   memberOptions: (MemberSafeDate & {
     user: UserSafeDate;
   })[];
+  parentTaskInfo?: {
+    taskId: string;
+    projectId: string;
+    workspaceId: string;
+  };
 }
 
 const TaskForm = ({
@@ -64,6 +70,7 @@ const TaskForm = ({
   onCancel,
   projectOptions,
   memberOptions,
+  parentTaskInfo,
 }: TaskFormProps) => {
   const workspaceId = useWorkspaceId();
   console.log("users: ", memberOptions);
@@ -80,12 +87,16 @@ const TaskForm = ({
     onCancel?.();
   };
 
-  const { mutate, isPending } = initialValues
-    ? useUpdateTask()
-    : useCreateTask({
-        redirectOnSuccess: true,
-        onSuccess: handleFormSuccess,
-      });
+  const { mutate: updateTask, isPending: isUpdating } = useUpdateTask();
+  const { mutate: createTask, isPending: isCreating } = useCreateTask({
+    redirectOnSuccess: !parentTaskInfo, // Don't redirect if creating child task
+    onSuccess: parentTaskInfo ? handleFormSuccess : undefined,
+  });
+  const { mutate: createChildTask, isPending: isCreatingChild } =
+    useCreateChildTask();
+
+  // Determine which mutation to use and combine pending states
+  const isPending = isUpdating || isCreating || isCreatingChild;
 
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask();
 
@@ -98,14 +109,14 @@ const TaskForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      workspaceId,
+      workspaceId: parentTaskInfo?.workspaceId || workspaceId,
       name: initialValues?.name ?? "",
       dueDate: initialValues?.dueDate
         ? new Date(initialValues.dueDate)
         : undefined,
       assigneeId: initialValues?.assigneeId ?? "",
       status: initialValues?.status ?? TaskStatus.TODO,
-      projectId: initialValues?.projectId ?? "",
+      projectId: initialValues?.projectId ?? parentTaskInfo?.projectId ?? "",
       timeEstimate: initialValues?.timeEstimate ?? "",
       categoryId: initialValues?.categoryId ?? "",
     },
@@ -121,9 +132,10 @@ const TaskForm = ({
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log("values: ", values);
-    let payload;
+
     if (initialValues) {
-      payload = {
+      // Update existing task
+      const payload = {
         json: {
           ...values,
         },
@@ -131,27 +143,55 @@ const TaskForm = ({
           taskId: initialValues.id,
         },
       };
+      updateTask(payload, {
+        onSuccess: handleFormSuccess,
+      });
+    } else if (parentTaskInfo) {
+      // Create child task
+      const payload = {
+        parentTaskId: parentTaskInfo.taskId,
+        taskData: {
+          ...values,
+          workspaceId: parentTaskInfo.workspaceId,
+          // Ensure dueDate is properly typed
+          dueDate:
+            values.dueDate instanceof Date
+              ? values.dueDate
+              : values.dueDate
+                ? new Date(values.dueDate)
+                : null,
+        },
+      };
+      createChildTask(payload, {
+        onSuccess: handleFormSuccess,
+      });
     } else {
-      payload = {
+      // Create new task
+      const payload = {
         json: {
           ...values,
           workspaceId,
         },
       };
+      createTask(payload);
     }
-    mutate(
-      //@ts-ignore
-      payload,
-      // Only add onSuccess for updates since creates are handled in the hook
-      initialValues
-        ? {
-            onSuccess: handleFormSuccess,
-          }
-        : undefined
-    );
   };
 
-  const action = initialValues ? "Update" : "Create";
+  const action = initialValues
+    ? "Update"
+    : parentTaskInfo
+      ? "Create Child"
+      : "Create";
+
+  const getTitle = () => {
+    if (initialValues) {
+      return `${action} ${initialValues.name}`;
+    } else if (parentTaskInfo) {
+      return `${action} Task`;
+    } else {
+      return `${action} Task`;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -182,11 +222,9 @@ const TaskForm = ({
             </Button>
           )}
           {!initialValues ? (
-            <CardTitle className="text-xl font-bold">{action} Task</CardTitle>
+            <CardTitle className="text-xl font-bold">{getTitle()}</CardTitle>
           ) : (
-            <CardTitle className="text-xl font-bold">
-              {`${action} ${initialValues.name}`}
-            </CardTitle>
+            <CardTitle className="text-xl font-bold">{getTitle()}</CardTitle>
           )}
         </CardHeader>
         <div className="px-7">

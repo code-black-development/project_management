@@ -10,21 +10,33 @@ import { TaskWithUser } from "@/types/types";
 interface CreateTaskFormWrapperProps {
   onCancel: () => void;
   id?: string;
+  parentTaskInfo?: {
+    taskId: string;
+    projectId: string;
+    workspaceId: string;
+  };
 }
 
-const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
+const TaskFormWrapper = ({
+  onCancel,
+  id,
+  parentTaskInfo,
+}: CreateTaskFormWrapperProps) => {
   const workspaceId = useWorkspaceId();
+
+  // Use parent task workspace if creating a child task
+  const targetWorkspaceId = parentTaskInfo?.workspaceId || workspaceId;
 
   const { data: task, isLoading: isLoadingTask } = id
     ? useGetTask({ taskId: id })
     : { data: undefined, isLoading: false };
 
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
-    workspaceId,
+    workspaceId: targetWorkspaceId,
   });
 
   const { data: members, isLoading: isLoadingMembers } = useGetMembers({
-    workspaceId,
+    workspaceId: targetWorkspaceId,
   });
 
   const isLoading = isLoadingProjects || isLoadingMembers || isLoadingTask;
@@ -45,6 +57,7 @@ const TaskFormWrapper = ({ onCancel, id }: CreateTaskFormWrapperProps) => {
       projectOptions={projects ?? []}
       memberOptions={members?.data ?? []}
       onCancel={onCancel}
+      parentTaskInfo={parentTaskInfo}
     />
   );
 };
