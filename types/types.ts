@@ -63,6 +63,7 @@ export type WorklogType = Omit<
   createdAt: string;
   updatedAt: string;
   dateWorked: string;
+  workDescription: string | null;
   member?: {
     id: string;
     user: {
