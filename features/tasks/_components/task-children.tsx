@@ -22,7 +22,12 @@ interface TaskChildrenProps {
   workspaceId: string;
   tasks: TaskSafeDate[];
 }
-const TaskChildren = ({ taskId, projectId, workspaceId, tasks }: TaskChildrenProps) => {
+const TaskChildren = ({
+  taskId,
+  projectId,
+  workspaceId,
+  tasks,
+}: TaskChildrenProps) => {
   const { data: linkableTasks, isLoading: isLinkableTasksLoading } =
     useGetLinkableTasks({
       taskId,
@@ -31,7 +36,7 @@ const TaskChildren = ({ taskId, projectId, workspaceId, tasks }: TaskChildrenPro
 
   const { mutate: linkTask, isPending: linkTaskIsPending } =
     useCreateLinkableTask();
-    
+
   const { open: openCreateChildTaskModal } = useCreateChildTaskModal();
 
   const handleLinkTask = (childTaskId: string) => {
@@ -39,7 +44,11 @@ const TaskChildren = ({ taskId, projectId, workspaceId, tasks }: TaskChildrenPro
   };
 
   const handleCreateChildTask = () => {
-    console.log("Create child task button clicked", { taskId, projectId, workspaceId });
+    console.log("Create child task button clicked", {
+      taskId,
+      projectId,
+      workspaceId,
+    });
     openCreateChildTaskModal({
       taskId,
       projectId,
@@ -56,11 +65,7 @@ const TaskChildren = ({ taskId, projectId, workspaceId, tasks }: TaskChildrenPro
       <div className="flex items-center justify-between">
         <p className="text-lg font-semibold">Child Tickets</p>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={handleCreateChildTask}
-          >
+          <Button size="sm" variant="primary" onClick={handleCreateChildTask}>
             <PlusIcon className="size-4 mr-2" />
             Create Child Task
           </Button>

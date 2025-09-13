@@ -8,15 +8,15 @@ interface ParentTaskInfo {
 
 const useCreateChildTaskModal = () => {
   const [parentTaskId, setParentTaskId] = useQueryState(
-    "create-child-task-parent", 
+    "create-child-task-parent",
     parseAsString
   );
   const [parentProjectId, setParentProjectId] = useQueryState(
-    "create-child-task-project", 
+    "create-child-task-project",
     parseAsString
   );
   const [parentWorkspaceId, setParentWorkspaceId] = useQueryState(
-    "create-child-task-workspace", 
+    "create-child-task-workspace",
     parseAsString
   );
 
