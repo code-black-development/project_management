@@ -85,8 +85,8 @@ export const ForgotPasswordCard = () => {
         <CardContent className="p-7">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              Thank you, if your email is in the system we will email you a reset link. 
-              Please check your email account.
+              Thank you, if your email is in the system we will email you a
+              reset link. Please check your email account.
             </p>
             <div className="pt-4">
               <Link href="/sign-in">
@@ -122,7 +122,11 @@ export const ForgotPasswordCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="Enter your email address" />
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="Enter your email address"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

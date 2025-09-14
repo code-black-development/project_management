@@ -80,8 +80,8 @@ export const searchTasks = async (
     where,
     include: {
       project: true,
-      assignee: { 
-        include: { 
+      assignee: {
+        include: {
           user: {
             select: {
               id: true,
@@ -93,8 +93,8 @@ export const searchTasks = async (
           },
         },
       },
-      createdBy: { 
-        include: { 
+      createdBy: {
+        include: {
           user: {
             select: {
               id: true,

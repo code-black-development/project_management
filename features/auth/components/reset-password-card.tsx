@@ -20,13 +20,18 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters").max(32, "Password must be less than 32 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(32, "Password must be less than 32 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export const ResetPasswordCard = () => {
   const [isPending, setIsPending] = useState(false);
@@ -78,7 +83,9 @@ export const ResetPasswordCard = () => {
         setIsSuccess(true);
         toast.success("Password reset successfully!");
       } else {
-        toast.error(result.error || "Failed to reset password. Please try again.");
+        toast.error(
+          result.error || "Failed to reset password. Please try again."
+        );
       }
     } catch (error) {
       console.error("Reset password error:", error);
@@ -100,13 +107,12 @@ export const ResetPasswordCard = () => {
         <CardContent className="p-7">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              Your password has been successfully reset. You can now sign in with your new password.
+              Your password has been successfully reset. You can now sign in
+              with your new password.
             </p>
             <div className="pt-4">
               <Link href="/sign-in">
-                <Button className="w-full">
-                  Sign In
-                </Button>
+                <Button className="w-full">Sign In</Button>
               </Link>
             </div>
           </div>
@@ -127,13 +133,12 @@ export const ResetPasswordCard = () => {
         <CardContent className="p-7">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              This reset link is invalid or has expired. Please request a new one.
+              This reset link is invalid or has expired. Please request a new
+              one.
             </p>
             <div className="pt-4">
               <Link href="/forgot-password">
-                <Button className="w-full">
-                  Request New Reset Link
-                </Button>
+                <Button className="w-full">Request New Reset Link</Button>
               </Link>
             </div>
           </div>
@@ -146,9 +151,7 @@ export const ResetPasswordCard = () => {
     <Card className="w-full h-full md:w-[487px] border-none shadow-none">
       <CardHeader className="flex items-center justify-center text-center p-7">
         <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-        <p className="text-muted-foreground">
-          Enter your new password below
-        </p>
+        <p className="text-muted-foreground">Enter your new password below</p>
       </CardHeader>
       <div className="px-7">
         <DottedSeparator />
@@ -163,10 +166,10 @@ export const ResetPasswordCard = () => {
                 <FormItem>
                   <FormControl>
                     <div className="relative">
-                      <Input 
-                        {...field} 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder="New password" 
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="New password"
                       />
                       <Button
                         type="button"
@@ -194,17 +197,19 @@ export const ResetPasswordCard = () => {
                 <FormItem>
                   <FormControl>
                     <div className="relative">
-                      <Input 
-                        {...field} 
-                        type={showConfirmPassword ? "text" : "password"} 
-                        placeholder="Confirm new password" 
+                      <Input
+                        {...field}
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm new password"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4" />

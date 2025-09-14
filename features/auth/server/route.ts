@@ -4,7 +4,10 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import bcrypt from "bcrypt";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
-import { sendEmail, generatePasswordResetEmailTemplate } from "@/lib/mailing-functions";
+import {
+  sendEmail,
+  generatePasswordResetEmailTemplate,
+} from "@/lib/mailing-functions";
 import { randomBytes } from "crypto";
 
 import { z } from "zod";
@@ -28,7 +31,8 @@ const app = new Hono()
         });
 
         // Always return success message for security (don't reveal if email exists)
-        const successMessage = "Thank you, if your email is in the system we will email you a reset link. Please check your email account.";
+        const successMessage =
+          "Thank you, if your email is in the system we will email you a reset link. Please check your email account.";
 
         if (!user) {
           return c.json({ message: successMessage });
@@ -48,17 +52,24 @@ const app = new Hono()
         });
 
         // Generate reset link
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
         // Send email
-        const emailHtml = await generatePasswordResetEmailTemplate(resetLink, user.name || user.email);
+        const emailHtml = await generatePasswordResetEmailTemplate(
+          resetLink,
+          user.name || user.email
+        );
         await sendEmail(user.email, "Reset Your Password", emailHtml);
 
         return c.json({ message: successMessage });
       } catch (error) {
         console.error("Forgot password error:", error);
-        return c.json({ message: "Thank you, if your email is in the system we will email you a reset link. Please check your email account." });
+        return c.json({
+          message:
+            "Thank you, if your email is in the system we will email you a reset link. Please check your email account.",
+        });
       }
     }
   )
