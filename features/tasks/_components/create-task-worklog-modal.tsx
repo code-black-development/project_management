@@ -5,10 +5,17 @@ import useCreateTaskWorklogModal from "../hooks/use-create-task-worklog-modal";
 import TaskWorklogForm from "./task-worklog-form";
 
 export const CreateTaskWorklogModal = () => {
-  const { taskId, setTaskId, close } = useCreateTaskWorklogModal();
+  const { taskId, worklogId, isEditing, close } = useCreateTaskWorklogModal();
+
   return (
     <ResponsiveModal open={!!taskId} onOpenChange={close}>
-      <TaskWorklogForm id={taskId!} onCancel={close} />
+      {taskId && (
+        <TaskWorklogForm
+          id={taskId}
+          worklogId={worklogId || undefined}
+          onCancel={close}
+        />
+      )}
     </ResponsiveModal>
   );
 };

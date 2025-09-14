@@ -126,3 +126,16 @@ export const createWorklogSchema = z.object({
   dateWorked: z.date(),
   workDescription: z.string().optional(),
 });
+
+export const updateWorklogSchema = z.object({
+  timeSpent: z
+    .string()
+    .min(1, "Time entry cannot be empty")
+    .refine((val) => /^(\d+[wdhm]\s?)+$/.test(val), {
+      message:
+        "Time must be in valid format (e.g., '2h 30m', '1d 4h', '1w 2d 3h 15m')",
+    })
+    .optional(),
+  dateWorked: z.date().optional(),
+  workDescription: z.string().optional(),
+});
