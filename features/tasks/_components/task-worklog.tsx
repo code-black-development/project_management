@@ -3,7 +3,7 @@
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { TaskWithUser } from "@/types/types";
-import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { PlusIcon, ChevronDownIcon, ChevronRightIcon, EditIcon } from "lucide-react";
 import useCreateTaskWorklogModal from "../hooks/use-create-task-worklog-modal";
 import {
   timeEstimateStringToMinutes,
@@ -12,13 +12,15 @@ import {
 import ProgressBar from "@/components/progress-bar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 interface TaskWorklogProps {
   task: TaskWithUser;
 }
 
 const TaskWorklog = ({ task }: TaskWorklogProps) => {
-  const { open } = useCreateTaskWorklogModal();
+  const { open, openEdit } = useCreateTaskWorklogModal();
+  const { data: session } = useSession();
   const [expandedWorklogs, setExpandedWorklogs] = useState<Set<string>>(new Set());
   
   const estimateInMinutes = task.timeEstimate
@@ -80,6 +82,7 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
               {task.worklogs.map((worklog) => {
                 const isExpanded = expandedWorklogs.has(worklog.id);
                 const hasDescription = worklog.workDescription && worklog.workDescription.trim().length > 0;
+                const canEdit = worklog.member?.user?.id === session?.user?.id;
                 
                 return (
                   <div key={worklog.id} className="border rounded-md">
@@ -87,9 +90,11 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
                       className={`flex items-center justify-between p-2 bg-muted rounded-md ${
                         hasDescription ? 'cursor-pointer hover:bg-muted/80' : ''
                       }`}
-                      onClick={() => hasDescription && toggleWorklogExpansion(worklog.id)}
                     >
-                      <div className="flex items-center gap-2">
+                      <div 
+                        className="flex items-center gap-2 flex-1"
+                        onClick={() => hasDescription && toggleWorklogExpansion(worklog.id)}
+                      >
                         {hasDescription && (
                           <div className="flex-shrink-0">
                             {isExpanded ? (
@@ -115,9 +120,24 @@ const TaskWorklog = ({ task }: TaskWorklogProps) => {
                             "Unknown User"}
                         </span>
                       </div>
-                      <span className="text-sm font-medium">
-                        {minutesToTimeEstimateString(worklog.timeSpent)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          {minutesToTimeEstimateString(worklog.timeSpent)}
+                        </span>
+                        {canEdit && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(task.id, worklog.id);
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            <EditIcon className="size-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     
                     {hasDescription && isExpanded && (

@@ -15,7 +15,13 @@ import {
 } from "@/lib/dbService/tasks";
 import { getProjectById } from "@/lib/dbService/projects";
 import { Hono } from "hono";
-import { taskSearchSchema, createTaskSchema, patchTaskSchema } from "../schema";
+import {
+  taskSearchSchema,
+  createTaskSchema,
+  patchTaskSchema,
+  createWorklogSchema,
+  updateWorklogSchema,
+} from "../schema";
 import { zValidator } from "@hono/zod-validator";
 import { TaskStatus } from "@prisma/client";
 import { string, z } from "zod";
@@ -28,7 +34,12 @@ import {
   getMemberWithUserByUserIdAndWorkspaceId,
 } from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
-import { createTaskWorklog } from "@/lib/dbService/task-worklogs";
+import {
+  createTaskWorklog,
+  updateTaskWorklog,
+  deleteTaskWorklog,
+  getWorklogById,
+} from "@/lib/dbService/task-worklogs";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import { TaskAssetFile } from "../_components/task-assets";
 import { sendTaskAssignmentNotification } from "@/lib/mailing-functions";
@@ -180,6 +191,87 @@ const app = new Hono()
       return c.json({ data: result });
     }
   )
+  .get("/worklog/:worklogId", async (c) => {
+    const { worklogId } = c.req.param();
+    const userId = c.get("userId");
+
+    // Get the worklog
+    const worklog = await getWorklogById(worklogId);
+    if (!worklog) {
+      throw new HTTPException(404, { message: "Worklog not found" });
+    }
+
+    // Check if the user is the owner of the worklog
+    if (worklog.member?.userId !== userId) {
+      throw new HTTPException(403, {
+        message: "You can only view your own worklogs",
+      });
+    }
+
+    return c.json({ data: worklog });
+  })
+  .patch(
+    "/worklog/:worklogId",
+    zValidator(
+      "json",
+      z.object({
+        timeSpent: z.number().optional(),
+        dateWorked: z.union([z.string().datetime(), z.date()]).optional(),
+        workDescription: z.string().nullish().optional(),
+      })
+    ),
+    async (c) => {
+      const { worklogId } = c.req.param();
+      const { timeSpent, dateWorked, workDescription } = c.req.valid("json");
+      const userId = c.get("userId");
+
+      // Get the worklog to verify ownership
+      const existingWorklog = await getWorklogById(worklogId);
+      if (!existingWorklog) {
+        throw new HTTPException(404, { message: "Worklog not found" });
+      }
+
+      // Check if the user is the owner of the worklog
+      if (existingWorklog.member?.userId !== userId) {
+        throw new HTTPException(403, {
+          message: "You can only edit your own worklogs",
+        });
+      }
+
+      const updateData: any = {};
+      if (timeSpent !== undefined) updateData.timeSpent = timeSpent;
+      if (dateWorked !== undefined) {
+        updateData.dateWorked =
+          dateWorked instanceof String ? new Date(dateWorked) : dateWorked;
+      }
+      if (workDescription !== undefined) {
+        updateData.workDescription = workDescription;
+      }
+
+      const result = await updateTaskWorklog(worklogId, updateData);
+      return c.json({ data: result });
+    }
+  )
+  .delete("/worklog/:worklogId", async (c) => {
+    const { worklogId } = c.req.param();
+    const userId = c.get("userId");
+
+    // Get the worklog to verify ownership
+    const existingWorklog = await getWorklogById(worklogId);
+    if (!existingWorklog) {
+      throw new HTTPException(404, { message: "Worklog not found" });
+    }
+
+    // Check if the user is the owner of the worklog
+    if (existingWorklog.member?.userId !== userId) {
+      throw new HTTPException(403, {
+        message: "You can only delete your own worklogs",
+      });
+    }
+
+    const result = await deleteTaskWorklog(worklogId);
+    return c.json({ data: result });
+  })
   .post(
     "/bulk-update",
     zValidator(
