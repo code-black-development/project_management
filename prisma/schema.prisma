@@ -7,7 +7,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  //directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Account {
@@ -16,15 +15,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -41,15 +39,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String?
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  members       Member[]
+  id               String    @id @default(cuid())
+  name             String?
+  email            String    @unique
+  password         String?
+  emailVerified    DateTime? @map("email_verified")
+  image            String?
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  members          Member[]
+  accounts         Account[]
+  sessions         Session[]
 
   @@map("users")
 }
@@ -68,24 +68,24 @@ model Workspace {
   user      String
   name      String
   image     String?
-  members   Member[]
-  invites   WorkspaceInvites[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+  members   Member[]
   projects  Project[]
+  invites   WorkspaceInvites[]
 }
 
 model Member {
   id            String    @id @default(cuid())
-  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId   String
-  user          User      @relation(fields: [userId], references: [id])
   userId        String
   role          String    @default("member")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  assignedTasks Task[]    @relation(name: "TaskAssignee")
-  createdTasks  Task[]    @relation(name: "TaskCreator")
+  user          User      @relation(fields: [userId], references: [id])
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTasks Task[]    @relation("TaskAssignee")
+  createdTasks  Task[]    @relation("TaskCreator")
   Worklog       Worklog[]
 
   @@unique([workspaceId, userId])
@@ -93,13 +93,13 @@ model Member {
 
 model WorkspaceInvites {
   id           String    @id @default(cuid())
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId  String
   inviteeEmail String
   code         String    @unique
   createdAt    DateTime  @default(now())
-  expiresAt    DateTime  @default(dbgenerated("now() + interval '7 days'"))
+  expiresAt    DateTime  @default(dbgenerated("(now() + '7 days'::interval)"))
   updatedAt    DateTime  @updatedAt
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, inviteeEmail])
 }
@@ -108,22 +108,22 @@ model Project {
   id                     String    @id @default(cuid())
   name                   String
   image                  String?
-  autoHideCompletedTasks Boolean   @default(false)
-  taskAssignmentEmail    Boolean   @default(true)
-  workspace              Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId            String
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
+  autoHideCompletedTasks Boolean   @default(false)
+  taskAssignmentEmail    Boolean   @default(true)
+  workspace              Workspace @relation(fields: [workspaceId], references: [id])
   Task                   Task[]
 }
 
 model TaskCategory {
-  id    String @id @default(cuid())
+  id    String  @id @default(cuid())
   name  String
   icon  String?
-  color String? // Optional color for the category
+  color String?
   tasks Task[]
-  
+
   @@map("task_categories")
 }
 
@@ -133,52 +133,50 @@ model Task {
   description  String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  assignee     Member?       @relation(name: "TaskAssignee", fields: [assigneeId], references: [id])
   assigneeId   String?
-  project      Project       @relation(fields: [projectId], references: [id])
   projectId    String
   workspaceId  String
   dueDate      DateTime?
   status       TaskStatus    @default(TODO)
   position     Int
-  timeEstimate Int? //store all values in minutes
-  createdBy    Member        @relation(name: "TaskCreator", fields: [createdById], references: [id])
+  timeEstimate Int?
   createdById  String
-  worklogs     Worklog[]
-  //tasks can be linked
-  parent       Task?         @relation(name: "TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   parentId     String?
-  children     Task[]        @relation(name: "TaskHierarchy")
-  assets       TaskAsset[]
-  // Many tasks can belong to one category
   categoryId   String?
-  category     TaskCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  assignee     Member?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  category     TaskCategory? @relation(fields: [categoryId], references: [id])
+  createdBy    Member        @relation("TaskCreator", fields: [createdById], references: [id])
+  parent       Task?         @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Task[]        @relation("TaskHierarchy")
+  project      Project       @relation(fields: [projectId], references: [id])
+  assets       TaskAsset[]
+  worklogs     Worklog[]
 
-  @@index([parentId]) // Index for faster lookups
+  @@index([parentId])
 }
 
 model TaskAsset {
   id        String   @id @default(cuid())
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
   assetType String?
   assetUrl  String
   fileName  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id])
 }
 
 model Worklog {
   id              String   @id @default(cuid())
   taskId          String
-  task            Task     @relation(fields: [taskId], references: [id])
   memberId        String
-  member          Member   @relation(fields: [memberId], references: [id])
   timeSpent       Int
   workDescription String?
-  dateWorked      DateTime //when the work was done
+  dateWorked      DateTime
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  member          Member   @relation(fields: [memberId], references: [id])
+  task            Task     @relation(fields: [taskId], references: [id])
 }
 
 enum TaskStatus {

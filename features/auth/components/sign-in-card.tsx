@@ -17,6 +17,7 @@ import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -110,6 +111,14 @@ const SignInCard = () => {
             >
               {isPending ? "Signing In..." : "Log In"}
             </Button>
+            <div className="text-center">
+              <Link
+                href={`/forgot-password${form.getValues("email") ? `?email=${encodeURIComponent(form.getValues("email"))}` : ""}`}
+                className="text-sm text-muted-foreground hover:text-primary underline"
+              >
+                Forgotten password?
+              </Link>
+            </div>
           </form>
         </Form>
       </CardContent>

@@ -4,10 +4,111 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import bcrypt from "bcrypt";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import { sendEmail, generatePasswordResetEmailTemplate } from "@/lib/mailing-functions";
+import { randomBytes } from "crypto";
 
 import { z } from "zod";
 
 const app = new Hono()
+  .post(
+    "/forgot-password",
+    zValidator(
+      "json",
+      z.object({
+        email: z.string().email(),
+      })
+    ),
+    async (c) => {
+      const { email } = c.req.valid("json");
+
+      try {
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        // Always return success message for security (don't reveal if email exists)
+        const successMessage = "Thank you, if your email is in the system we will email you a reset link. Please check your email account.";
+
+        if (!user) {
+          return c.json({ message: successMessage });
+        }
+
+        // Generate reset token
+        const resetToken = randomBytes(32).toString("hex");
+        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+        // Save reset token to database
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            resetToken,
+            resetTokenExpiry,
+          },
+        });
+
+        // Generate reset link
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+
+        // Send email
+        const emailHtml = await generatePasswordResetEmailTemplate(resetLink, user.name || user.email);
+        await sendEmail(user.email, "Reset Your Password", emailHtml);
+
+        return c.json({ message: successMessage });
+      } catch (error) {
+        console.error("Forgot password error:", error);
+        return c.json({ message: "Thank you, if your email is in the system we will email you a reset link. Please check your email account." });
+      }
+    }
+  )
+  .post(
+    "/reset-password",
+    zValidator(
+      "json",
+      z.object({
+        token: z.string(),
+        password: z.string().min(8),
+      })
+    ),
+    async (c) => {
+      const { token, password } = c.req.valid("json");
+
+      try {
+        // Find user with valid reset token
+        const user = await prisma.user.findFirst({
+          where: {
+            resetToken: token,
+            resetTokenExpiry: {
+              gt: new Date(),
+            },
+          },
+        });
+
+        if (!user) {
+          return c.json({ error: "Invalid or expired reset token" }, 400);
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Update user password and clear reset token
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            password: hashedPassword,
+            resetToken: null,
+            resetTokenExpiry: null,
+          },
+        });
+
+        return c.json({ message: "Password reset successfully" });
+      } catch (error) {
+        console.error("Reset password error:", error);
+        return c.json({ error: "Failed to reset password" }, 500);
+      }
+    }
+  )
   .post(
     "/register",
     zValidator(
