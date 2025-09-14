@@ -80,7 +80,7 @@ export const patchTaskSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (val === "" ? null : val)),
   timeEstimate: z
     .string()
     .nullable()
@@ -88,22 +88,22 @@ export const patchTaskSchema = z.object({
     .refine((val) => !val || /^(\d+[wdhm]\s?)+$/.test(val), {
       message: "invalid format (use: 1w 2d 3h 4m)",
     })
-    .transform((val) => val || null),
+    .transform((val) => (val === "" ? null : val)),
   dueDate: z
     .union([z.string(), z.date()])
     .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (val === "" ? null : val)),
   assigneeId: z
     .string()
     .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (val === "" ? null : val)),
   description: z
     .string()
     .nullable()
     .optional()
-    .transform((val) => val || null),
+    .transform((val) => (val === "" ? null : val)),
 });
 
 export const taskSearchSchema = z.object({

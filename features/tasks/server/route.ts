@@ -254,6 +254,17 @@ const app = new Hono()
     //TODO: we should check if the user is a member of the workspace and has permission
     const taskData: any = {};
 
+    console.log("PATCH request data:", {
+      name,
+      status,
+      projectId,
+      dueDate,
+      assigneeId,
+      description,
+      timeEstimate,
+      categoryId,
+    });
+
     if (name !== undefined) taskData.name = name;
     if (status !== undefined) taskData.status = status;
     if (projectId !== undefined) taskData.projectId = projectId;
@@ -266,6 +277,8 @@ const app = new Hono()
         : null;
     }
     if (categoryId !== undefined) taskData.categoryId = categoryId;
+
+    console.log("Task data to update:", taskData);
 
     // Get the existing task BEFORE updating to check if assignee changed
     let existingTask = null;
