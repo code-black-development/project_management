@@ -22,8 +22,10 @@ const app = new Hono().basePath("/api");
 ); */
 
 app.use("*", (c, next) => {
-  // Skip auth for registration endpoint
-  if (c.req.url.endsWith("/users/register")) {
+  // Skip auth for registration and password reset endpoints
+  if (c.req.url.endsWith("/users/register") || 
+      c.req.url.endsWith("/users/forgot-password") ||
+      c.req.url.endsWith("/users/reset-password")) {
     return next();
   }
   return authMiddleware(c, next);

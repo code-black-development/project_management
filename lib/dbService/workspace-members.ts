@@ -6,7 +6,16 @@ export const getMembersByWorkspaceId = async (workspaceId: string) => {
       workspaceId,
     },
     include: {
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          emailVerified: true,
+          // Exclude password, resetToken, and resetTokenExpiry for security
+        },
+      },
     },
   });
 };
@@ -41,7 +50,16 @@ export const getMemberWithUserByUserIdAndWorkspaceId = async (
       workspaceId,
     },
     include: {
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          emailVerified: true,
+          // Exclude password, resetToken, and resetTokenExpiry for security
+        },
+      },
     },
   });
 };

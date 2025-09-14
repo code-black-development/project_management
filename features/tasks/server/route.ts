@@ -295,7 +295,17 @@ const app = new Hono()
             // Get assignee details with user information (assigneeId is a member ID)
             const assignee = await prisma.member.findUnique({
               where: { id: assigneeId },
-              include: { user: true },
+              include: { 
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                    emailVerified: true,
+                  },
+                },
+              },
             });
 
             if (assignee?.user?.email) {
@@ -461,7 +471,17 @@ const app = new Hono()
             // Get assignee details with user information (assigneeId is a member ID)
             const assignee = await prisma.member.findUnique({
               where: { id: assigneeId },
-              include: { user: true },
+              include: { 
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                    emailVerified: true,
+                  },
+                },
+              },
             });
 
             if (assignee?.user?.email) {
