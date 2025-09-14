@@ -4,6 +4,15 @@ import prisma from "@/prisma/prisma";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 
+// Safe user select to exclude sensitive fields
+const safeUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+  emailVerified: true,
+} as const;
+
 export const searchTasks = async (
   data: z.infer<typeof taskSearchSchema>,
   excludeCompleted?: boolean
@@ -71,13 +80,45 @@ export const searchTasks = async (
     where,
     include: {
       project: true,
-      assignee: { include: { user: true } },
-      createdBy: { include: { user: true } },
+      assignee: { 
+        include: { 
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              emailVerified: true,
+            },
+          },
+        },
+      },
+      createdBy: { 
+        include: { 
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              emailVerified: true,
+            },
+          },
+        },
+      },
       worklogs: {
         include: {
           member: {
             include: {
-              user: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                  emailVerified: true,
+                },
+              },
             },
           },
         },
@@ -107,13 +148,13 @@ export const getTaskById = async (taskId: string) => {
       },
       include: {
         project: true,
-        assignee: { include: { user: true } },
-        createdBy: { include: { user: true } },
+        assignee: { include: { user: { select: safeUserSelect } } },
+        createdBy: { include: { user: { select: safeUserSelect } } },
         worklogs: {
           include: {
             member: {
               include: {
-                user: true,
+                user: { select: safeUserSelect },
               },
             },
           },
@@ -123,14 +164,14 @@ export const getTaskById = async (taskId: string) => {
         },
         children: {
           include: {
-            assignee: { include: { user: true } },
-            createdBy: { include: { user: true } },
+            assignee: { include: { user: { select: safeUserSelect } } },
+            createdBy: { include: { user: { select: safeUserSelect } } },
             project: true,
             worklogs: {
               include: {
                 member: {
                   include: {
-                    user: true,
+                    user: { select: safeUserSelect },
                   },
                 },
               },
@@ -139,8 +180,8 @@ export const getTaskById = async (taskId: string) => {
             category: true,
             children: {
               include: {
-                assignee: { include: { user: true } },
-                createdBy: { include: { user: true } },
+                assignee: { include: { user: { select: safeUserSelect } } },
+                createdBy: { include: { user: { select: safeUserSelect } } },
                 project: true,
                 worklogs: true,
                 assets: true,
@@ -168,13 +209,13 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
     },
     include: {
       project: true,
-      assignee: { include: { user: true } },
-      createdBy: { include: { user: true } },
+      assignee: { include: { user: { select: safeUserSelect } } },
+      createdBy: { include: { user: { select: safeUserSelect } } },
       worklogs: {
         include: {
           member: {
             include: {
-              user: true,
+              user: { select: safeUserSelect },
             },
           },
         },

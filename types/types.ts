@@ -42,7 +42,7 @@ export type MemberSafeDate = Omit<Member, "createdAt" | "updatedAt"> & {
   updatedAt: string;
 };
 
-export type UserSafeDate = Omit<User, "emailVerified"> & {
+export type UserSafeDate = Omit<User, "emailVerified" | "resetTokenExpiry" | "password" | "resetToken"> & {
   emailVerified: string | null;
 };
 
