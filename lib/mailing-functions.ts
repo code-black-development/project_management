@@ -268,3 +268,58 @@ export async function sendTaskAssignmentNotification(
     // Don't throw the error to prevent task creation/update from failing
   }
 }
+
+export async function generatePasswordResetEmailTemplate(
+  resetLink: string,
+  userName: string
+) {
+  try {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Reset Your Password</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Reset Your Password</h1>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #667eea;">
+            <h2 style="color: #667eea; margin-top: 0;">Password Reset Request</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              Hello ${userName},
+            </p>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              We received a request to reset your password for your CodeFlow Pro account. Click the button below to reset your password:
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}" 
+                 style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
+              If you didn't request this password reset, please ignore this email. This link will expire in 1 hour.
+            </p>
+            <p style="color: #6c757d; font-size: 14px;">
+              If the button doesn't work, you can copy and paste this link into your browser: ${resetLink}
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+  } catch (error) {
+    console.error("Error generating password reset email template:", error);
+    return `
+      <h2>Reset Your Password</h2>
+      <p>Hello ${userName},</p>
+      <p>We received a request to reset your password. Click the link below to reset your password:</p>
+      <p><a href="${resetLink}">Reset Password</a></p>
+      <p>If you didn't request this, please ignore this email. This link will expire in 1 hour.</p>
+    `;
+  }
+}
