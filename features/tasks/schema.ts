@@ -114,3 +114,15 @@ export const taskSearchSchema = z.object({
   search: z.string().nullish(),
   dueDate: z.date().nullish(),
 });
+
+export const createWorklogSchema = z.object({
+  timeSpent: z
+    .string()
+    .min(1, "Time entry cannot be empty")
+    .refine((val) => /^(\d+[wdhm]\s?)+$/.test(val), {
+      message:
+        "Time must be in valid format (e.g., '2h 30m', '1d 4h', '1w 2d 3h 15m')",
+    }),
+  dateWorked: z.date(),
+  workDescription: z.string().optional(),
+});
