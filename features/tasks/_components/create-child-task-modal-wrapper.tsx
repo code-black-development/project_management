@@ -1,5 +1,4 @@
 "use client";
-import { Suspense } from "react";
 import ResponsiveModal from "@/components/responsive-modal";
 import useCreateChildTaskModal from "../hooks/use-create-child-task-modal";
 import TaskFormWrapper from "./task-form-wrapper";
@@ -20,9 +19,7 @@ const CreateChildTaskModalWrapper = () => {
 
   return (
     <ResponsiveModal open={isOpen} onOpenChange={setIsOpen}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <TaskFormWrapper onCancel={close} parentTaskInfo={parentTaskInfo} />
-      </Suspense>
+      <TaskFormWrapper onCancel={close} parentTaskInfo={parentTaskInfo} />
     </ResponsiveModal>
   );
 };

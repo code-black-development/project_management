@@ -102,16 +102,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // Handle session updates (when user.update is called)
       if (trigger === "update" && session) {
-        // Fetch the latest user data from the database
-        const updatedUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { id: true, name: true, email: true, image: true },
-        });
+        try {
+          // Fetch the latest user data from the database
+          const updatedUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { id: true, name: true, email: true, image: true },
+          });
 
-        if (updatedUser) {
-          token.name = updatedUser.name;
-          token.email = updatedUser.email;
-          token.image = updatedUser.image;
+          if (updatedUser) {
+            token.name = updatedUser.name;
+            token.email = updatedUser.email;
+            token.image = updatedUser.image;
+          }
+        } catch (error) {
+          console.error("JWT callback database error:", error);
+          // Continue with existing token data if database is unreachable
         }
       }
 

@@ -9,15 +9,20 @@ declare module "hono" {
 }
 
 export const authMiddleware = async (c: Context, next: () => Promise<void>) => {
-  const session = await auth();
-  const userId = session?.user?.id;
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
 
-  if (!userId) {
-    return c.json({ message: "Unauthorized" }, 401);
+    if (!userId) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+
+    // Set the userId in context
+    c.set("userId", userId);
+
+    await next();
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+    return c.json({ message: "Authentication error" }, 500);
   }
-
-  // Set the userId in context
-  c.set("userId", userId);
-
-  await next();
 };
