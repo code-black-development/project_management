@@ -24,7 +24,7 @@ import { TaskStatus } from "@prisma/client";
 
 import { useConfirm } from "@/hooks/use-confirm";
 
-import { createTaskSchema, updateTaskSchema } from "../schema";
+import { createTaskSchema, updateTaskSchema, patchTaskSchema } from "../schema";
 
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useUpdateTask } from "../api/use-update-task";
@@ -119,6 +119,7 @@ const TaskForm = ({
       projectId: initialValues?.projectId ?? parentTaskInfo?.projectId ?? "",
       timeEstimate: initialValues?.timeEstimate ?? "",
       categoryId: initialValues?.categoryId ?? "",
+      description: initialValues?.description ?? "",
     },
   });
 
@@ -134,24 +135,75 @@ const TaskForm = ({
     console.log("values: ", values);
 
     if (initialValues) {
-      // Update existing task
-      const payload = {
-        json: {
-          ...values,
-        },
-        param: {
-          taskId: initialValues.id,
-        },
-      };
-      updateTask(payload, {
-        onSuccess: handleFormSuccess,
-      });
+      // Update existing task - only send fields that have changed
+      const changedFields: any = {};
+
+      // Compare each field and only include if changed
+      if (values.name !== initialValues.name) {
+        changedFields.name = values.name;
+      }
+      if (values.status !== initialValues.status) {
+        changedFields.status = values.status;
+      }
+      if (values.projectId !== initialValues.projectId) {
+        changedFields.projectId = values.projectId;
+      }
+      if (values.assigneeId !== (initialValues.assigneeId || "")) {
+        changedFields.assigneeId = values.assigneeId || null;
+      }
+      if (values.categoryId !== (initialValues.categoryId || "")) {
+        changedFields.categoryId = values.categoryId || null;
+      }
+      if (values.timeEstimate !== (initialValues.timeEstimate || "")) {
+        changedFields.timeEstimate = values.timeEstimate || null;
+      }
+      if (values.description !== (initialValues.description || "")) {
+        changedFields.description = values.description || null;
+      }
+
+      // Handle dueDate comparison carefully
+      const initialDueDate = initialValues.dueDate
+        ? new Date(initialValues.dueDate)
+        : null;
+      const formDueDate =
+        values.dueDate instanceof Date
+          ? values.dueDate
+          : values.dueDate
+            ? new Date(values.dueDate)
+            : null;
+
+      const datesAreEqual =
+        initialDueDate && formDueDate
+          ? initialDueDate.getTime() === formDueDate.getTime()
+          : initialDueDate === formDueDate;
+
+      if (!datesAreEqual) {
+        changedFields.dueDate = formDueDate;
+      }
+
+      // Only proceed with update if there are actual changes
+      if (Object.keys(changedFields).length > 0) {
+        const payload = {
+          json: changedFields,
+          param: {
+            taskId: initialValues.id,
+          },
+        };
+        updateTask(payload, {
+          onSuccess: handleFormSuccess,
+        });
+      } else {
+        // No changes, just close the form
+        handleFormSuccess();
+      }
     } else if (parentTaskInfo) {
       // Create child task
       const payload = {
         parentTaskId: parentTaskInfo.taskId,
         taskData: {
-          ...values,
+          name: values.name!,
+          status: values.status!,
+          projectId: values.projectId!,
           workspaceId: parentTaskInfo.workspaceId,
           // Ensure dueDate is properly typed
           dueDate:
@@ -160,6 +212,10 @@ const TaskForm = ({
               : values.dueDate
                 ? new Date(values.dueDate)
                 : null,
+          assigneeId: values.assigneeId || null,
+          description: values.description || null,
+          timeEstimate: values.timeEstimate || null,
+          categoryId: values.categoryId || null,
         },
       };
       createChildTask(payload, {
@@ -169,8 +225,15 @@ const TaskForm = ({
       // Create new task
       const payload = {
         json: {
-          ...values,
-          workspaceId,
+          name: values.name,
+          status: values.status,
+          projectId: values.projectId,
+          workspaceId: values.workspaceId,
+          dueDate: values.dueDate || null,
+          assigneeId: values.assigneeId || null,
+          description: values.description || null,
+          timeEstimate: values.timeEstimate || null,
+          categoryId: values.categoryId || null,
         },
       };
       createTask(payload);
