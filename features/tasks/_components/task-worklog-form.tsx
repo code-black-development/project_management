@@ -25,11 +25,11 @@ import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useCreateTaskWorklog } from "../api/use-create-task-worklog";
+import { createWorklogSchema } from "../schema";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import { useSession } from "next-auth/react";
 import { Textarea } from "@/components/ui/textarea";
 import DatePicker from "@/components/date-picker";
-import { time } from "console";
 
 interface TaskWorklogFormProps {
   id: string;
@@ -40,16 +40,10 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
   const workspaceId = useWorkspaceId();
   const { data: session } = useSession();
 
-  const formSchema = z.object({
-    timeSpent: z.string().nonempty("time is required"),
-    dateWorked: z.date(),
-    workDescription: z.string().optional(),
-  });
-
   const { mutate, isPending } = useCreateTaskWorklog();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof createWorklogSchema>>({
+    resolver: zodResolver(createWorklogSchema),
     defaultValues: {
       timeSpent: "",
       dateWorked: new Date(),
@@ -57,7 +51,7 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof createWorklogSchema>) => {
     mutate(
       {
         json: {
@@ -127,10 +121,13 @@ const TaskWorklogForm = ({ id, onCancel }: TaskWorklogFormProps) => {
                         <Input
                           {...field}
                           type="text"
-                          placeholder="6w 3d 4h 2m"
+                          placeholder="e.g., 2h 30m, 1d 4h, 1w 2d 3h 15m"
                           className="input"
                         />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Use: w (weeks), d (days), h (hours), m (minutes)
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
