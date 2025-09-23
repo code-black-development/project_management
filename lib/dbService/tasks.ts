@@ -150,6 +150,13 @@ export const getTaskById = async (taskId: string) => {
         project: true,
         assignee: { include: { user: { select: safeUserSelect } } },
         createdBy: { include: { user: { select: safeUserSelect } } },
+        parent: {
+          include: {
+            project: true,
+            assignee: { include: { user: { select: safeUserSelect } } },
+            createdBy: { include: { user: { select: safeUserSelect } } },
+          },
+        },
         worklogs: {
           include: {
             member: {

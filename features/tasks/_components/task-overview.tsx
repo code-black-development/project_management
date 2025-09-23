@@ -2,7 +2,7 @@ import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TaskWithUser } from "@/types/types";
-import { PencilIcon, Tag, Trash2, CopyIcon } from "lucide-react";
+import { PencilIcon, Trash2, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import TaskOverviewProperty from "./task-overview-property";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import TaskChildren from "./task-children";
 import { TaskType } from "@prisma/client";
+import Link from "next/link";
 
 import DynamicIcon from "@/components/dynamic-icon";
 
@@ -121,6 +122,19 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                   "Unknown"}
               </p>
             </TaskOverviewProperty>
+
+            {task.parent && (
+              <TaskOverviewProperty label="Parent Task">
+                <Link
+                  href={`/workspaces/${workspaceId}/tasks/${task.parent.id}`}
+                  className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <ExternalLinkIcon className="size-4" />
+                  <span>{task.parent.name}</span>
+                </Link>
+              </TaskOverviewProperty>
+            )}
+
             <TaskOverviewProperty label="Due Date">
               {task.dueDate ? (
                 <TaskDate
