@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, TaskType, RecurrenceFrequency, RecurrenceDuration } from "@prisma/client";
 
 export const createTaskSchema = z.object({
   name: z.string().trim().nonempty("Name is required"),
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  taskType: z.nativeEnum(TaskType).optional().default(TaskType.TASK),
   categoryId: z
     .string()
     .nullable()
@@ -31,6 +32,14 @@ export const createTaskSchema = z.object({
     .transform((val) => (!val || val === "" ? null : val)),
   description: z
     .string()
+    .nullable()
+    .optional()
+    .transform((val) => (!val || val === "" ? null : val)),
+  isRecurring: z.boolean().optional().default(false),
+  recurrenceFrequency: z.nativeEnum(RecurrenceFrequency).nullable().optional(),
+  recurrenceDuration: z.nativeEnum(RecurrenceDuration).nullable().optional(),
+  recurrenceEndDate: z
+    .union([z.string(), z.date()])
     .nullable()
     .optional()
     .transform((val) => (!val || val === "" ? null : val)),
@@ -41,6 +50,7 @@ export const updateTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
+  taskType: z.nativeEnum(TaskType).optional().default(TaskType.TASK),
   categoryId: z
     .string()
     .nullable()
@@ -69,6 +79,14 @@ export const updateTaskSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => (!val || val === "" ? null : val)),
+  isRecurring: z.boolean().optional().default(false),
+  recurrenceFrequency: z.nativeEnum(RecurrenceFrequency).nullable().optional(),
+  recurrenceDuration: z.nativeEnum(RecurrenceDuration).nullable().optional(),
+  recurrenceEndDate: z
+    .union([z.string(), z.date()])
+    .nullable()
+    .optional()
+    .transform((val) => (!val || val === "" ? null : val)),
 });
 
 export const patchTaskSchema = z.object({
@@ -76,6 +94,7 @@ export const patchTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus).optional(),
   workspaceId: z.string().optional(),
   projectId: z.string().optional(),
+  taskType: z.nativeEnum(TaskType).optional(),
   categoryId: z
     .string()
     .nullable()
@@ -101,6 +120,14 @@ export const patchTaskSchema = z.object({
     .transform((val) => (val === "" ? null : val)),
   description: z
     .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
+  isRecurring: z.boolean().optional(),
+  recurrenceFrequency: z.nativeEnum(RecurrenceFrequency).nullable().optional(),
+  recurrenceDuration: z.nativeEnum(RecurrenceDuration).nullable().optional(),
+  recurrenceEndDate: z
+    .union([z.string(), z.date()])
     .nullable()
     .optional()
     .transform((val) => (val === "" ? null : val)),
@@ -139,3 +166,30 @@ export const updateWorklogSchema = z.object({
   dateWorked: z.date().optional(),
   workDescription: z.string().optional(),
 });
+
+export const createEventSchema = createTaskSchema.extend({
+  taskType: z.literal(TaskType.EVENT),
+  dueDate: z
+    .union([z.string(), z.date()])
+    .refine((val) => val !== null && val !== "", {
+      message: "Due date is required for events",
+    }),
+}).refine(
+  (data) => {
+    if (data.isRecurring) {
+      // If recurring, require frequency
+      if (!data.recurrenceFrequency) {
+        return false;
+      }
+      // If duration is CUSTOM, require end date
+      if (data.recurrenceDuration === RecurrenceDuration.CUSTOM && !data.recurrenceEndDate) {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: "Recurring events require frequency and duration settings",
+    path: ["isRecurring"],
+  }
+);

@@ -6,6 +6,9 @@ import {
   Workspace,
   Worklog,
   TaskAsset,
+  TaskType,
+  RecurrenceFrequency,
+  RecurrenceDuration,
 } from "@prisma/client";
 
 export type TaskWithUser = TaskSafeDate & {
@@ -29,12 +32,13 @@ export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
 
 export type TaskSafeDate = Omit<
   Task,
-  "createdAt" | "updatedAt" | "dueDate" | "timeEstimate"
+  "createdAt" | "updatedAt" | "dueDate" | "timeEstimate" | "recurrenceEndDate"
 > & {
   createdAt: string;
   updatedAt: string;
   dueDate: string | null;
   timeEstimate: string | null;
+  recurrenceEndDate: string | null;
 };
 
 export type MemberSafeDate = Omit<Member, "createdAt" | "updatedAt"> & {

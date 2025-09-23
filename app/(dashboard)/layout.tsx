@@ -2,6 +2,7 @@ import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import CreateProjectModal from "@/features/projects/_components/create-project-modal";
 import CreateTaskModal from "@/features/tasks/_components/create-task-modal";
+import CreateEventModal from "@/features/tasks/_components/create-event-modal";
 import CreateChildTaskModalWrapper from "@/features/tasks/_components/create-child-task-modal-wrapper";
 import CreateTaskWorklogModal from "@/features/tasks/_components/create-task-worklog-modal";
 import EditTaskModal from "@/features/tasks/_components/edit-task-modal";
@@ -17,6 +18,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <CreateWorkspaceModal />
       <CreateProjectModal />
       <CreateTaskModal />
+      <CreateEventModal />
       <CreateChildTaskModalWrapper />
       <EditTaskModal />
       <CreateTaskWorklogModal />

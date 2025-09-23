@@ -1,9 +1,22 @@
 "use client";
 import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, PlusIcon } from "lucide-react";
+import {
+  Loader2,
+  PlusIcon,
+  ChevronDownIcon,
+  CalendarIcon,
+  CheckSquareIcon,
+} from "lucide-react";
 import useCreateTaskModal from "../hooks/use-create-task-modal";
+import useCreateEventModal from "../hooks/use-create-event-modal";
 import { useGetTasks } from "../api/use-get-tasks";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useQueryState } from "nuqs";
@@ -49,6 +62,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   );
 
   const { open } = useCreateTaskModal();
+  const { open: openEvent } = useCreateEventModal();
   return (
     <Tabs
       defaultValue={view}
@@ -68,10 +82,25 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
               Calendar
             </TabsTrigger>
           </TabsList>
-          <Button size="sm" className="w-full lg:w-auto" onClick={open}>
-            <PlusIcon className="size-4 mr-2" />
-            New
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="w-full lg:w-auto">
+                <PlusIcon className="size-4 mr-2" />
+                New
+                <ChevronDownIcon className="size-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={open}>
+                <CheckSquareIcon className="size-4 mr-2" />
+                New Task
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={openEvent}>
+                <CalendarIcon className="size-4 mr-2" />
+                New Event
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <DottedSeparator className="my-4" />
         <DataFilters hideProjectFilter={hideProjectFilter} />

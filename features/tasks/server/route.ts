@@ -13,6 +13,15 @@ import {
   searchTasks,
   updateTask,
 } from "@/lib/dbService/tasks";
+import {
+  createEvent,
+  getEventsByWorkspaceId,
+  getEventsByProjectId,
+  getEventsInDateRange,
+  generateEventOccurrences,
+  updateEventAndOccurrences,
+  deleteEventAndOccurrences,
+} from "@/lib/dbService/events";
 import { getProjectById } from "@/lib/dbService/projects";
 import { Hono } from "hono";
 import {
@@ -23,7 +32,7 @@ import {
   updateWorklogSchema,
 } from "../schema";
 import { zValidator } from "@hono/zod-validator";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, TaskType } from "@prisma/client";
 import { string, z } from "zod";
 import {
   minutesToTimeEstimateString,
@@ -503,6 +512,11 @@ const app = new Hono()
         description,
         timeEstimate,
         categoryId,
+        taskType,
+        isRecurring,
+        recurrenceFrequency,
+        recurrenceDuration,
+        recurrenceEndDate,
       } = c.req.valid("json");
 
       console.log("Validated data:", {
@@ -515,6 +529,11 @@ const app = new Hono()
         description,
         timeEstimate,
         categoryId,
+        taskType,
+        isRecurring,
+        recurrenceFrequency,
+        recurrenceDuration,
+        recurrenceEndDate,
       });
 
       //TODO: we should get the taskstatus passed and check that not just hard code TDOD
@@ -562,9 +581,27 @@ const app = new Hono()
           ? timeEstimateStringToMinutes(timeEstimate)
           : null,
         categoryId: categoryId ?? null,
+        taskType: taskType || "TASK",
+        isRecurring: isRecurring || false,
+        recurrenceFrequency: recurrenceFrequency || null,
+        recurrenceDuration: recurrenceDuration || null,
+        recurrenceEndDate: recurrenceEndDate
+          ? new Date(recurrenceEndDate)
+          : null,
+        originalEventId: null,
       };
 
       const task = await createTask(taskData);
+
+      // If this is a recurring event, generate occurrences
+      if (task && taskType === TaskType.EVENT && isRecurring) {
+        try {
+          await generateEventOccurrences(task.id);
+        } catch (error) {
+          console.error("Failed to generate event occurrences:", error);
+          // Don't fail the task creation if occurrence generation fails
+        }
+      }
 
       // Send notification email if task is assigned and project has notifications enabled
       if (assigneeId && task) {
@@ -629,6 +666,119 @@ const app = new Hono()
         },
         500
       );
+    }
+  })
+  // Event-specific endpoints
+  .get(
+    "/events",
+    zValidator(
+      "query",
+      z.object({
+        workspaceId: z.string(),
+        projectId: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      const { workspaceId, projectId, startDate, endDate } =
+        c.req.valid("query");
+
+      try {
+        console.log("Fetching events with params:", {
+          workspaceId,
+          projectId,
+          startDate,
+          endDate,
+        });
+        let events;
+
+        if (startDate && endDate) {
+          // Get events in date range
+          console.log("Getting events in date range");
+          events = await getEventsInDateRange(
+            workspaceId,
+            new Date(startDate),
+            new Date(endDate)
+          );
+        } else if (projectId) {
+          // Get events by project
+          console.log("Getting events by project");
+          events = await getEventsByProjectId(projectId);
+        } else {
+          // Get all events in workspace
+          console.log("Getting events by workspace");
+          events = await getEventsByWorkspaceId(workspaceId);
+        }
+
+        console.log("Fetched events:", events?.length || 0, "events");
+        return c.json({ data: events || [] });
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+        return c.json({ error: "Failed to fetch events", data: [] }, 500);
+      }
+    }
+  )
+  .post("/events/:eventId/regenerate-occurrences", async (c) => {
+    const { eventId } = c.req.param();
+    const userId = c.get("userId");
+
+    try {
+      // Check if user has permission to modify this event
+      const event = await getTaskById(eventId);
+      if (!event) {
+        return c.json({ error: "Event not found" }, 404);
+      }
+
+      // Check if user is a member of the workspace
+      const member = await getMemberByUserIdAndWorkspaceId(
+        userId,
+        event.workspaceId
+      );
+      if (!member) {
+        throw new HTTPException(403, {
+          message: "You are not a member of this workspace",
+        });
+      }
+
+      await generateEventOccurrences(eventId);
+      return c.json({ message: "Event occurrences regenerated successfully" });
+    } catch (error) {
+      console.error("Failed to regenerate event occurrences:", error);
+      return c.json({ error: "Failed to regenerate event occurrences" }, 500);
+    }
+  })
+  .delete("/events/:eventId", async (c) => {
+    const { eventId } = c.req.param();
+    const userId = c.get("userId");
+
+    try {
+      // Check if the event exists and get event details
+      const event = await getTaskById(eventId);
+      if (!event) {
+        return c.json({ error: "Event not found" }, 404);
+      }
+
+      // Check if user is a member of the workspace
+      const member = await getMemberByUserIdAndWorkspaceId(
+        userId,
+        event.workspaceId
+      );
+      if (!member) {
+        throw new HTTPException(403, {
+          message: "You are not a member of this workspace",
+        });
+      }
+
+      // Delete the event and all its occurrences
+      await deleteEventAndOccurrences(eventId);
+
+      return c.json({
+        message: "Event and all occurrences deleted successfully",
+      });
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      return c.json({ error: "Failed to delete event" }, 500);
     }
   });
 
