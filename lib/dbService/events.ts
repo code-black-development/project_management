@@ -5,14 +5,7 @@ import {
   RecurrenceFrequency,
   RecurrenceDuration,
 } from "@prisma/client";
-import {
-  addDays,
-  addWeeks,
-  addMonths,
-  addYears,
-  isBefore,
-  isAfter,
-} from "date-fns";
+import { addDays, addWeeks, addMonths, addYears, isBefore } from "date-fns";
 
 // Safe user select to exclude sensitive fields
 const safeUserSelect = {
