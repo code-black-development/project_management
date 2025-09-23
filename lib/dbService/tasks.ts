@@ -15,7 +15,8 @@ const safeUserSelect = {
 
 export const searchTasks = async (
   data: z.infer<typeof taskSearchSchema>,
-  excludeCompleted?: boolean
+  excludeCompleted?: boolean,
+  excludeChildTasks?: boolean
 ) => {
   const where: Prisma.TaskWhereInput = {};
 
@@ -53,6 +54,11 @@ export const searchTasks = async (
     } else {
       where.status = { not: TaskStatus.DONE };
     }
+  }
+
+  // Add logic to exclude child tasks (tasks that have a parent)
+  if (excludeChildTasks) {
+    where.parentId = null;
   }
 
   if (data.search) {

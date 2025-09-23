@@ -5,6 +5,7 @@ export const useProjectAutoHide = (projectId?: string) => {
 
   return {
     autoHideCompletedTasks: project?.autoHideCompletedTasks || false,
+    autoHideChildTasks: project?.autoHideChildTasks ?? false,
     isLoading: !project && !!projectId,
   };
 };

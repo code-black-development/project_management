@@ -9,6 +9,18 @@ export const createProjectSchema = z.object({
     ])
     .optional(),
   workspaceId: z.string(),
+  autoHideCompletedTasks: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  autoHideChildTasks: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  taskAssignmentEmail: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
 });
 export const updateProjectSchema = z.object({
   name: z.string().trim().min(1, "Must be at least one character"),
@@ -19,5 +31,6 @@ export const updateProjectSchema = z.object({
     ])
     .optional(),
   autoHideCompletedTasks: z.boolean().optional(),
+  autoHideChildTasks: z.boolean().optional(),
   taskAssignmentEmail: z.boolean().optional(),
 });

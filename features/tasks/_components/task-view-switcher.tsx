@@ -42,7 +42,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
-  const { autoHideCompletedTasks } = useProjectAutoHide(
+  const { autoHideCompletedTasks, autoHideChildTasks } = useProjectAutoHide(
     paramProjectId || projectId || undefined
   );
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
@@ -105,9 +105,18 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
         <DottedSeparator className="my-4" />
         <DataFilters hideProjectFilter={hideProjectFilter} />
         <DottedSeparator className="my-4" />
-        {autoHideCompletedTasks && (
+        {(autoHideCompletedTasks || autoHideChildTasks) && (
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">Hide done: on</p>
+            <div className="flex gap-4">
+              {autoHideCompletedTasks && (
+                <p className="text-sm text-muted-foreground">Hide done: on</p>
+              )}
+              {autoHideChildTasks && (
+                <p className="text-sm text-muted-foreground">
+                  Hide child tasks: on
+                </p>
+              )}
+            </div>
           </div>
         )}
         {isLoadingTasks ? (
