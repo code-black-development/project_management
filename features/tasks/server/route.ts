@@ -477,14 +477,20 @@ const app = new Hono()
     async (c) => {
       const data = c.req.valid("query");
 
-      // Check if project has autoHideCompletedTasks enabled
+      // Check if project has autoHideCompletedTasks and autoHideChildTasks enabled
       let excludeCompleted = false;
+      let excludeChildTasks = false;
       if (data.projectId) {
         const project = await getProjectById(data.projectId);
         excludeCompleted = project?.autoHideCompletedTasks || false;
+        excludeChildTasks = project?.autoHideChildTasks ?? false;
       }
 
-      const tasks = await searchTasks(data, excludeCompleted);
+      const tasks = await searchTasks(
+        data,
+        excludeCompleted,
+        excludeChildTasks
+      );
       let result = [];
       for (let task of tasks) {
         result.push({

@@ -112,6 +112,7 @@ model Project {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   autoHideCompletedTasks Boolean   @default(false)
+  autoHideChildTasks     Boolean?
   taskAssignmentEmail    Boolean   @default(true)
   workspace              Workspace @relation(fields: [workspaceId], references: [id])
   Task                   Task[]

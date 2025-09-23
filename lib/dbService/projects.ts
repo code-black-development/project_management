@@ -26,6 +26,9 @@ export const createProject = async (data: {
   name: string;
   workspaceId: string;
   image?: string | null;
+  autoHideCompletedTasks?: boolean;
+  autoHideChildTasks?: boolean;
+  taskAssignmentEmail?: boolean;
 }) => {
   return await prisma.project.create({
     data,
@@ -38,6 +41,7 @@ export const updateProject = async (
     name?: string;
     image?: string | null;
     autoHideCompletedTasks?: boolean;
+    autoHideChildTasks?: boolean;
     taskAssignmentEmail?: boolean;
   }
 ) => {

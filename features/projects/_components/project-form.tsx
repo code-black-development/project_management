@@ -42,8 +42,16 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
 
   const formSchema = initialValues
     ? updateProjectSchema
-    : createProjectSchema.omit({ workspaceId: true }).extend({
+    : z.object({
+        name: z.string().trim().nonempty("Name is required"),
+        image: z
+          .union([
+            z.instanceof(File),
+            z.string().transform((val) => (val === "" ? undefined : val)),
+          ])
+          .optional(),
         autoHideCompletedTasks: z.boolean().optional(),
+        autoHideChildTasks: z.boolean().optional(),
         taskAssignmentEmail: z.boolean().optional(),
       });
 
@@ -70,6 +78,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
       name: initialValues?.name || "",
       image: initialValues?.image || undefined,
       autoHideCompletedTasks: initialValues?.autoHideCompletedTasks || false,
+      autoHideChildTasks: initialValues?.autoHideChildTasks ?? false,
       taskAssignmentEmail: initialValues?.taskAssignmentEmail ?? true,
     },
   });
@@ -89,6 +98,10 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
       ...values,
       ...(!initialValues && { workspaceId }),
       image: values.image instanceof File || values.image ? values.image : "",
+      // Convert boolean values to strings for form data
+      autoHideCompletedTasks: values.autoHideCompletedTasks?.toString(),
+      autoHideChildTasks: values.autoHideChildTasks?.toString(),
+      taskAssignmentEmail: values.taskAssignmentEmail?.toString(),
     };
 
     mutate({
@@ -259,6 +272,28 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                         <p className="text-sm text-muted-foreground">
                           Hide tasks with "Done" status from table, kanban, and
                           calendar views
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="autoHideChildTasks"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Auto-hide child tasks</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Hide tasks that are children of other tasks from
+                          table, kanban, and calendar views
                         </p>
                       </div>
                     </FormItem>
