@@ -4,10 +4,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ExternalLinkIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { ExternalLinkIcon, PencilIcon, TrashIcon, CopyIcon } from "lucide-react";
 
 import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteTask } from "../api/use-delete-task";
+import { useCloneTask } from "../api/use-clone-task";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import useEditTaskModal from "../hooks/use-edit-task-modal";
@@ -29,12 +30,17 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
     "This action acannot be undone",
     "destructive"
   );
-  const { mutate: deleteTask, isPending } = useDeleteTask();
+  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask();
+  const { mutate: cloneTask, isPending: isCloning } = useCloneTask();
 
   const onDelete = async () => {
     const response = await confirm();
     if (!response) return;
     deleteTask({ param: { taskId: id } });
+  };
+
+  const onClone = () => {
+    cloneTask({ taskId: id });
   };
 
   const onOpenTask = () => {
@@ -67,6 +73,14 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
             Edit Task
           </DropdownMenuItem>
           <DropdownMenuItem
+            onClick={onClone}
+            disabled={isCloning}
+            className="font-medium p-[10px]"
+          >
+            <CopyIcon className="mr-2 size=4 stroke-2" />
+            Clone Task
+          </DropdownMenuItem>
+          <DropdownMenuItem
             onClick={onOpenProject}
             className="font-medium p-[10px]"
           >
@@ -75,7 +89,7 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={onDelete}
-            disabled={isPending}
+            disabled={isDeleting}
             className="text-amber-700 focus:text-amber-700 font-medium p-[10px]"
           >
             <TrashIcon className="mr-2 size=4 stroke-2" />

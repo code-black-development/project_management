@@ -2,7 +2,7 @@ import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TaskWithUser } from "@/types/types";
-import { PencilIcon, Tag, Trash2 } from "lucide-react";
+import { PencilIcon, Tag, Trash2, CopyIcon } from "lucide-react";
 import TaskOverviewProperty from "./task-overview-property";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
@@ -10,6 +10,7 @@ import { TaskBadge } from "./task-badge";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import useEditTaskModal from "../hooks/use-edit-task-modal";
 import { useDeleteEvent } from "../api/use-delete-event";
+import { useCloneTask } from "../api/use-clone-task";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useRouter } from "next/navigation";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
@@ -25,6 +26,7 @@ interface TaskOverviewProps {
 const TaskOverview = ({ task }: TaskOverviewProps) => {
   const { open } = useEditTaskModal();
   const { mutate: deleteEvent, isPending: isDeletingEvent } = useDeleteEvent();
+  const { mutate: cloneTask, isPending: isCloningTask } = useCloneTask();
   const [ConfirmDialog, confirm] = useConfirm(
     "Delete Event",
     "This will permanently delete this event and all its occurrences. This action cannot be undone.",
@@ -47,6 +49,10 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
     );
   };
 
+  const onClone = () => {
+    cloneTask({ taskId: task.id });
+  };
+
   const isEvent = task.taskType === TaskType.EVENT;
 
   return (
@@ -64,6 +70,15 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
               >
                 <PencilIcon className="size-4 mr-2" />
                 Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onClone}
+                disabled={isCloningTask}
+              >
+                <CopyIcon className="size-4 mr-2" />
+                Clone
               </Button>
               {isEvent && (
                 <Button
