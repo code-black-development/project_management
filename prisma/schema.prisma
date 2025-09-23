@@ -128,31 +128,40 @@ model TaskCategory {
 }
 
 model Task {
-  id           String        @id @default(cuid())
-  name         String
-  description  String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  assigneeId   String?
-  projectId    String
-  workspaceId  String
-  dueDate      DateTime?
-  status       TaskStatus    @default(TODO)
-  position     Int
-  timeEstimate Int?
-  createdById  String
-  parentId     String?
-  categoryId   String?
-  assignee     Member?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  category     TaskCategory? @relation(fields: [categoryId], references: [id])
-  createdBy    Member        @relation("TaskCreator", fields: [createdById], references: [id])
-  parent       Task?         @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children     Task[]        @relation("TaskHierarchy")
-  project      Project       @relation(fields: [projectId], references: [id])
-  assets       TaskAsset[]
-  worklogs     Worklog[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  assigneeId            String?
+  projectId             String
+  workspaceId           String
+  dueDate               DateTime?
+  status                TaskStatus             @default(TODO)
+  position              Int
+  timeEstimate          Int?
+  createdById           String
+  parentId              String?
+  categoryId            String?
+  taskType              TaskType               @default(TASK)
+  isRecurring           Boolean                @default(false)
+  recurrenceFrequency   RecurrenceFrequency?
+  recurrenceDuration    RecurrenceDuration?
+  recurrenceEndDate     DateTime?
+  originalEventId       String?
+  assignee              Member?                @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  category              TaskCategory?          @relation(fields: [categoryId], references: [id])
+  createdBy             Member                 @relation("TaskCreator", fields: [createdById], references: [id])
+  parent                Task?                  @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children              Task[]                 @relation("TaskHierarchy")
+  project               Project                @relation(fields: [projectId], references: [id])
+  assets                TaskAsset[]
+  worklogs              Worklog[]
+  originalEvent         Task?                  @relation("EventOccurrences", fields: [originalEventId], references: [id])
+  eventOccurrences      Task[]                 @relation("EventOccurrences")
 
   @@index([parentId])
+  @@index([originalEventId])
 }
 
 model TaskAsset {
@@ -185,4 +194,23 @@ enum TaskStatus {
   IN_PROGRESS
   IN_REVIEW
   DONE
+}
+
+enum TaskType {
+  TASK
+  EVENT
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ANNUALLY
+}
+
+enum RecurrenceDuration {
+  ONE_MONTH
+  ONE_YEAR
+  CUSTOM
+  CONTINUOUS
 }
