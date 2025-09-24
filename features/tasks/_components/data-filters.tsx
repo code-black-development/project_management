@@ -46,7 +46,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
   }));
 
   const memberOptions = members?.data.map((member) => ({
-    label: member.user.name,
+    label: member.user.name || member.user.email,
     value: member.id,
   }));
 
