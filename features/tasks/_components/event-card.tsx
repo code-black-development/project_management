@@ -60,7 +60,9 @@ const EventCard = ({
   };
 
   const bgColor =
-    type === "event" ? "bg-purple-50 dark:bg-gray-800" : "bg-white dark:bg-gray-800";
+    type === "event"
+      ? "bg-purple-50 dark:bg-gray-800"
+      : "bg-white dark:bg-gray-800";
   const borderStyle =
     type === "event"
       ? "border-purple-500"
