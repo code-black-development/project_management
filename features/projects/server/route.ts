@@ -131,56 +131,74 @@ const app = new Hono()
     }
   )
   .post(
-    "/", 
+    "/",
     zValidator("form", createProjectSchema, (result, c) => {
       if (!result.success) {
         console.log("Validation failed:", result.error);
-        return c.json({ error: "Validation failed", details: result.error }, 400);
+        return c.json(
+          { error: "Validation failed", details: result.error },
+          400
+        );
       }
-    }), 
+    }),
     async (c) => {
-    console.log("POST /api/projects - Starting project creation");
-    const formData = c.req.valid("form");
-    console.log("Received form data:", formData);
-    
-    const { name, image, workspaceId, autoHideChildTasks, autoHideCompletedTasks, taskAssignmentEmail } = formData;
-    console.log("Extracted values:", { name, image: !!image, workspaceId, autoHideChildTasks, autoHideCompletedTasks, taskAssignmentEmail });
-    
-    //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
+      console.log("POST /api/projects - Starting project creation");
+      const formData = c.req.valid("form");
+      console.log("Received form data:", formData);
 
-    let fileUrl: string | null = null;
+      const {
+        name,
+        image,
+        workspaceId,
+        autoHideChildTasks,
+        autoHideCompletedTasks,
+        taskAssignmentEmail,
+      } = formData;
+      console.log("Extracted values:", {
+        name,
+        image: !!image,
+        workspaceId,
+        autoHideChildTasks,
+        autoHideCompletedTasks,
+        taskAssignmentEmail,
+      });
 
-    // Upload image to S3 if provided
-    if (image instanceof File && image.size > 0) {
-      try {
-        const uploadResult = await uploadToS3(image, "projects", image.name);
-        fileUrl = uploadResult.url;
-      } catch (error) {
-        console.error("Failed to upload image:", error);
-        return c.json({ error: "Failed to upload image" }, 500);
+      //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
+
+      let fileUrl: string | null = null;
+
+      // Upload image to S3 if provided
+      if (image instanceof File && image.size > 0) {
+        try {
+          const uploadResult = await uploadToS3(image, "projects", image.name);
+          fileUrl = uploadResult.url;
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          return c.json({ error: "Failed to upload image" }, 500);
+        }
       }
+
+      console.log("About to create project with data:", {
+        name,
+        workspaceId,
+        image: fileUrl,
+        autoHideChildTasks: autoHideChildTasks || false,
+        autoHideCompletedTasks: autoHideCompletedTasks || false,
+        taskAssignmentEmail: taskAssignmentEmail ?? true,
+      });
+
+      const project = await createProject({
+        name,
+        workspaceId,
+        image: fileUrl,
+        autoHideChildTasks: autoHideChildTasks || false,
+        autoHideCompletedTasks: autoHideCompletedTasks || false,
+        taskAssignmentEmail: taskAssignmentEmail ?? true,
+      });
+
+      return c.json({ data: project });
     }
-
-    console.log("About to create project with data:", {
-      name,
-      workspaceId,
-      image: fileUrl,
-      autoHideChildTasks: autoHideChildTasks || false,
-      autoHideCompletedTasks: autoHideCompletedTasks || false,
-      taskAssignmentEmail: taskAssignmentEmail ?? true,
-    });
-
-    const project = await createProject({
-      name,
-      workspaceId,
-      image: fileUrl,
-      autoHideChildTasks: autoHideChildTasks || false,
-      autoHideCompletedTasks: autoHideCompletedTasks || false,
-      taskAssignmentEmail: taskAssignmentEmail ?? true,
-    });
-
-    return c.json({ data: project });
-  })
+  )
   .get(
     "/",
 
