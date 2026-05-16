@@ -14,6 +14,26 @@ export const createWorkspaceInvites = async (
   });
 };
 
+export const getOrCreateWorkspaceInvite = async (
+  workspaceId: string,
+  inviteeEmail: string
+) => {
+  return await prisma.workspaceInvites.upsert({
+    where: {
+      workspaceId_inviteeEmail: {
+        workspaceId,
+        inviteeEmail,
+      },
+    },
+    update: {},
+    create: {
+      code: generateCode(10),
+      workspaceId,
+      inviteeEmail,
+    },
+  });
+};
+
 export const getWorkspaceInvitesByEmail = async (inviteeEmail: string) => {
   return await prisma.workspaceInvites.findMany({
     where: {

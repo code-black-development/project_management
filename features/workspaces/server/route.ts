@@ -13,7 +13,7 @@ import {
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
-import { createWorkspaceInvites } from "@/lib/dbService/workspace-invites";
+import { getOrCreateWorkspaceInvite } from "@/lib/dbService/workspace-invites";
 import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import { TaskStatus } from "@prisma/client";
@@ -186,8 +186,8 @@ const app = new Hono()
         errors: [],
       };
 
-      // Process each invite
-      for (const email of invites) {
+      // Process each unique invite once to avoid duplicate emails in the same request.
+      for (const email of [...new Set(invites)]) {
         try {
           // Check if user already exists
           const existingUser = await getUserByEmail(email);
@@ -221,11 +221,8 @@ const app = new Hono()
 
             results.existingUserAdded.push(email);
           } else {
-            // Create invite for new user
-            const dbInvites = await createWorkspaceInvites(workspaceId, [
-              email,
-            ]);
-            const invite = dbInvites[0];
+            // Reuse the existing invite row when the email was already invited.
+            const invite = await getOrCreateWorkspaceInvite(workspaceId, email);
 
             // Send invite email to new user
             const emailTemplate = await generateEmailTemplate(
