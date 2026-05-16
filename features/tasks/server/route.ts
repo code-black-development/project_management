@@ -461,11 +461,29 @@ const app = new Hono()
 
     return c.json({ data: result });
   })
+  .post(
+    "/bulk-delete",
+    zValidator("json", z.object({ ids: z.array(z.string()) })),
+    async (c) => {
+      const { ids } = c.req.valid("json");
+      try {
+        await Promise.all(ids.map((id) => deleteTask(id)));
+        return c.json({ data: { ids } });
+      } catch (error) {
+        console.error("Failed to bulk delete tasks:", error);
+        return c.json({ error: "Failed to delete tasks" }, 500);
+      }
+    }
+  )
   .delete("/:taskId", async (c) => {
-    const user = c.get("userId");
     const { taskId } = c.req.param();
-    const task = await deleteTask(taskId);
-    return c.json({ data: { id: task.id } });
+    try {
+      const task = await deleteTask(taskId);
+      return c.json({ data: { id: task.id } });
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      return c.json({ error: "Failed to delete task" }, 500);
+    }
   })
   .get(
     "/",

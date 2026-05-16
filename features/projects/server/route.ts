@@ -38,8 +38,13 @@ const app = new Hono()
       }
     }
 
-    const project = await deleteProject(projectId);
-    return c.json({ data: project });
+    try {
+      const project = await deleteProject(projectId);
+      return c.json({ data: project });
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      return c.json({ error: "Failed to delete project" }, 500);
+    }
   })
   .patch(
     "/:projectId",

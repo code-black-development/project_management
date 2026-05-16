@@ -74,7 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/sign-in", // Redirect errors back to sign-in page
   },
   trustHost: true,
-  secret: "BkP6Zj/Z+NXVfAhrwDWF5ESA2ImFgsT8YRL+kXqxvfc=",
+  secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
   },

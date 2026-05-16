@@ -28,6 +28,7 @@ import DataKanban from "./data-kanban";
 import { useCallback } from "react";
 import { TaskStatus } from "@prisma/client";
 import { useBulkUpdateTasks } from "../api/use-bulk-update-task";
+import { useBulkDeleteTasks } from "../api/use-bulk-delete-tasks";
 import DataCalendar from "./data-calendar";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
 import { useProjectAutoHide } from "@/features/projects/hooks/use-project-auto-hide";
@@ -39,6 +40,7 @@ interface TaskViewSwitcherProps {
 const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
+  const { mutate: bulkDelete } = useBulkDeleteTasks();
   const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
@@ -126,7 +128,11 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
         ) : (
           <>
             <TabsContent value="table" className="mt-0">
-              <DataTable columns={columns} data={tasks ?? []} />
+              <DataTable
+                columns={columns}
+                data={tasks ?? []}
+                onDeleteSelected={(ids) => bulkDelete({ json: { ids } })}
+              />
             </TabsContent>
             <TabsContent value="kanban" className="mt-0">
               <DataKanban data={tasks ?? []} onChange={onKanbanChange} />
