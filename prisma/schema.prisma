@@ -45,6 +45,7 @@ model User {
   password         String?
   emailVerified    DateTime? @map("email_verified")
   image            String?
+  lastLoginAt      DateTime?
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
   members          Member[]

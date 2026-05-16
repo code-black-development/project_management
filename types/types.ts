@@ -56,9 +56,14 @@ export type MemberSafeDate = Omit<Member, "createdAt" | "updatedAt"> & {
 
 export type UserSafeDate = Omit<
   User,
-  "emailVerified" | "resetTokenExpiry" | "password" | "resetToken"
+  | "emailVerified"
+  | "lastLoginAt"
+  | "resetTokenExpiry"
+  | "password"
+  | "resetToken"
 > & {
   emailVerified: string | null;
+  lastLoginAt?: string | null;
 };
 
 export type AssetSafeDate = Omit<TaskAsset, "createdAt" | "updatedAt"> & {

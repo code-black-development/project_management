@@ -51,6 +51,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.log("🔑 Password comparison result:", passwordMatch);
 
           if (passwordMatch) {
+            try {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  lastLoginAt: new Date(),
+                },
+              });
+            } catch (error) {
+              console.error("Failed to update last login timestamp:", error);
+            }
+
             console.log("✅ Authentication successful for user:", user.id);
             return {
               id: user.id,
