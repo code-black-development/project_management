@@ -14,6 +14,12 @@ interface TaskAssetsProps {
   task: TaskWithUser;
 }
 
+export type TaskAssetFile = {
+  name: string;
+  file: string;
+  type: string;
+};
+
 const TaskAssets = ({ task }: TaskAssetsProps) => {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadVisible, setUploadVisible] = useState(false);

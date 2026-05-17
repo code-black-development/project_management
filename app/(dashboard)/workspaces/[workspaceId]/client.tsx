@@ -3,32 +3,47 @@
 import PageError from "@/components/page-error";
 import PageLoader from "@/components/page-loader";
 import { Button } from "@/components/ui/button";
+import { TaskBadge } from "@/features/tasks/_components/task-badge";
 import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import useCreateProjectModal from "@/features/projects/hooks/use-create-project-modal";
-import Analytics from "@/features/tasks/_components/analytics";
 import { useGetTasks } from "@/features/tasks/api/use-get-tasks";
 import useCreateTaskModal from "@/features/tasks/hooks/use-create-task-modal";
-import useGetWorkspaceAnalytics from "@/features/workspaces/api/use-get-workspace-analytics";
+import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+import { snakeCaseToTitleCase } from "@/lib/utils";
 import {
   MemberSafeDate,
   ProjectSafeDate,
   TaskWithUser,
   UserSafeDate,
 } from "@/types/types";
-import { PlusIcon, CalendarIcon, SettingsIcon } from "lucide-react";
-
-import { formatDistanceToNow } from "date-fns";
-
-import { Card, CardContent } from "@/components/ui/card";
-
-import Link from "next/link";
-import ProjectAvatar from "@/features/projects/_components/project-avatar";
-import MemberAvatar from "@/features/members/_components/member-avatar";
-import { cn } from "@/lib/utils";
+import { TaskStatus } from "@prisma/client";
+import {
+  addDays,
+  endOfDay,
+  format,
+  formatDistanceToNow,
+  isAfter,
+  isBefore,
+  isToday,
+  isWithinInterval,
+  startOfDay,
+} from "date-fns";
+import {
+  ActivityIcon,
+  AlertCircleIcon,
+  ArrowUpRightIcon,
+  FolderPlusIcon,
+  PlusIcon,
+  UserCheckIcon,
+  UserPlusIcon,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
+import Link from "next/link";
+
+type DashboardTask = Omit<TaskWithUser, "children">;
+type DashboardMember = MemberSafeDate & { user: UserSafeDate };
 
 const WorkspaceIdClient = () => {
   const workspaceId = useWorkspaceId();
@@ -39,9 +54,6 @@ const WorkspaceIdClient = () => {
   const workspaceName =
     workspacesData?.data?.find((w) => w.id === workspaceId)?.name ||
     "your workspace";
-
-  const { data: analytics, isLoading: isLoadingAnalytics } =
-    useGetWorkspaceAnalytics({ workspaceId });
 
   const { data: members, isLoading: isLoadingMembers } = useGetMembers({
     workspaceId,
@@ -54,198 +66,639 @@ const WorkspaceIdClient = () => {
     search: null,
   });
 
-  if (
-    isLoadingAnalytics ||
-    isLoadingMembers ||
-    isLoadingProjects ||
-    isLoadingTasks
-  ) {
+  if (isLoadingMembers || isLoadingProjects || isLoadingTasks) {
     return <PageLoader />;
   }
 
-  if (!analytics || !members || !projects || !tasks) {
+  if (!members || !projects || !tasks) {
     return <PageError message="Failed to fetch workspace data" />;
   }
 
+  const currentMember = members.data.find(
+    (member) => member.user.id === session?.user?.id
+  );
+  const taskGroups = getTaskGroups(tasks, currentMember?.id);
+  const projectHotspots = getProjectHotspots(projects, taskGroups.overdue);
+  const recentActivity = getRecentActivity(tasks, projects, members.data);
+
   return (
-    <div className="h-full flex flex-col space-y-4">
-      <div className="flex flex-col gap-y-1 mb-4">
-        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-foreground">
+    <div className="h-full flex flex-col gap-y-6">
+      <div className="flex flex-col gap-y-1">
+        <h1 className="text-2xl font-semibold text-foreground">
           Hi {firstName}
         </h1>
-        <p className="text-[16px] text-muted-foreground leading-relaxed">
-          Here&apos;s your workspace overview for{" "}
-          <span className="text-foreground font-medium">{workspaceName}</span>.
+        <p className="text-sm text-muted-foreground">
+          What needs attention now in{" "}
+          <span className="font-medium text-foreground">{workspaceName}</span>.
         </p>
       </div>
-      <Analytics data={analytics} />
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <TaskList data={tasks} />
-        <ProjectList data={projects} />
-        <MemberList data={members.data} />
+
+      <SummaryStrip
+        overdue={taskGroups.overdue.length}
+        dueSoon={taskGroups.dueSoon.length}
+        assignedToMe={taskGroups.myTasks.length}
+        unassigned={taskGroups.unassigned.length}
+        inReview={taskGroups.inReview.length}
+      />
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className="flex flex-col gap-4">
+          <NeedsAttentionSection
+            tasks={taskGroups.needsAttention}
+            workspaceId={workspaceId}
+          />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TaskQueueSection
+              title="My tasks"
+              description="Prioritized by overdue and upcoming deadlines."
+              tasks={taskGroups.myTasks}
+              workspaceId={workspaceId}
+              emptyMessage="Nothing is assigned to you right now."
+              ctaHref={
+                currentMember
+                  ? `/workspaces/${workspaceId}/tasks?assigneeId=${currentMember.id}`
+                  : `/workspaces/${workspaceId}/tasks`
+              }
+              ctaLabel="View my tasks"
+            />
+            <TaskQueueSection
+              title="Due soon"
+              description="Open tasks due in the next 7 days."
+              tasks={taskGroups.dueSoon}
+              workspaceId={workspaceId}
+              emptyMessage="No upcoming deadlines in the next week."
+              ctaHref={`/workspaces/${workspaceId}/tasks`}
+              ctaLabel="Open task list"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <QuickActions
+            workspaceId={workspaceId}
+            currentMemberId={currentMember?.id}
+          />
+          <RecentActivity items={recentActivity} workspaceId={workspaceId} />
+          {projectHotspots.length > 0 && (
+            <ProjectHotspots items={projectHotspots} workspaceId={workspaceId} />
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-const panelClass =
-  "col-span-1 bg-muted border border-border rounded-xl p-5";
-
-const sectionHeaderClass =
-  "flex items-center justify-between border-b border-border pb-4 mb-4";
-
-interface TaskListProps {
-  data: Omit<TaskWithUser, "children">[];
-}
-export const TaskList = ({ data }: TaskListProps) => {
-  const workspaceId = useWorkspaceId();
-  const { open: createTask } = useCreateTaskModal();
+const SummaryStrip = ({
+  overdue,
+  dueSoon,
+  assignedToMe,
+  unassigned,
+  inReview,
+}: {
+  overdue: number;
+  dueSoon: number;
+  assignedToMe: number;
+  unassigned: number;
+  inReview: number;
+}) => {
+  const stats = [
+    { value: overdue, label: "overdue" },
+    { value: dueSoon, label: "due soon" },
+    { value: assignedToMe, label: "assigned to me" },
+    { value: unassigned, label: "unassigned" },
+    { value: inReview, label: "in review" },
+  ];
 
   return (
-    <div className={panelClass}>
-      <div className={sectionHeaderClass}>
-        <p className="text-base font-semibold">Tasks {data.length || 0}</p>
-        <Button variant="muted" size="icon" onClick={createTask}>
-          <PlusIcon className="size-4" />
-        </Button>
-      </div>
-      <ul className="flex flex-col gap-y-2.5">
-        {data.map((task) => (
-          <li key={task.id}>
-            <Link href={`/workspaces/${workspaceId}/tasks/${task.id}`}>
-              <Card className="shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-border dark:hover:bg-card-hover">
-                <CardContent className="p-4">
-                  <p
-                    className="text-sm font-medium text-foreground line-clamp-2"
-                    title={task.name}
-                  >
-                    {task.name}
-                  </p>
-                  <div className="flex items-center gap-x-2 mt-1.5">
-                    <p className="text-xs text-muted-foreground truncate">
-                      {task.project.name}
-                    </p>
-                    <div className="size-1 rounded-full bg-border shrink-0" />
-                    <div className="text-xs text-muted-foreground flex items-center gap-x-1 shrink-0">
-                      <CalendarIcon className="size-3" />
-                      <span>
-                        {task.dueDate
-                          ? formatDistanceToNow(new Date(task.dueDate))
-                          : "No due date"}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </li>
-        ))}
-        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-          No tasks found
-        </li>
-      </ul>
-      <div className="mt-4">
-        <Button variant="muted" className="w-full" asChild>
-          <Link href={`/workspaces/${workspaceId}/tasks`}>Show all</Link>
-        </Button>
-      </div>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 bg-card border border-border rounded-xl w-fit max-w-full">
+      {stats.map((stat, index) => (
+        <div key={stat.label} className="flex items-center gap-x-6">
+          {index > 0 && <div className="h-4 w-px bg-border" />}
+          <Stat value={stat.value} label={stat.label} />
+        </div>
+      ))}
     </div>
   );
 };
 
-interface ProjectListProps {
-  data: ProjectSafeDate[];
-}
-export const ProjectList = ({ data }: ProjectListProps) => {
-  const workspaceId = useWorkspaceId();
+const Stat = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex items-baseline gap-x-1.5">
+    <span className="text-lg font-semibold text-foreground">{value}</span>
+    <span className="text-xs text-muted-foreground">{label}</span>
+  </div>
+);
+
+const NeedsAttentionSection = ({
+  tasks,
+  workspaceId,
+}: {
+  tasks: DashboardTask[];
+  workspaceId: string;
+}) => (
+  <section id="needs-attention" className="bg-card border border-border rounded-xl p-5">
+    <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Needs attention</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Overdue, due today, unassigned, in review, or stale.
+        </p>
+      </div>
+      <Button variant="muted" size="sm" asChild>
+        <Link href={`/workspaces/${workspaceId}/tasks`}>
+          View all
+          <ArrowUpRightIcon className="size-4" />
+        </Link>
+      </Button>
+    </div>
+
+    <TaskRows
+      tasks={tasks}
+      workspaceId={workspaceId}
+      limit={8}
+      emptyMessage="No urgent tasks need attention."
+      showReason
+    />
+  </section>
+);
+
+const TaskQueueSection = ({
+  title,
+  description,
+  tasks,
+  workspaceId,
+  emptyMessage,
+  ctaHref,
+  ctaLabel,
+}: {
+  title: string;
+  description: string;
+  tasks: DashboardTask[];
+  workspaceId: string;
+  emptyMessage: string;
+  ctaHref: string;
+  ctaLabel: string;
+}) => (
+  <section className="bg-card border border-border rounded-xl p-5">
+    <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      <Button variant="muted" size="sm" asChild>
+        <Link href={ctaHref}>{ctaLabel}</Link>
+      </Button>
+    </div>
+    <TaskRows
+      tasks={tasks}
+      workspaceId={workspaceId}
+      limit={5}
+      emptyMessage={emptyMessage}
+    />
+  </section>
+);
+
+const TaskRows = ({
+  tasks,
+  workspaceId,
+  limit,
+  emptyMessage,
+  showReason,
+}: {
+  tasks: DashboardTask[];
+  workspaceId: string;
+  limit: number;
+  emptyMessage: string;
+  showReason?: boolean;
+}) => {
+  const visibleTasks = tasks.slice(0, limit);
+
+  if (visibleTasks.length === 0) {
+    return (
+      <div className="px-3 py-6 rounded-lg border border-border text-center">
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-y-2.5">
+      {visibleTasks.map((task) => (
+        <li key={task.id}>
+          <Link
+            href={`/workspaces/${workspaceId}/tasks/${task.id}`}
+            className="flex items-start justify-between gap-x-4 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {showReason && (
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {getAttentionReason(task)}
+                  </span>
+                )}
+                <TaskBadge
+                  variant={task.status}
+                  className="px-2 py-0 text-[11px]"
+                >
+                  {snakeCaseToTitleCase(task.status)}
+                </TaskBadge>
+              </div>
+              <p
+                className="text-sm font-medium text-foreground line-clamp-2 mt-1.5"
+                title={task.name}
+              >
+                {task.name}
+              </p>
+              <p className="text-xs text-muted-foreground truncate mt-1">
+                {task.project.name}
+                {task.assignee ? ` · ${getMemberName(task.assignee)}` : " · Unassigned"}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-xs font-medium text-foreground">
+                {formatDueDate(task)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Updated {formatDistanceToNow(new Date(task.updatedAt))} ago
+              </p>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+const QuickActions = ({
+  workspaceId,
+  currentMemberId,
+}: {
+  workspaceId: string;
+  currentMemberId?: string;
+}) => {
+  const { open: createTask } = useCreateTaskModal();
   const { open: createProject } = useCreateProjectModal();
 
+  const actions = [
+    {
+      label: "New task",
+      icon: PlusIcon,
+      onClick: createTask,
+    },
+    {
+      label: "New project",
+      icon: FolderPlusIcon,
+      onClick: createProject,
+    },
+    {
+      label: "Invite member",
+      icon: UserPlusIcon,
+      href: `/workspaces/${workspaceId}/settings`,
+    },
+    {
+      label: "View overdue",
+      icon: AlertCircleIcon,
+      href: "#needs-attention",
+    },
+    {
+      label: "View my tasks",
+      icon: UserCheckIcon,
+      href: currentMemberId
+        ? `/workspaces/${workspaceId}/tasks?assigneeId=${currentMemberId}`
+        : `/workspaces/${workspaceId}/tasks`,
+    },
+  ];
+
   return (
-    <div className={panelClass}>
-      <div className={sectionHeaderClass}>
-        <p className="text-base font-semibold">Projects {data.length || 0}</p>
-        <Button variant="muted" size="icon" onClick={createProject}>
-          <PlusIcon className="size-4" />
-        </Button>
+    <section className="bg-card border border-border rounded-xl p-5">
+      <p className="text-sm font-semibold text-foreground border-b border-border pb-4 mb-4">
+        Quick actions
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          const content = (
+            <>
+              <Icon className="size-4" />
+              {action.label}
+            </>
+          );
+
+          return action.href ? (
+            <Button
+              key={action.label}
+              variant="muted"
+              className="justify-start"
+              asChild
+            >
+              <Link href={action.href}>{content}</Link>
+            </Button>
+          ) : (
+            <Button
+              key={action.label}
+              variant="muted"
+              className="justify-start"
+              onClick={action.onClick}
+            >
+              {content}
+            </Button>
+          );
+        })}
       </div>
-      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {data.map((project) => (
-          <li key={project.id}>
-            <Link href={`/workspaces/${workspaceId}/projects/${project.id}`}>
-              <Card className="shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-border dark:hover:bg-card-hover">
-                <CardContent className="p-4 flex items-center gap-x-3">
-                  <div className="size-11 shrink-0">
-                    <ProjectAvatar
-                      name={project.name}
-                      image={project.image || undefined}
-                      className="size-11 rounded-lg"
-                      fallbackClassName="text-base rounded-lg"
-                    />
-                  </div>
-                  <p
-                    className="text-sm font-medium text-foreground line-clamp-2"
-                    title={project.name}
-                  >
-                    {project.name}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          </li>
-        ))}
-        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-          No projects found
-        </li>
-      </ul>
-    </div>
+    </section>
   );
 };
 
-interface MemberListProps {
-  data: (MemberSafeDate & { user: UserSafeDate })[];
-}
-export const MemberList = ({ data }: MemberListProps) => {
-  const workspaceId = useWorkspaceId();
-
-  return (
-    <div className={panelClass}>
-      <div className={sectionHeaderClass}>
-        <p className="text-base font-semibold">Members {data.length || 0}</p>
-        <Button variant="muted" size="icon" asChild>
-          <Link href={`/workspaces/${workspaceId}/members`}>
-            <SettingsIcon className="size-4" />
-          </Link>
-        </Button>
+const RecentActivity = ({
+  items,
+  workspaceId,
+}: {
+  items: RecentActivityItem[];
+  workspaceId: string;
+}) => (
+  <section className="bg-card border border-border rounded-xl p-5">
+    <div className="flex items-center gap-x-2 border-b border-border pb-4 mb-4">
+      <ActivityIcon className="size-4 text-muted-foreground" />
+      <p className="text-sm font-semibold text-foreground">Recent activity</p>
+    </div>
+    {items.length === 0 ? (
+      <div className="px-3 py-6 rounded-lg border border-border text-center">
+        <p className="text-sm text-muted-foreground">No recent updates yet.</p>
       </div>
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {data?.map((member) => (
-          <li key={member.id}>
-            <Card className="shadow-none rounded-xl border border-border dark:border-border">
-              <CardContent className="p-3 flex flex-col items-center gap-y-2">
-                <MemberAvatar
-                  name={member.user.name ?? member.user.email}
-                  image={member.user.image || undefined}
-                  className="size-11"
-                  fallbackClassName="text-base"
-                />
-                <div className="flex flex-col items-center overflow-hidden w-full">
-                  <p className="text-sm font-medium text-foreground line-clamp-1">
-                    {member.user.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {member.user.email}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+    ) : (
+      <ul className="flex flex-col gap-y-2.5">
+        {items.map((item) => (
+          <li key={`${item.type}-${item.id}`}>
+            <Link
+              href={getActivityHref(item, workspaceId)}
+              className="flex items-start gap-x-3 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors"
+            >
+              <div className="mt-1 size-2 rounded-full bg-primary shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {item.title}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {item.description}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {formatDistanceToNow(item.date)} ago
+              </span>
+            </Link>
           </li>
         ))}
-        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-          No members found
-        </li>
       </ul>
-    </div>
+    )}
+  </section>
+);
+
+const ProjectHotspots = ({
+  items,
+  workspaceId,
+}: {
+  items: ProjectHotspot[];
+  workspaceId: string;
+}) => (
+  <section className="bg-card border border-border rounded-xl p-5">
+    <p className="text-sm font-semibold text-foreground border-b border-border pb-4 mb-4">
+      Project hotspots
+    </p>
+    <ul className="flex flex-col gap-y-2.5">
+      {items.map((item) => (
+        <li key={item.project.id}>
+          <Link
+            href={`/workspaces/${workspaceId}/projects/${item.project.id}`}
+            className="flex items-center justify-between gap-x-3 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors"
+          >
+            <div className="min-w-0">
+              <p
+                className="text-sm font-medium text-foreground truncate"
+                title={item.project.name}
+              >
+                {item.project.name}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {item.oldestDueDate
+                  ? `Oldest due ${format(item.oldestDueDate, "MMM d")}`
+                  : "Needs review"}
+              </p>
+            </div>
+            <div className="flex items-center gap-x-2 shrink-0">
+              <AlertCircleIcon className="size-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">
+                {item.overdueCount}
+              </span>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </section>
+);
+
+const getTaskGroups = (tasks: DashboardTask[], currentMemberId?: string) => {
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const todayEnd = endOfDay(now);
+  const soonEnd = endOfDay(addDays(now, 7));
+  const openTasks = tasks.filter((task) => task.status !== TaskStatus.DONE);
+  const overdue = openTasks.filter(
+    (task) => task.dueDate && isBefore(new Date(task.dueDate), todayStart)
   );
+  const dueToday = openTasks.filter(
+    (task) => task.dueDate && isWithinInterval(new Date(task.dueDate), {
+      start: todayStart,
+      end: todayEnd,
+    })
+  );
+  const dueSoon = openTasks.filter(
+    (task) =>
+      task.dueDate &&
+      isAfter(new Date(task.dueDate), todayEnd) &&
+      isWithinInterval(new Date(task.dueDate), {
+        start: todayStart,
+        end: soonEnd,
+      })
+  );
+  const myTasks = currentMemberId
+    ? openTasks.filter((task) => task.assigneeId === currentMemberId)
+    : [];
+  const unassigned = openTasks.filter((task) => !task.assigneeId);
+  const inReview = openTasks.filter((task) => task.status === TaskStatus.IN_REVIEW);
+  const staleUnowned = unassigned.filter((task) =>
+    isBefore(new Date(task.updatedAt), addDays(now, -7))
+  );
+
+  const needsAttention = uniqueTasks([
+    ...sortByUrgency(overdue),
+    ...sortByUrgency(dueToday),
+    ...sortByUpdatedAt(inReview),
+    ...sortByUrgency(unassigned),
+    ...sortByUpdatedAt(staleUnowned),
+  ]);
+
+  return {
+    overdue: sortByUrgency(overdue),
+    dueSoon: sortByUrgency([...dueToday, ...dueSoon]),
+    myTasks: sortByUrgency(myTasks),
+    unassigned: sortByUrgency(unassigned),
+    inReview: sortByUpdatedAt(inReview),
+    needsAttention,
+  };
+};
+
+const sortByUrgency = (tasks: DashboardTask[]) =>
+  [...tasks].sort((a, b) => {
+    const aDue = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const bDue = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+
+    if (aDue !== bDue) {
+      return aDue - bDue;
+    }
+
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+const sortByUpdatedAt = (tasks: DashboardTask[]) =>
+  [...tasks].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+
+const uniqueTasks = (tasks: DashboardTask[]) => {
+  const seen = new Set<string>();
+  return tasks.filter((task) => {
+    if (seen.has(task.id)) {
+      return false;
+    }
+    seen.add(task.id);
+    return true;
+  });
+};
+
+const getAttentionReason = (task: DashboardTask) => {
+  if (task.dueDate) {
+    const dueDate = new Date(task.dueDate);
+
+    if (isBefore(dueDate, startOfDay(new Date()))) {
+      return "Overdue";
+    }
+
+    if (isToday(dueDate)) {
+      return "Due today";
+    }
+  }
+
+  if (task.status === TaskStatus.IN_REVIEW) {
+    return "In review";
+  }
+
+  if (!task.assigneeId) {
+    return isBefore(new Date(task.updatedAt), addDays(new Date(), -7))
+      ? "No owner"
+      : "Unassigned";
+  }
+
+  return "Needs attention";
+};
+
+const formatDueDate = (task: DashboardTask) => {
+  if (!task.dueDate) {
+    return "No due date";
+  }
+
+  const dueDate = new Date(task.dueDate);
+
+  if (isToday(dueDate)) {
+    return "Due today";
+  }
+
+  return format(dueDate, "MMM d");
+};
+
+const getMemberName = (member: DashboardTask["assignee"]) =>
+  member?.user.name || member?.user.email || "Unknown member";
+
+type RecentActivityItem = {
+  id: string;
+  type: "task" | "project" | "member";
+  title: string;
+  description: string;
+  date: Date;
+};
+
+const getRecentActivity = (
+  tasks: DashboardTask[],
+  projects: ProjectSafeDate[],
+  members: DashboardMember[]
+): RecentActivityItem[] => {
+  const taskItems = tasks.map((task) => ({
+    id: task.id,
+    type: "task" as const,
+    title: task.name,
+    description: `Task updated in ${task.project.name}`,
+    date: new Date(task.updatedAt),
+  }));
+  const projectItems = projects.map((project) => ({
+    id: project.id,
+    type: "project" as const,
+    title: project.name,
+    description: "Project updated",
+    date: new Date(project.updatedAt),
+  }));
+  const memberItems = members.map((member) => ({
+    id: member.id,
+    type: "member" as const,
+    title: member.user.name || member.user.email,
+    description: "Member joined the workspace",
+    date: new Date(member.createdAt),
+  }));
+
+  return [...taskItems, ...projectItems, ...memberItems]
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 6);
+};
+
+const getActivityHref = (item: RecentActivityItem, workspaceId: string) => {
+  if (item.type === "task") {
+    return `/workspaces/${workspaceId}/tasks/${item.id}`;
+  }
+
+  if (item.type === "project") {
+    return `/workspaces/${workspaceId}/projects/${item.id}`;
+  }
+
+  return `/workspaces/${workspaceId}/members/${item.id}`;
+};
+
+type ProjectHotspot = {
+  project: ProjectSafeDate;
+  overdueCount: number;
+  oldestDueDate: Date | null;
+};
+
+const getProjectHotspots = (
+  projects: ProjectSafeDate[],
+  overdueTasks: DashboardTask[]
+): ProjectHotspot[] => {
+  return projects
+    .map((project) => {
+      const projectOverdue = overdueTasks.filter(
+        (task) => task.projectId === project.id
+      );
+      const oldestDueDate = projectOverdue
+        .map((task) => (task.dueDate ? new Date(task.dueDate) : null))
+        .filter(Boolean)
+        .sort((a, b) => a!.getTime() - b!.getTime())[0] ?? null;
+
+      return {
+        project,
+        overdueCount: projectOverdue.length,
+        oldestDueDate,
+      };
+    })
+    .filter((item) => item.overdueCount > 0)
+    .sort((a, b) => b.overdueCount - a.overdueCount)
+    .slice(0, 4);
 };
 
 export default WorkspaceIdClient;
