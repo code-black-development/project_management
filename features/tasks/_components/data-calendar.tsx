@@ -47,6 +47,7 @@ import useTaskFilters from "../api/use-task-filters";
 
 interface DataCalendarProps {
   data: Omit<TaskWithUser, "children">[];
+  hideProjectInfo?: boolean;
 }
 
 interface CustomToolbarProps {
@@ -84,7 +85,7 @@ const CustomToolbar = ({ date, onNavigate }: CustomToolbarProps) => {
   );
 };
 
-const DataCalendar = ({ data }: DataCalendarProps) => {
+const DataCalendar = ({ data, hideProjectInfo }: DataCalendarProps) => {
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
   const [{ projectId }] = useTaskFilters();
@@ -178,6 +179,7 @@ const DataCalendar = ({ data }: DataCalendarProps) => {
             project={event.project}
             status={event.status}
             type={event.type}
+            hideProjectInfo={hideProjectInfo}
           />
         ),
         toolbar: () => (

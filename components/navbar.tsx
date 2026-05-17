@@ -7,7 +7,7 @@ import UserButton from "@/features/auth/components/user-button";
 
 const pathnameMap = {
   tasks: { title: "Tasks", description: "Manage all of your tasks here" },
-  project: {
+  projects: {
     title: "My Project",
     description: "Manage your project here",
   },
@@ -24,14 +24,21 @@ const defaultMap = {
 
 const Navbar = () => {
   const pathname = usePathname();
-  const { title, description } =
-    pathnameMap[pathname.split("/")[3] as keyof typeof pathnameMap] ||
-    defaultMap;
+  const segment = pathname.split("/")[3];
+  const isWorkspaceRoot = !segment;
+  const pageInfo = isWorkspaceRoot
+    ? null
+    : pathnameMap[segment as keyof typeof pathnameMap] || defaultMap;
+
   return (
     <nav className="pt-4 px-6 flex flex-row items-center justify-between w-full">
       <div className="flex-col hidden lg:flex">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+        {pageInfo && (
+          <>
+            <h1 className="text-2xl font-semibold">{pageInfo.title}</h1>
+            <p className="text-muted-foreground">{pageInfo.description}</p>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <DarkModeSwitch />

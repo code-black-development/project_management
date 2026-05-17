@@ -119,7 +119,7 @@ For item titles in cards, use `line-clamp-2` with a `title` attribute:
 
 **Panels** (Tasks, Projects, Members containers):
 ```tsx
-"col-span-1 bg-muted border border-border rounded-xl p-5 dark:border-white/8"
+"col-span-1 bg-muted border border-border rounded-xl p-5"
 ```
 
 **Section header row** (inside panels — replaces dotted separator):
@@ -129,8 +129,10 @@ For item titles in cards, use `line-clamp-2` with a `title` attribute:
 
 **Cards** (inside panels):
 ```tsx
-"shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-white/7 dark:hover:bg-card-hover"
+"shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:hover:bg-card-hover"
 ```
+
+`border-border` works for both light and dark mode — the CSS variable resolves to a white/8% rgba in dark mode automatically. Never use `dark:border-white/8` directly (Tailwind does not generate arbitrary opacity steps by default).
 
 ## Sidebar Active State
 
@@ -154,7 +156,23 @@ Inside panels, use a `border-b border-border` on the section header row instead.
 
 The `muted` button variant is used for secondary icon actions (plus, settings). It adapts to dark mode:
 - Light: `bg-neutral-200 text-neutral-600`
-- Dark: `bg-white/8 border border-white/10 text-white/60` — subtle surface, not attention-grabbing
+- Dark: `bg-muted text-muted-foreground border border-border hover:bg-accent` — uses CSS variable tokens, not hardcoded opacity values
+
+## Status Badges
+
+Task status badges use soft tinted colors — a 10% opacity background with a matching dark text (light mode) or light text (dark mode). Never use solid saturated badge colors; they clash in both modes.
+
+| Status | Classes |
+|---|---|
+| TODO | `bg-red-500/10 text-red-700 dark:text-red-400` |
+| IN_PROGRESS | `bg-yellow-500/10 text-yellow-700 dark:text-yellow-400` |
+| IN_REVIEW | `bg-blue-500/10 text-blue-700 dark:text-blue-400` |
+| DONE | `bg-emerald-500/10 text-emerald-700 dark:text-emerald-400` |
+| BACKLOG | `bg-pink-500/10 text-pink-700 dark:text-pink-400` |
+
+## Tabs (view switcher)
+
+The `TabsList` uses `bg-neutral-100 dark:bg-muted` with a transparent border in light mode and `dark:border-border` in dark mode. The active `TabsTrigger` uses `data-[state=active]:bg-white data-[state=active]:shadow-sm` in light mode and `dark:data-[state=active]:bg-popover dark:data-[state=active]:shadow-none` in dark mode. This keeps the active tab elevated but not blindingly bright.
 
 ## Icon Library
 

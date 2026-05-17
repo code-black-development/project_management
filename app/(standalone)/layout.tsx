@@ -6,7 +6,7 @@ interface StandaloneLayoutProps {
 }
 const StandaloneLayout = ({ children }: StandaloneLayoutProps) => {
   return (
-    <main className="min-h-screen  bg-neutral-100">
+    <main className="min-h-screen bg-neutral-100 dark:bg-background">
       <div className="mx-auto max-w-screen-2xl p-4">
         <nav className="flex justify-between items-center h-[73px]">
           <Logo />

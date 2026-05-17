@@ -37,3 +37,25 @@
 .rbc-off-range-bg {
   background: inherit;
 }
+
+/* Dark mode calendar grid */
+.dark .rbc-month-row {
+  @apply border-border;
+}
+
+.dark .rbc-day-bg {
+  @apply bg-card;
+}
+
+.dark .rbc-day-bg + .rbc-day-bg {
+  @apply border-l border-border;
+}
+
+.dark .rbc-off-range-bg .rbc-day-bg,
+.dark .rbc-off-range-bg {
+  @apply bg-muted;
+}
+
+.dark .rbc-header {
+  @apply border-border;
+}

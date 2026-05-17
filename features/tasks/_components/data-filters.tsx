@@ -105,7 +105,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
       {/* Search Input */}
       <div className="flex gap-1 w-full lg:w-auto">
         <div className="relative flex-1 lg:w-[200px]">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             placeholder="Search tasks..."
             value={searchInput}
@@ -118,7 +118,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
           size="sm"
           onClick={onSearchSubmit}
           className="h-8 px-3"
-          variant="primary"
+          variant="muted"
         >
           Search
         </Button>

@@ -60,7 +60,7 @@ export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
       return (
         <Link 
           href={`/workspaces/${workspaceId}/tasks/${taskId}`}
-          className="line-clamp-1 hover:underline hover:text-blue-600 transition-colors cursor-pointer"
+          className="line-clamp-1 hover:underline hover:text-primary transition-colors cursor-pointer"
         >
           {name}
         </Link>

@@ -1,5 +1,4 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,7 +68,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
     <Tabs
       defaultValue={view}
       onValueChange={setView}
-      className="flex-1 w-full border rounded-lg"
+      className="flex-1 w-full border border-border rounded-lg bg-card dark:bg-card"
     >
       <div className="h-full flex flex-col overflow-auto p-4">
         <div className="flex flex-col gap-y-2 lg:flex-row justify-between items-center ">
@@ -104,9 +103,9 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <DottedSeparator className="my-4" />
+        <div className="border-b border-border my-4" />
         <DataFilters hideProjectFilter={hideProjectFilter} />
-        <DottedSeparator className="my-4" />
+        <div className="border-b border-border my-4" />
         {(autoHideCompletedTasks || autoHideChildTasks) && (
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-4">
@@ -138,7 +137,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
               <DataKanban data={tasks ?? []} onChange={onKanbanChange} />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0 h-full pb-4">
-              <DataCalendar data={tasks ?? []} />
+              <DataCalendar data={tasks ?? []} hideProjectInfo={hideProjectFilter} />
             </TabsContent>
           </>
         )}

@@ -31,24 +31,27 @@ const ProjectIdClient = () => {
   return (
     <div className="flex flex-col gap-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-x-2">
+        <div className="flex items-center gap-x-3">
           <ProjectAvatar
             image={project.image || undefined}
             name={project.name}
-            className="size-8"
+            className="size-10 rounded-lg"
+            fallbackClassName="text-base rounded-lg"
           />
-          <p className="text-lg font-semibold">{project.name}</p>
+          <div className="flex flex-col gap-y-0.5">
+            <h1 className="text-xl font-semibold text-foreground leading-tight">
+              {project.name}
+            </h1>
+          </div>
         </div>
-        <div className="">
-          <Button variant="secondary" size="sm" asChild>
-            <Link
-              href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings`}
-            >
-              <PencilIcon />
-              Edit project
-            </Link>
-          </Button>
-        </div>
+        <Button variant="muted" size="sm" asChild>
+          <Link
+            href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings`}
+          >
+            <PencilIcon className="size-4" />
+            Edit project
+          </Link>
+        </Button>
       </div>
       {analytics && <Analytics data={analytics} />}
       <TaskViewSwitcher hideProjectFilter={true} />

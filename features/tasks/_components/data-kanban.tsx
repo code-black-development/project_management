@@ -182,7 +182,7 @@ const DataKanban = ({ data, onChange }: DataKanbanProps) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className="bg-primary-foreground rounded-md p-2 mb-2"
+                              className="bg-card border border-border rounded-md mb-2"
                             >
                               <DataKanbanCard task={task} />
                             </div>

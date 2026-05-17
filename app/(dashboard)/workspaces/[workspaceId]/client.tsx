@@ -27,9 +27,19 @@ import Link from "next/link";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
 
 const WorkspaceIdClient = () => {
   const workspaceId = useWorkspaceId();
+  const { data: session } = useSession();
+  const { data: workspacesData } = useGetWorkspaces();
+
+  const firstName = session?.user?.name?.split(" ")[0] || "there";
+  const workspaceName =
+    workspacesData?.data?.find((w) => w.id === workspaceId)?.name ||
+    "your workspace";
+
   const { data: analytics, isLoading: isLoadingAnalytics } =
     useGetWorkspaceAnalytics({ workspaceId });
 
@@ -59,6 +69,15 @@ const WorkspaceIdClient = () => {
 
   return (
     <div className="h-full flex flex-col space-y-4">
+      <div className="flex flex-col gap-y-1 mb-4">
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight text-foreground">
+          Hi {firstName}
+        </h1>
+        <p className="text-[16px] text-muted-foreground leading-relaxed">
+          Here&apos;s your workspace overview for{" "}
+          <span className="text-foreground font-medium">{workspaceName}</span>.
+        </p>
+      </div>
       <Analytics data={analytics} />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <TaskList data={tasks} />

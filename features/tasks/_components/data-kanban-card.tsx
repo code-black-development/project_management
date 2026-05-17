@@ -14,7 +14,7 @@ interface DataKanbanCardProps {
 
 const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
   return (
-    <div className="p-2.5 mb-1.5 rounded shadow-sm space-y-3">
+    <div className="p-2.5 space-y-3">
       <div className="flex items-start justify-between gap-x-2">
         <p className="text-sm line-clamp-2">{task.name}</p>
         <TaskActions id={task.id} projectId={task.projectId}>
