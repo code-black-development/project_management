@@ -1,6 +1,5 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import PageError from "@/components/page-error";
 import PageLoader from "@/components/page-loader";
 import { Button } from "@/components/ui/button";
@@ -80,21 +79,19 @@ export const TaskList = ({ data }: TaskListProps) => {
   return (
     <div className="flex flex-col agp-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Tasks {data.length || 0}</p>
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <p className="text-base font-semibold">Tasks {data.length || 0}</p>
           <Button variant="muted" size="icon" onClick={createTask}>
             <PlusIcon className="size-4 text-neutral-400" />
           </Button>
         </div>
-
-        <DottedSeparator className="my-4" />
         <ul className="flex flex-col gap-y-4">
           {data.map((task) => (
             <li key={task.id}>
               <Link href={`/workspaces/${workspaceId}/tasks/${task.id}`}>
-                <Card className="shadow-none rounded-lg hover:opcaity-75 transition">
+                <Card className="shadow-none rounded-lg hover:opacity-75 transition">
                   <CardContent className="p-4">
-                    <p className="text-lg font-medium truncate">{task.name}</p>
+                    <p className="text-sm font-medium line-clamp-2" title={task.name}>{task.name}</p>
                     <div className="flex items-center gap-x-2">
                       <p>{task.project.name}</p>
                       <div className="size-1 rounded-full bg-neutral-300" />
@@ -135,19 +132,17 @@ export const ProjectList = ({ data }: ProjectListProps) => {
   return (
     <div className="flex flex-col agp-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Projects {data.length || 0}</p>
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <p className="text-base font-semibold">Projects {data.length || 0}</p>
           <Button variant="muted" size="icon" onClick={createProject}>
             <PlusIcon className="size-4 text-neutral-400" />
           </Button>
         </div>
-
-        <DottedSeparator className="my-4" />
         <ul className="grid grid-cols-1 lg:grid-cols-2  gap-4">
           {data.map((project) => (
             <li key={project.id}>
               <Link href={`/workspaces/${workspaceId}/projects/${project.id}`}>
-                <Card className="shadow-none rounded-lg hover:opcaity-75 transition">
+                <Card className="shadow-none rounded-lg hover:opacity-75 transition">
                   <CardContent className="p-4 flex items-center gap-x-2.5">
                     <ProjectAvatar
                       name={project.name}
@@ -155,7 +150,7 @@ export const ProjectList = ({ data }: ProjectListProps) => {
                       className="size-12"
                       fallbackClassName="text-lg"
                     />
-                    <p className="text-lg font-medium truncate">
+                    <p className="text-sm font-medium line-clamp-2" title={project.name}>
                       {project.name}
                     </p>
                   </CardContent>
@@ -181,16 +176,14 @@ export const MemberList = ({ data }: MemberListProps) => {
   return (
     <div className="flex flex-col agp-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Members {data.length || 0}</p>
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+          <p className="text-base font-semibold">Members {data.length || 0}</p>
           <Button variant="muted" size="icon" asChild>
             <Link href={`/workspaces/${workspaceId}/members`}>
               <SettingsIcon className="size-4 text-neutral-400" />
             </Link>
           </Button>
         </div>
-
-        <DottedSeparator className="my-4" />
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4">
           {data?.map((member) => (
             <li key={member.id}>

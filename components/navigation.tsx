@@ -65,10 +65,10 @@ const Navigation = () => {
               className={cn(
                 "flex items-center gap-2.5 p-2.5 rounded-md font-medium hover:text-primary transition text-neutral-500 dark:text-neutral-200",
                 isActive &&
-                  "bg-white dark:bg-neutral-600 shadow-sm hover:opacity-100 text-primary"
+                  "bg-white shadow-sm hover:opacity-100 text-primary dark:bg-neutral-800/50 dark:border-l-2 dark:border-blue-500 dark:text-blue-400"
               )}
             >
-              <Icon className="size-5 text-neutral-500" />
+              <Icon className={cn("size-5 text-neutral-500", isActive && "dark:text-blue-400")} />
               {route.label}
             </div>
           </Link>

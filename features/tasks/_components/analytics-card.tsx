@@ -34,17 +34,19 @@ const AnalyticsCard = ({
           <CardDescription className="flex items-center gap-x-2 font-medium overflow-hidden">
             <span className="truncate text-base">{title}</span>
           </CardDescription>
-          <div className="flex items-center gap-x-1">
-            <Icon className={cn("size-4", iconColor)} />
-            <span
-              className={cn(
-                "truncate text-base font-medium",
-                increaseValueColor
-              )}
-            >
-              {increaseValue}
-            </span>
-          </div>
+          {increaseValue !== 0 && (
+            <div className="flex items-center gap-x-1">
+              <Icon className={cn("size-4", iconColor)} />
+              <span
+                className={cn(
+                  "truncate text-base font-medium",
+                  increaseValueColor
+                )}
+              >
+                {increaseValue}
+              </span>
+            </div>
+          )}
         </div>
         <CardTitle className="3xl font-semibold">{title}</CardTitle>
       </CardHeader>

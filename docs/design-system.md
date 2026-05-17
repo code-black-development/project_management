@@ -6,7 +6,26 @@ Dark mode is class-based via Tailwind (`darkMode: ["class"]`). A custom `ThemePr
 
 All color values are CSS variables, so components pick up dark mode automatically — as long as you use the semantic Tailwind utilities and not raw color scale values.
 
-**Critical rule: never use raw Tailwind color scale values** (e.g. `bg-neutral-100`, `text-gray-800`) without a `dark:` counterpart. Always use the CSS variable-backed semantic utilities instead. Raw scale values do not respond to dark mode and will cause visual bugs.
+**Critical rule: never use raw Tailwind color scale values** (e.g. `bg-neutral-100`, `text-gray-800`) without a `dark:` counterpart. Always use the CSS variable-backed semantic utilities instead (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`, etc.). Raw scale values do not respond to dark mode and will cause visual bugs.
+
+## Dark Mode Surface Hierarchy
+
+Dark mode uses a layered surface stack — each level is subtly lighter than the one below. Always respect this order; never place a darker surface on top of a lighter one.
+
+| Layer | Token | Usage |
+|---|---|---|
+| Base | `bg-background` | Page background |
+| Panel | `bg-muted` | Section containers (task list, project list) |
+| Card | `bg-card` | Individual item cards inside panels |
+| Sidebar | `bg-neutral-800` | Sidebar (hardcoded — predates CSS variable adoption) |
+
+The CSS variables for dark mode (`app/globals.css`):
+- `--background`: `240 10% 3.9%` — near black
+- `--card`: `240 8% 8%` — just above background so cards are visible
+- `--muted`: `240 3.7% 15.9%` — panel grey
+- `--border`: `240 4% 20%` — readable border in dark mode
+
+**Do not** use `dark:bg-neutral-*` hardcoded values for new components — update the CSS variables if the token system needs extending.
 
 ## Color Palette
 
@@ -16,13 +35,13 @@ Defined as CSS variables in `app/globals.css`. Zinc-based neutral palette — no
 |---|---|---|
 | `--background` | white | near-black (`240 10% 3.9%`) |
 | `--foreground` | near-black | off-white |
-| `--card` | white | near-black |
+| `--card` | white | just above background (`240 8% 8%`) |
 | `--primary` | dark neutral | off-white |
 | `--secondary` | very light gray | dark gray |
-| `--muted` | light gray | dark gray |
+| `--muted` | light gray | panel gray (`240 3.7% 15.9%`) |
 | `--accent` | light gray | dark gray |
 | `--destructive` | red | darker red |
-| `--border` | light gray | dark gray |
+| `--border` | light gray | readable gray (`240 4% 20%`) |
 
 In Tailwind, these are used as: `bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`, etc.
 
@@ -64,6 +83,35 @@ Lucide React (`lucide-react`). Import icons directly: `import { SomeIcon } from 
 ## Animations
 
 Framer Motion (`framer-motion`) for component animations. `tailwindcss-animate` for CSS-based transitions.
+
+## Typography Hierarchy
+
+Four clear levels — use these consistently. Mixing levels (e.g. using a section title style for an item title) weakens the visual hierarchy.
+
+| Level | Usage | Classes |
+|---|---|---|
+| Page title | Navbar h1 | `text-2xl font-semibold` |
+| Section title | List/panel headers (Tasks, Projects, Members) | `text-base font-semibold` |
+| Item title | Task name, project name in cards | `text-sm font-medium` |
+| Metadata | Due dates, labels, secondary info | `text-xs text-muted-foreground` |
+
+## Text Truncation
+
+For item titles in cards, use `line-clamp-2` (wraps to two lines before cutting) rather than `truncate` (hard single-line cut). Always add a `title` attribute so the full text is available on hover:
+
+```tsx
+<p className="text-sm font-medium line-clamp-2" title={item.name}>{item.name}</p>
+```
+
+## Dotted Separator
+
+`DottedSeparator` is used sparingly. It belongs in the sidebar (between major sections) and in the auth layout. Do not use it inside dashboard content cards — use `border-b border-border` on the header row instead:
+
+```tsx
+<div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+  ...
+</div>
+```
 
 ## Notifications
 

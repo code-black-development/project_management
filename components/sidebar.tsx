@@ -10,8 +10,9 @@ const Sidebar = () => {
       <Logo />
       <DottedSeparator className="my-4" />
       <WorkspaceSwitcher />
-      <DottedSeparator className="my-4" />
-      <Navigation />
+      <div className="mt-4">
+        <Navigation />
+      </div>
       <DottedSeparator className="my-4" />
       <Projects />
     </aside>

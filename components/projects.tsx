@@ -17,7 +17,7 @@ const Projects = () => {
   return (
     <div className="flex flex-col gap-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase text-neutral-500 dark:text-neutral-200">
+        <p className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
           Projects
         </p>
         <RiAddCircleFill
@@ -33,9 +33,9 @@ const Projects = () => {
             <Link href={href} key={project.id}>
               <div
                 className={cn(
-                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer hover:opcaity-75 transition text-neutral-500 dark:text-neutral-200",
+                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer hover:opacity-75 transition text-neutral-500 dark:text-neutral-200",
                   isActive &&
-                    "bg-white dark:bg-neutral-600 shadow-sm hover:opacity-100 text-primary"
+                    "bg-white shadow-sm hover:opacity-100 text-primary dark:bg-neutral-800/50 dark:border-l-2 dark:border-blue-500 dark:text-blue-400"
                 )}
               >
                 <ProjectAvatar
