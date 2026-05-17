@@ -63,12 +63,12 @@ const Navigation = () => {
           <Link href={fullPath} key={route.href}>
             <div
               className={cn(
-                "flex items-center gap-2.5 p-2.5 rounded-md font-medium hover:text-primary transition text-neutral-500 dark:text-neutral-200",
+                "flex items-center gap-2.5 p-2.5 rounded-md font-medium transition text-neutral-500 hover:text-primary dark:text-white/55 dark:hover:text-primary",
                 isActive &&
-                  "bg-white shadow-sm hover:opacity-100 text-primary dark:bg-neutral-800/50 dark:border-l-2 dark:border-blue-500 dark:text-blue-400"
+                  "bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none"
               )}
             >
-              <Icon className={cn("size-5 text-neutral-500", isActive && "dark:text-blue-400")} />
+              <Icon className={cn("size-5 text-neutral-400 dark:text-white/45 transition", isActive && "text-primary dark:text-primary")} />
               {route.label}
             </div>
           </Link>

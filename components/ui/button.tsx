@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost:
           "border-transparent shadow-none hover:bg-accent hover:text-accent-foreground",
-        muted: "bg-neutral-200 text-neutral-600 hover:bg-neutral-200/80 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700/80",
+        muted: "bg-neutral-200 text-neutral-600 hover:bg-neutral-200/80 dark:bg-muted dark:text-muted-foreground dark:border dark:border-border dark:hover:bg-accent",
         tertiary:
           "bg-blue-100 text-blue-600 border-transparent hover:bg-blue-200 shadow-none",
       },

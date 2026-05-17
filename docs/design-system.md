@@ -6,44 +6,62 @@ Dark mode is class-based via Tailwind (`darkMode: ["class"]`). A custom `ThemePr
 
 All color values are CSS variables, so components pick up dark mode automatically — as long as you use the semantic Tailwind utilities and not raw color scale values.
 
-**Critical rule: never use raw Tailwind color scale values** (e.g. `bg-neutral-100`, `text-gray-800`) without a `dark:` counterpart. Always use the CSS variable-backed semantic utilities instead (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`, etc.). Raw scale values do not respond to dark mode and will cause visual bugs.
+**Critical rule: never use raw Tailwind color scale values** (e.g. `bg-neutral-100`, `text-gray-800`) without a `dark:` counterpart. Always use the CSS variable-backed semantic utilities (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`, etc.). Raw scale values do not respond to dark mode and will cause visual bugs.
 
 ## Dark Mode Surface Hierarchy
 
-Dark mode uses a layered surface stack — each level is subtly lighter than the one below. Always respect this order; never place a darker surface on top of a lighter one.
+Dark mode uses a layered surface stack. Each layer is subtly lighter than the one below. Never place a darker surface on top of a lighter one.
 
-| Layer | Token | Usage |
-|---|---|---|
-| Base | `bg-background` | Page background |
-| Panel | `bg-muted` | Section containers (task list, project list) |
-| Card | `bg-card` | Individual item cards inside panels |
-| Sidebar | `bg-neutral-800` | Sidebar (hardcoded — predates CSS variable adoption) |
+| Layer | Token / Class | Hex approx | Usage |
+|---|---|---|---|
+| Page base | `bg-background` | `#0B0D12` | Full page background (darkest) |
+| Sidebar | `dark:bg-sidebar` | `#151821` | Left sidebar |
+| Panel | `bg-muted` | `#171B24` | Section containers (Tasks, Projects, Members) |
+| Card | `bg-card` | `#11151D` | Individual item cards inside panels |
+| Card hover | `dark:hover:bg-card-hover` | `#1B2130` | Card hover state |
+| Elevated | `bg-popover` | `#202634` | Dropdowns, menus, tooltips |
 
-The CSS variables for dark mode (`app/globals.css`):
-- `--background`: `240 10% 3.9%` — near black
-- `--card`: `240 8% 8%` — just above background so cards are visible
-- `--muted`: `240 3.7% 15.9%` — panel grey
-- `--border`: `240 4% 20%` — readable border in dark mode
+`sidebar` and `card-hover` are custom tokens defined in `tailwind.config.ts` via `--sidebar-bg` and `--card-hover` CSS variables.
 
-**Do not** use `dark:bg-neutral-*` hardcoded values for new components — update the CSS variables if the token system needs extending.
+## Dark Mode Color Tokens
 
-## Color Palette
+Defined in `app/globals.css` under `.dark`. Full palette:
 
-Defined as CSS variables in `app/globals.css`. Zinc-based neutral palette — no brand accent colors. Colors are consumed through semantic tokens, not raw Tailwind scales.
+**Surfaces:**
+- `--background: 223 25% 6%` → `#0B0D12`
+- `--card: 221 26% 9%` → `#11151D`
+- `--muted: 221 22% 12%` → `#171B24` (panels)
+- `--sidebar-bg: 225 22% 11%` → `#151821`
+- `--card-hover: 223 28% 15%` → `#1B2130`
+- `--popover: 222 24% 17%` → `#202634`
 
-| Token | Light | Dark |
-|---|---|---|
-| `--background` | white | near-black (`240 10% 3.9%`) |
-| `--foreground` | near-black | off-white |
-| `--card` | white | just above background (`240 8% 8%`) |
-| `--primary` | dark neutral | off-white |
-| `--secondary` | very light gray | dark gray |
-| `--muted` | light gray | panel gray (`240 3.7% 15.9%`) |
-| `--accent` | light gray | dark gray |
-| `--destructive` | red | darker red |
-| `--border` | light gray | readable gray (`240 4% 20%`) |
+**Text:**
+- `--foreground: 0 0% 93%` → off-white primary text
+- `--muted-foreground: 0 0% 65%` → secondary/muted text
 
-In Tailwind, these are used as: `bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`, etc.
+**Accent (blue):**
+- `--primary: 217 91% 60%` → `#3B82F6` (active states, interactive elements)
+- `--accent-foreground: 213 93% 68%` → `#60A5FA` (lighter blue text on blue bg)
+
+**Borders:**
+- `--border: 0 0% 100% / 8%` → `rgba(255,255,255,0.08)` (subtle dividers, card outlines)
+- `--input: 0 0% 100% / 10%` → `rgba(255,255,255,0.10)` (form inputs)
+
+## Color Palette (light mode)
+
+Defined in `app/globals.css` under `:root`. Zinc-based neutral palette.
+
+| Token | Light |
+|---|---|
+| `--background` | white |
+| `--foreground` | near-black |
+| `--card` | white |
+| `--primary` | dark charcoal |
+| `--muted` | light gray (panel) |
+| `--muted-foreground` | medium gray |
+| `--border` | light gray |
+
+In Tailwind: `bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`, etc.
 
 ## Component Library
 
@@ -76,6 +94,68 @@ Custom components built on top of shadcn/ui primitives live in `components/`:
 | `dynamic-icon.tsx` | Dynamic icon rendering |
 | `page-error.tsx` / `page-loader.tsx` | Error and loading states |
 
+## Typography Hierarchy
+
+Four clear levels — use these consistently.
+
+| Level | Usage | Classes |
+|---|---|---|
+| Page title | Navbar h1 | `text-2xl font-semibold` |
+| Section title | List/panel headers | `text-base font-semibold` |
+| Item title | Task name, project name in cards | `text-sm font-medium text-foreground` |
+| Metadata | Due dates, labels, secondary info | `text-xs text-muted-foreground` |
+
+Avoid `text-lg` for item titles — it creates visual competition with section headers.
+
+## Text Truncation
+
+For item titles in cards, use `line-clamp-2` with a `title` attribute:
+
+```tsx
+<p className="text-sm font-medium line-clamp-2" title={item.name}>{item.name}</p>
+```
+
+## Panels and Cards
+
+**Panels** (Tasks, Projects, Members containers):
+```tsx
+"col-span-1 bg-muted border border-border rounded-xl p-5 dark:border-white/8"
+```
+
+**Section header row** (inside panels — replaces dotted separator):
+```tsx
+"flex items-center justify-between border-b border-border pb-4 mb-4"
+```
+
+**Cards** (inside panels):
+```tsx
+"shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-white/7 dark:hover:bg-card-hover"
+```
+
+## Sidebar Active State
+
+```tsx
+// Active nav item
+"bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none"
+
+// Inactive nav item
+"text-neutral-500 hover:text-primary dark:text-white/55 dark:hover:text-primary"
+```
+
+In dark mode, `text-primary` = `#3B82F6` (blue). This is intentional — `--primary` is blue in dark mode only.
+
+## Dotted Separator
+
+`DottedSeparator` is used sparingly. The default colour is `hsl(var(--border))` so it automatically adapts to dark mode. Use it only in the sidebar (between major sections) and in auth layouts. Do not use it inside dashboard content panels.
+
+Inside panels, use a `border-b border-border` on the section header row instead.
+
+## Buttons (action/icon buttons)
+
+The `muted` button variant is used for secondary icon actions (plus, settings). It adapts to dark mode:
+- Light: `bg-neutral-200 text-neutral-600`
+- Dark: `bg-white/8 border border-white/10 text-white/60` — subtle surface, not attention-grabbing
+
 ## Icon Library
 
 Lucide React (`lucide-react`). Import icons directly: `import { SomeIcon } from "lucide-react"`.
@@ -83,35 +163,6 @@ Lucide React (`lucide-react`). Import icons directly: `import { SomeIcon } from 
 ## Animations
 
 Framer Motion (`framer-motion`) for component animations. `tailwindcss-animate` for CSS-based transitions.
-
-## Typography Hierarchy
-
-Four clear levels — use these consistently. Mixing levels (e.g. using a section title style for an item title) weakens the visual hierarchy.
-
-| Level | Usage | Classes |
-|---|---|---|
-| Page title | Navbar h1 | `text-2xl font-semibold` |
-| Section title | List/panel headers (Tasks, Projects, Members) | `text-base font-semibold` |
-| Item title | Task name, project name in cards | `text-sm font-medium` |
-| Metadata | Due dates, labels, secondary info | `text-xs text-muted-foreground` |
-
-## Text Truncation
-
-For item titles in cards, use `line-clamp-2` (wraps to two lines before cutting) rather than `truncate` (hard single-line cut). Always add a `title` attribute so the full text is available on hover:
-
-```tsx
-<p className="text-sm font-medium line-clamp-2" title={item.name}>{item.name}</p>
-```
-
-## Dotted Separator
-
-`DottedSeparator` is used sparingly. It belongs in the sidebar (between major sections) and in the auth layout. Do not use it inside dashboard content cards — use `border-b border-border` on the header row instead:
-
-```tsx
-<div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-  ...
-</div>
-```
 
 ## Notifications
 

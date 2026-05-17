@@ -33,9 +33,9 @@ const Projects = () => {
             <Link href={href} key={project.id}>
               <div
                 className={cn(
-                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer hover:opacity-75 transition text-neutral-500 dark:text-neutral-200",
+                  "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer transition text-neutral-500 hover:text-primary dark:text-white/55 dark:hover:text-primary",
                   isActive &&
-                    "bg-white shadow-sm hover:opacity-100 text-primary dark:bg-neutral-800/50 dark:border-l-2 dark:border-blue-500 dark:text-blue-400"
+                    "bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none"
                 )}
               >
                 <ProjectAvatar

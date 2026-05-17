@@ -26,6 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
+import { cn } from "@/lib/utils";
 
 const WorkspaceIdClient = () => {
   const workspaceId = useWorkspaceId();
@@ -68,56 +69,66 @@ const WorkspaceIdClient = () => {
   );
 };
 
+const panelClass =
+  "col-span-1 bg-muted border border-border rounded-xl p-5";
+
+const sectionHeaderClass =
+  "flex items-center justify-between border-b border-border pb-4 mb-4";
+
 interface TaskListProps {
   data: Omit<TaskWithUser, "children">[];
 }
 export const TaskList = ({ data }: TaskListProps) => {
   const workspaceId = useWorkspaceId();
-
   const { open: createTask } = useCreateTaskModal();
 
   return (
-    <div className="flex flex-col agp-y-4 col-span-1">
-      <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-          <p className="text-base font-semibold">Tasks {data.length || 0}</p>
-          <Button variant="muted" size="icon" onClick={createTask}>
-            <PlusIcon className="size-4 text-neutral-400" />
-          </Button>
-        </div>
-        <ul className="flex flex-col gap-y-4">
-          {data.map((task) => (
-            <li key={task.id}>
-              <Link href={`/workspaces/${workspaceId}/tasks/${task.id}`}>
-                <Card className="shadow-none rounded-lg hover:opacity-75 transition">
-                  <CardContent className="p-4">
-                    <p className="text-sm font-medium line-clamp-2" title={task.name}>{task.name}</p>
-                    <div className="flex items-center gap-x-2">
-                      <p>{task.project.name}</p>
-                      <div className="size-1 rounded-full bg-neutral-300" />
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <CalendarIcon className="size-3 mr-1" />
-                        <span className="truncate">
-                          {task.dueDate
-                            ? formatDistanceToNow(new Date(task.dueDate))
-                            : "No due date"}
-                        </span>
-                      </div>
+    <div className={panelClass}>
+      <div className={sectionHeaderClass}>
+        <p className="text-base font-semibold">Tasks {data.length || 0}</p>
+        <Button variant="muted" size="icon" onClick={createTask}>
+          <PlusIcon className="size-4" />
+        </Button>
+      </div>
+      <ul className="flex flex-col gap-y-2.5">
+        {data.map((task) => (
+          <li key={task.id}>
+            <Link href={`/workspaces/${workspaceId}/tasks/${task.id}`}>
+              <Card className="shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-border dark:hover:bg-card-hover">
+                <CardContent className="p-4">
+                  <p
+                    className="text-sm font-medium text-foreground line-clamp-2"
+                    title={task.name}
+                  >
+                    {task.name}
+                  </p>
+                  <div className="flex items-center gap-x-2 mt-1.5">
+                    <p className="text-xs text-muted-foreground truncate">
+                      {task.project.name}
+                    </p>
+                    <div className="size-1 rounded-full bg-border shrink-0" />
+                    <div className="text-xs text-muted-foreground flex items-center gap-x-1 shrink-0">
+                      <CalendarIcon className="size-3" />
+                      <span>
+                        {task.dueDate
+                          ? formatDistanceToNow(new Date(task.dueDate))
+                          : "No due date"}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </li>
-          ))}
-          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-            No tasks found
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </li>
-        </ul>
-        <div className="mt-4 flex justify-center">
-          <Button variant="muted" className="w-full" asChild>
-            <Link href={`/workspaces/${workspaceId}/tasks`}>Show all</Link>
-          </Button>
-        </div>
+        ))}
+        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
+          No tasks found
+        </li>
+      </ul>
+      <div className="mt-4">
+        <Button variant="muted" className="w-full" asChild>
+          <Link href={`/workspaces/${workspaceId}/tasks`}>Show all</Link>
+        </Button>
       </div>
     </div>
   );
@@ -129,40 +140,44 @@ interface ProjectListProps {
 export const ProjectList = ({ data }: ProjectListProps) => {
   const workspaceId = useWorkspaceId();
   const { open: createProject } = useCreateProjectModal();
+
   return (
-    <div className="flex flex-col agp-y-4 col-span-1">
-      <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-          <p className="text-base font-semibold">Projects {data.length || 0}</p>
-          <Button variant="muted" size="icon" onClick={createProject}>
-            <PlusIcon className="size-4 text-neutral-400" />
-          </Button>
-        </div>
-        <ul className="grid grid-cols-1 lg:grid-cols-2  gap-4">
-          {data.map((project) => (
-            <li key={project.id}>
-              <Link href={`/workspaces/${workspaceId}/projects/${project.id}`}>
-                <Card className="shadow-none rounded-lg hover:opacity-75 transition">
-                  <CardContent className="p-4 flex items-center gap-x-2.5">
+    <div className={panelClass}>
+      <div className={sectionHeaderClass}>
+        <p className="text-base font-semibold">Projects {data.length || 0}</p>
+        <Button variant="muted" size="icon" onClick={createProject}>
+          <PlusIcon className="size-4" />
+        </Button>
+      </div>
+      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {data.map((project) => (
+          <li key={project.id}>
+            <Link href={`/workspaces/${workspaceId}/projects/${project.id}`}>
+              <Card className="shadow-none rounded-xl border border-border hover:bg-accent transition-colors dark:border-border dark:hover:bg-card-hover">
+                <CardContent className="p-4 flex items-center gap-x-3">
+                  <div className="size-11 shrink-0">
                     <ProjectAvatar
                       name={project.name}
                       image={project.image || undefined}
-                      className="size-12"
-                      fallbackClassName="text-lg"
+                      className="size-11 rounded-lg"
+                      fallbackClassName="text-base rounded-lg"
                     />
-                    <p className="text-sm font-medium line-clamp-2" title={project.name}>
-                      {project.name}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            </li>
-          ))}
-          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-            No projects found
+                  </div>
+                  <p
+                    className="text-sm font-medium text-foreground line-clamp-2"
+                    title={project.name}
+                  >
+                    {project.name}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           </li>
-        </ul>
-      </div>
+        ))}
+        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
+          No projects found
+        </li>
+      </ul>
     </div>
   );
 };
@@ -174,44 +189,42 @@ export const MemberList = ({ data }: MemberListProps) => {
   const workspaceId = useWorkspaceId();
 
   return (
-    <div className="flex flex-col agp-y-4 col-span-1">
-      <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-          <p className="text-base font-semibold">Members {data.length || 0}</p>
-          <Button variant="muted" size="icon" asChild>
-            <Link href={`/workspaces/${workspaceId}/members`}>
-              <SettingsIcon className="size-4 text-neutral-400" />
-            </Link>
-          </Button>
-        </div>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-4">
-          {data?.map((member) => (
-            <li key={member.id}>
-              <Card className="shadow-none rounded-lg overflow-hidden">
-                <CardContent className="p-3 flex flex-col items-center gap-x-2">
-                  <MemberAvatar
-                    name={member.user.name ?? member.user.email}
-                    image={member.user.image || undefined}
-                    className="size-12"
-                    fallbackClassName="text-lg"
-                  />
-                  <div className="flex flex-col items-center overflow-hidden">
-                    <p className="text-lg font-medium line-clamp-1">
-                      {member.user.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {member.user.email}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </li>
-          ))}
-          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
-            No members found
-          </li>
-        </ul>
+    <div className={panelClass}>
+      <div className={sectionHeaderClass}>
+        <p className="text-base font-semibold">Members {data.length || 0}</p>
+        <Button variant="muted" size="icon" asChild>
+          <Link href={`/workspaces/${workspaceId}/members`}>
+            <SettingsIcon className="size-4" />
+          </Link>
+        </Button>
       </div>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data?.map((member) => (
+          <li key={member.id}>
+            <Card className="shadow-none rounded-xl border border-border dark:border-border">
+              <CardContent className="p-3 flex flex-col items-center gap-y-2">
+                <MemberAvatar
+                  name={member.user.name ?? member.user.email}
+                  image={member.user.image || undefined}
+                  className="size-11"
+                  fallbackClassName="text-base"
+                />
+                <div className="flex flex-col items-center overflow-hidden w-full">
+                  <p className="text-sm font-medium text-foreground line-clamp-1">
+                    {member.user.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">
+                    {member.user.email}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </li>
+        ))}
+        <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">
+          No members found
+        </li>
+      </ul>
     </div>
   );
 };
