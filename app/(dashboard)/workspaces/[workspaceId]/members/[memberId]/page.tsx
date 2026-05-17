@@ -1,7 +1,5 @@
 import { auth } from "@/auth";
-import DottedSeparator from "@/components/dotted-separator";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getMemberByUserIdAndWorkspaceId,
   getWorkspaceMemberDetails,
@@ -17,6 +15,7 @@ import {
 } from "@/features/members/utils";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ChevronRightIcon } from "lucide-react";
 
 const MemberDetailsPage = async ({
   params,
@@ -49,169 +48,164 @@ const MemberDetailsPage = async ({
   const initials = getMemberInitials(member.user.name, member.user.email);
 
   return (
-    <div className="h-full flex flex-col gap-y-6">
+    <div className="flex flex-col gap-y-6">
+      {/* Breadcrumb + page title */}
       <div className="flex flex-col gap-y-2">
-        <Link
-          href={`/workspaces/${workspaceId}/members`}
-          className="text-sm text-muted-foreground hover:text-foreground transition"
-        >
-          Back to members
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">{displayName}</h1>
+        <div className="flex items-center gap-x-1.5 text-sm text-muted-foreground">
+          <Link
+            href={`/workspaces/${workspaceId}/members`}
+            className="hover:text-foreground transition-colors"
+          >
+            Members
+          </Link>
+          <ChevronRightIcon className="size-3.5 shrink-0" />
+          <span>{displayName}</span>
+        </div>
+        <h1 className="text-2xl font-semibold text-foreground leading-snug">
+          {displayName}
+        </h1>
         <p className="text-sm text-muted-foreground">{member.user.email}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-        <Card className="shadow-none">
-          <CardHeader className="pb-4">
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex items-center gap-x-4">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-muted text-lg font-semibold text-foreground">
-                {initials}
-              </div>
-              <div className="space-y-2">
-                <p className="text-xl font-semibold">{displayName}</p>
-                <Badge variant="secondary">{formatMemberRole(member.role)}</Badge>
-              </div>
+      {/* Content grid — items-start keeps left column height content-driven */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr] items-start">
+        {/* Profile card */}
+        <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-y-4">
+          <p className="text-sm font-semibold text-foreground">Profile</p>
+
+          <div className="flex items-center gap-x-3">
+            <div className="size-12 shrink-0 flex items-center justify-center rounded-lg bg-muted text-sm font-semibold text-foreground">
+              {initials}
             </div>
-
-            <DottedSeparator />
-
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-x-4">
-                <span className="text-muted-foreground">Joined workspace</span>
-                <span>{formatOptionalDate(member.createdAt)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-x-4">
-                <span className="text-muted-foreground">Last login</span>
-                <span>{formatOptionalDate(member.user.lastLoginAt, "Not recorded yet")}</span>
-              </div>
-              <div className="flex items-center justify-between gap-x-4">
-                <span className="text-muted-foreground">Last active</span>
-                <span>{formatRelativeDate(member.user.lastLoginAt, "Not recorded yet")}</span>
-              </div>
-              <div className="flex items-center justify-between gap-x-4">
-                <span className="text-muted-foreground">Email verified</span>
-                <span>
-                  {member.user.emailVerified
-                    ? formatOptionalDate(member.user.emailVerified)
-                    : "Not verified"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-x-4">
-                <span className="text-muted-foreground">Recent worklog</span>
-                <span>{formatOptionalDate(member.stats.lastWorkedAt, "No work logged")}</span>
-              </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{displayName}</p>
+              <Badge variant="secondary" className="mt-1 text-[11px] px-1.5 py-0">
+                {formatMemberRole(member.role)}
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="border-t border-border pt-4 flex flex-col gap-y-2.5 text-sm">
+            <ProfileRow label="Joined" value={formatOptionalDate(member.createdAt)} />
+            <ProfileRow
+              label="Last login"
+              value={formatOptionalDate(member.user.lastLoginAt, "Not recorded")}
+            />
+            <ProfileRow
+              label="Last active"
+              value={formatRelativeDate(member.user.lastLoginAt, "Not recorded")}
+            />
+            <ProfileRow
+              label="Email verified"
+              value={
+                member.user.emailVerified
+                  ? formatOptionalDate(member.user.emailVerified)
+                  : "Not verified"
+              }
+            />
+            <ProfileRow
+              label="Recent worklog"
+              value={formatOptionalDate(member.stats.lastWorkedAt, "None")}
+            />
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="flex flex-col gap-y-4">
+          {/* Stat strip */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard
-              label="Assigned Tasks"
+              label="Assigned"
               value={member.stats.assignedTasks}
               caption={`${member.stats.openAssignedTasks} open`}
             />
             <StatCard
-              label="Completed Tasks"
+              label="Completed"
               value={member.stats.completedAssignedTasks}
               caption={`${member.stats.overdueAssignedTasks} overdue`}
             />
             <StatCard
-              label="Created Tasks"
+              label="Created"
               value={member.stats.createdTasks}
-              caption="Created in this workspace"
             />
             <StatCard
-              label="Logged Time"
+              label="Logged time"
               value={minutesToTimeEstimateString(member.stats.totalLoggedMinutes) || "0m"}
-              caption={`${member.stats.worklogEntries} worklog entries`}
+              caption={`${member.stats.worklogEntries} entries`}
             />
           </div>
 
-          <Card className="shadow-none">
-            <CardHeader className="pb-4">
-              <CardTitle>Recent Assigned Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {member.assignedTasks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No assigned tasks yet.
-                  </p>
-                ) : (
-                  member.assignedTasks.map((task) => (
-                    <Link
-                      key={task.id}
-                      href={`/workspaces/${workspaceId}/tasks/${task.id}`}
-                      className="block rounded-lg border p-4 transition hover:bg-muted/50"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="font-medium">{task.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {task.project.name}
-                          </p>
-                        </div>
-                        <TaskBadge variant={task.status}>
-                          {snakeCaseToTitleCase(task.status)}
-                        </TaskBadge>
-                      </div>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Due {formatOptionalDate(task.dueDate, "No due date")}
+          {/* Recent assigned tasks */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-4 mb-4">
+              Recent Assigned Tasks
+            </p>
+            <div className="flex flex-col gap-y-2">
+              {member.assignedTasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No assigned tasks yet.</p>
+              ) : (
+                member.assignedTasks.map((task) => (
+                  <Link
+                    key={task.id}
+                    href={`/workspaces/${workspaceId}/tasks/${task.id}`}
+                    className="flex items-start justify-between gap-x-4 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{task.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {task.project.name} · Due {formatOptionalDate(task.dueDate, "No due date")}
                       </p>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                    <TaskBadge variant={task.status} className="shrink-0">
+                      {snakeCaseToTitleCase(task.status)}
+                    </TaskBadge>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
 
-          <Card className="shadow-none">
-            <CardHeader className="pb-4">
-              <CardTitle>Recent Worklogs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {member.Worklog.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No worklogs recorded yet.
-                  </p>
-                ) : (
-                  member.Worklog.map((worklog) => (
-                    <Link
-                      key={worklog.id}
-                      href={`/workspaces/${workspaceId}/tasks/${worklog.task.id}`}
-                      className="block rounded-lg border p-4 transition hover:bg-muted/50"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="font-medium">{worklog.task.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {worklog.task.project.name}
-                          </p>
-                        </div>
-                        <Badge variant="outline">
-                          {minutesToTimeEstimateString(worklog.timeSpent)}
-                        </Badge>
-                      </div>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Logged {formatOptionalDate(worklog.dateWorked)}
+          {/* Recent worklogs */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-4 mb-4">
+              Recent Worklogs
+            </p>
+            <div className="flex flex-col gap-y-2">
+              {member.Worklog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No worklogs recorded yet.</p>
+              ) : (
+                member.Worklog.map((worklog) => (
+                  <Link
+                    key={worklog.id}
+                    href={`/workspaces/${workspaceId}/tasks/${worklog.task.id}`}
+                    className="flex items-start justify-between gap-x-4 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{worklog.task.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {worklog.task.project.name} · Logged {formatOptionalDate(worklog.dateWorked)}
                       </p>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {minutesToTimeEstimateString(worklog.timeSpent)}
+                    </Badge>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+const ProfileRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-center justify-between gap-x-4">
+    <span className="text-muted-foreground shrink-0">{label}</span>
+    <span className="text-foreground text-right">{value}</span>
+  </div>
+);
 
 const StatCard = ({
   label,
@@ -220,17 +214,13 @@ const StatCard = ({
 }: {
   label: string;
   value: number | string;
-  caption: string;
-}) => {
-  return (
-    <Card className="shadow-none">
-      <CardContent className="space-y-2 p-5">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-        <p className="text-xs text-muted-foreground">{caption}</p>
-      </CardContent>
-    </Card>
-  );
-};
+  caption?: string;
+}) => (
+  <div className="bg-card border border-border rounded-xl px-4 py-3">
+    <p className="text-xs text-muted-foreground">{label}</p>
+    <p className="text-xl font-semibold text-foreground mt-1">{value}</p>
+    {caption && <p className="text-xs text-muted-foreground mt-0.5">{caption}</p>}
+  </div>
+);
 
 export default MemberDetailsPage;

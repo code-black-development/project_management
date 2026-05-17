@@ -1,7 +1,5 @@
 import { auth } from "@/auth";
-import DottedSeparator from "@/components/dotted-separator";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   getMemberByUserIdAndWorkspaceId,
   getWorkspaceMembersWithStats,
@@ -14,6 +12,7 @@ import {
 } from "@/features/members/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const MembersPage = async ({
   params,
@@ -38,95 +37,77 @@ const MembersPage = async ({
 
   const members = await getWorkspaceMembersWithStats(workspaceId);
   const totalAssignedTasks = members.reduce(
-    (sum, member) => sum + member._count.assignedTasks,
+    (sum, m) => sum + m._count.assignedTasks,
     0
   );
+  const adminCount = members.filter((m) => m.role === "admin").length;
 
   return (
-    <div className="h-full flex flex-col gap-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Members</h1>
+    <div className="flex flex-col gap-y-6">
+      {/* Page header */}
+      <div className="flex flex-col gap-y-1">
+        <h1 className="text-2xl font-semibold text-foreground">Members</h1>
         <p className="text-sm text-muted-foreground">
           Browse everyone in this workspace and open a member profile for task
           and activity details.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <SummaryCard label="Workspace Members" value={members.length} />
-        <SummaryCard
-          label="Assigned Tasks"
-          value={totalAssignedTasks}
-          caption="Across all members"
-        />
-        <SummaryCard
-          label="Admins"
-          value={members.filter((member) => member.role === "admin").length}
-          caption="Members with admin access"
-        />
+      {/* Compact stat strip */}
+      <div className="flex items-center gap-x-6 px-5 py-3 bg-card border border-border rounded-xl w-fit">
+        <Stat value={members.length} label="members" />
+        <div className="h-4 w-px bg-border" />
+        <Stat value={totalAssignedTasks} label="assigned tasks" />
+        <div className="h-4 w-px bg-border" />
+        <Stat value={adminCount} label={adminCount === 1 ? "admin" : "admins"} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {/* Member grid */}
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         {members.map((member) => {
           const displayName = getMemberDisplayName(
             member.user.name,
             member.user.email
           );
+          const initials = getMemberInitials(member.user.name, member.user.email);
 
           return (
-            <Card key={member.id} className="shadow-none">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-muted text-sm font-semibold text-foreground">
-                    {getMemberInitials(member.user.name, member.user.email)}
+            <Link
+              key={member.id}
+              href={`/workspaces/${workspaceId}/members/${member.id}`}
+            >
+              <div className="group flex items-center gap-x-3.5 px-4 py-3.5 bg-card border border-border rounded-xl hover:bg-accent transition-colors cursor-pointer">
+                {/* Avatar */}
+                <div className="size-10 shrink-0 flex items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground group-hover:bg-card transition-colors">
+                  {initials}
+                </div>
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-x-2">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {displayName}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 text-[11px] px-1.5 py-0"
+                    >
+                      {formatMemberRole(member.role)}
+                    </Badge>
                   </div>
-
-                  <div className="min-w-0 flex-1 space-y-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <Link
-                          href={`/workspaces/${workspaceId}/members/${member.id}`}
-                          className="block truncate text-lg font-semibold hover:underline"
-                        >
-                          {displayName}
-                        </Link>
-                        <p className="truncate text-sm text-muted-foreground">
-                          {member.user.email}
-                        </p>
-                      </div>
-
-                      <Badge variant="secondary">
-                        {formatMemberRole(member.role)}
-                      </Badge>
-                    </div>
-
-                    <DottedSeparator />
-
-                    <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                      <InfoBlock
-                        label="Last login"
-                        value={formatOptionalDate(
-                          member.user.lastLoginAt,
-                          "Not recorded yet"
-                        )}
-                      />
-                      <InfoBlock
-                        label="Assigned"
-                        value={member._count.assignedTasks}
-                      />
-                      <InfoBlock
-                        label="Created"
-                        value={member._count.createdTasks}
-                      />
-                      <InfoBlock
-                        label="Joined"
-                        value={formatOptionalDate(member.createdAt)}
-                      />
-                    </div>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {member.user.email}
+                  </p>
+                  <div className="flex items-center gap-x-2.5 mt-1.5 text-xs text-muted-foreground/70 flex-wrap">
+                    <span>{member._count.assignedTasks} assigned</span>
+                    <span>·</span>
+                    <span>{member._count.createdTasks} created</span>
+                    <span>·</span>
+                    <span>Joined {formatOptionalDate(member.createdAt)}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </Link>
           );
         })}
       </div>
@@ -134,41 +115,11 @@ const MembersPage = async ({
   );
 };
 
-const SummaryCard = ({
-  label,
-  value,
-  caption,
-}: {
-  label: string;
-  value: number | string;
-  caption?: string;
-}) => {
-  return (
-    <Card className="shadow-none">
-      <CardContent className="space-y-2 p-5">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-        {caption ? <p className="text-xs text-muted-foreground">{caption}</p> : null}
-      </CardContent>
-    </Card>
-  );
-};
-
-const InfoBlock = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | string;
-}) => {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="font-medium">{value}</p>
-    </div>
-  );
-};
+const Stat = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex items-baseline gap-x-1.5">
+    <span className="text-lg font-semibold text-foreground">{value}</span>
+    <span className="text-xs text-muted-foreground">{label}</span>
+  </div>
+);
 
 export default MembersPage;
