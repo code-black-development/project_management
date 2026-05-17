@@ -1,101 +1,118 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
+
 import { TaskWithUser } from "@/types/types";
-import { Cross, CrossIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, XIcon, PaperclipIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Dropzone from "shadcn-dropzone";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { is } from "date-fns/locale";
 import { toast } from "sonner";
 import TaskAssetDisplay from "./task-asset-display";
-import { useCreateAssets } from "../api/use-create-assets";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskAssetsProps {
   task: TaskWithUser;
 }
 
-export type TaskAssetFile = {
-  name: string;
-  file: string;
-  type: string;
-};
-
 const TaskAssets = ({ task }: TaskAssetsProps) => {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadVisible, setUploadVisible] = useState(false);
-
   const queryClient = useQueryClient();
 
-  //const{mutate: createAssets} = useCreateAssets();
+  const hasAssets = task.assets && task.assets.length > 0;
 
   const onSubmit = async () => {
     const formData = new FormData();
     formData.set("taskId", task.id);
+    uploadFiles.forEach((file) => formData.append("files", file));
 
-    uploadFiles.forEach((file) => {
-      formData.append("files", file);
-    });
-
-    console.log("formData", formData.get("files"));
     try {
-      const response = await fetch("/api/tasks/assets", {
-        method: "POST",
-        body: formData,
-      });
+      await fetch("/api/tasks/assets", { method: "POST", body: formData });
       toast.success("Assets uploaded successfully");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task"], data: task.id });
       setUploadFiles([]);
       setUploadVisible(false);
     } catch (error) {
-      console.error(error);
       toast.error("Failed to upload assets");
     }
   };
 
   return (
-    <div className="p-4 border rounded-lg">
-      <div className="flex items-center justify-between">
-        <p className="tetx-lg font-semibold">Assets</p>
+    <div className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+        <p className="text-sm font-semibold text-foreground">
+          Assets
+          {hasAssets && (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              {task.assets.length}
+            </span>
+          )}
+        </p>
         <Button
           size="sm"
-          variant="secondary"
+          variant="muted"
           onClick={() => setUploadVisible((prev) => !prev)}
         >
-          {!uploadVisible ? (
-            <PlusIcon className="size-4 mr-2" />
+          {uploadVisible ? (
+            <>
+              <XIcon className="size-3.5 mr-1.5" />
+              Cancel
+            </>
           ) : (
-            <TrashIcon className="size-4 mr-2" />
+            <>
+              <PlusIcon className="size-3.5 mr-1.5" />
+              Add asset
+            </>
           )}
         </Button>
       </div>
-      <DottedSeparator className="my-4" />
-      <div className="flex items-start flex-wrap justify-between gap-4 my-4">
-        {task.assets &&
-          task.assets.map((asset) => (
+
+      {hasAssets && (
+        <div className="flex items-start flex-wrap gap-3 mb-4">
+          {task.assets.map((asset) => (
             <TaskAssetDisplay key={asset.id} taskAsset={asset} />
           ))}
-      </div>
-      <div
-        className={cn("h-[400px]", {
-          hidden: !uploadVisible,
-        })}
-      >
-        <Dropzone
-          onDrop={(acceptedFiles: File[]) => {
-            setUploadFiles((prev) => [...prev, ...acceptedFiles]);
-          }}
-        />
-        {uploadFiles.map((file) => (
-          <img src={URL.createObjectURL(file)} alt="" className="w-[50px]" />
-        ))}
-        <div className="flex items-center justify-end">
-          <Button onClick={onSubmit} className="ml-auto mt-4">
-            upload
-          </Button>
         </div>
+      )}
+
+      {!hasAssets && !uploadVisible && (
+        <div className="flex flex-col items-center justify-center gap-y-1.5 py-6 text-center">
+          <PaperclipIcon className="size-7 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">No assets attached</p>
+          <p className="text-xs text-muted-foreground/70">
+            Upload files, images, or documents related to this task.
+          </p>
+        </div>
+      )}
+
+      <div className={cn({ hidden: !uploadVisible })}>
+        <div className="h-[200px]">
+          <Dropzone
+            onDrop={(acceptedFiles: File[]) => {
+              setUploadFiles((prev) => [...prev, ...acceptedFiles]);
+            }}
+          />
+        </div>
+        {uploadFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {uploadFiles.map((file) => (
+              <img
+                key={file.name}
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="w-12 h-12 object-cover rounded-md border border-border"
+              />
+            ))}
+          </div>
+        )}
+        {uploadFiles.length > 0 && (
+          <div className="flex justify-end mt-3">
+            <Button size="sm" onClick={onSubmit}>
+              Upload {uploadFiles.length} file{uploadFiles.length !== 1 ? "s" : ""}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -24,11 +24,17 @@ const defaultMap = {
 
 const Navbar = () => {
   const pathname = usePathname();
-  const segment = pathname.split("/")[3];
+  const parts = pathname.split("/");
+  const segment = parts[3];
+  const subSegment = parts[4];
   const isWorkspaceRoot = !segment;
-  const pageInfo = isWorkspaceRoot
-    ? null
-    : pathnameMap[segment as keyof typeof pathnameMap] || defaultMap;
+  // Suppress generic heading on task/project detail pages — the page content provides the title
+  const isDetailPage =
+    !!subSegment && (segment === "tasks" || segment === "projects");
+  const pageInfo =
+    isWorkspaceRoot || isDetailPage
+      ? null
+      : pathnameMap[segment as keyof typeof pathnameMap] || defaultMap;
 
   return (
     <nav className="pt-4 px-6 flex flex-row items-center justify-between w-full">
