@@ -31,8 +31,8 @@ const Navbar = () => {
   // Suppress generic heading on task/project detail pages — the page content provides the title
   const isDetailPage =
     !!subSegment && (segment === "tasks" || segment === "projects");
-  // members page has its own in-content heading
-  const isSelfHeadedPage = segment === "members";
+  // members and reports pages have their own in-content headings
+  const isSelfHeadedPage = segment === "members" || segment === "reports";
   const pageInfo =
     isWorkspaceRoot || isDetailPage || isSelfHeadedPage
       ? null

@@ -5,7 +5,6 @@ import { useRef } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormField,
@@ -14,13 +13,11 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import DottedSeparator from "@/components/dotted-separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
-import { ArrowLeftIcon, CopyIcon, Delete, ImageIcon } from "lucide-react";
+import { ArrowLeftIcon, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useConfirm } from "@/hooks/use-confirm";
@@ -87,9 +84,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
 
   const handleDelete = async () => {
     const deleteStatus = await confirmDelete();
-    if (!deleteStatus) {
-      return;
-    }
+    if (!deleteStatus) return;
     deleteProject({ param: { projectId: initialValues?.id! } });
   };
 
@@ -98,7 +93,6 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
       ...values,
       ...(!initialValues && { workspaceId }),
       image: values.image instanceof File || values.image ? values.image : "",
-      // Convert boolean values to strings for form data
       autoHideCompletedTasks: values.autoHideCompletedTasks?.toString(),
       autoHideChildTasks: values.autoHideChildTasks?.toString(),
       taskAssignmentEmail: values.taskAssignmentEmail?.toString(),
@@ -123,18 +117,22 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
   return (
     <div className="flex flex-col gap-y-4">
       <DeleteDialog />
-      <Card className="w-full h-full border-none shadow-none">
-        <CardHeader
+
+      {/* Main form card */}
+      <div className="bg-card border border-border rounded-xl">
+        {/* Header */}
+        <div
           className={cn(
-            "flex p-7",
-            initialValues && "flex-row items-center gap-x-4 space-y-0"
+            "flex items-center px-6 py-5 border-b border-border",
+            initialValues ? "gap-x-3" : ""
           )}
         >
           {initialValues && (
             <Button
+              type="button"
               size="sm"
-              className=""
-              variant="secondary"
+              variant="ghost"
+              className="h-8 w-8 p-0 shrink-0"
               onClick={
                 onCancel
                   ? onCancel
@@ -144,132 +142,133 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                       )
               }
             >
-              Back
-              <ArrowLeftIcon className="size-4 mr-2" />
+              <ArrowLeftIcon className="size-4" />
             </Button>
           )}
-          {!initialValues ? (
-            <CardTitle className="text-xl font-bold">
-              {action} Project
-            </CardTitle>
-          ) : (
-            <CardTitle className="text-xl font-bold">
-              {`${action} ${initialValues.name}`}
-            </CardTitle>
-          )}
-        </CardHeader>
-        <div className="px-7">
-          <DottedSeparator />
+          <p className="text-base font-semibold text-foreground">
+            {initialValues ? `Update ${initialValues.name}` : "Create Project"}
+          </p>
         </div>
-        <CardContent className="p-7">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="">
-              <div className="flex flex-col gap-y-4">
-                <FormField
-                  name="name"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Project Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="text"
-                          placeholder="Project Name"
-                          className="input"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                <FormField
-                  name="image"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex flex-col gap-y-2">
-                      <div className="flex items-center gap-x-5">
-                        {field.value ? (
-                          <div className="size-[72px] relative rounded-md overflow-hidden">
-                            <Image
-                              src={
-                                field.value instanceof File
-                                  ? URL.createObjectURL(field.value)
-                                  : `/${field.value}`
-                              }
-                              alt="Logo"
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <Avatar className="size-[72px]">
-                            <AvatarFallback>
-                              <ImageIcon className="size-[36px] text-neutral-400" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className="flex flex-col">
-                          <p className="text-sm">Project Icon</p>
-                          <p className="text-sm text-muted-foreground">
-                            JPG, PNG, SVG or JPEG. Max 1mb.
-                          </p>
-                          <input
-                            className="hidden "
-                            type="file"
-                            accept=".jpg, .png, .jpeg, .svg"
-                            ref={inputRef}
-                            disabled={isPending}
-                            onChange={handleImageChange}
-                          />
-                          {field.value ? (
-                            <Button
-                              type="button"
-                              disabled={isPending}
-                              variant="destructive"
-                              size="xs"
-                              className="w-fit mt-2"
-                              onClick={() => {
-                                field.onChange("");
-                                if (inputRef.current) {
-                                  inputRef.current.value = "";
-                                }
-                              }}
-                            >
-                              Remove Image
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              disabled={isPending}
-                              variant="tertiary"
-                              size="xs"
-                              className="w-fit mt-2"
-                              onClick={() => inputRef.current?.click()}
-                            >
-                              Upload Image
-                            </Button>
-                          )}
-                        </div>
+        {/* Body */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="px-6 py-5 flex flex-col gap-y-5">
+              {/* Project name */}
+              <FormField
+                name="name"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="text"
+                        placeholder="Project Name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Icon upload */}
+              <FormField
+                name="image"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="flex items-center gap-x-4">
+                    {field.value ? (
+                      <div className="size-12 relative rounded-lg overflow-hidden shrink-0 border border-border">
+                        <Image
+                          src={
+                            field.value instanceof File
+                              ? URL.createObjectURL(field.value)
+                              : `/${field.value}`
+                          }
+                          alt="Project icon"
+                          fill
+                          className="object-cover"
+                        />
                       </div>
+                    ) : (
+                      <div className="size-12 shrink-0 flex items-center justify-center rounded-lg bg-muted border border-border">
+                        <ImageIcon className="size-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-y-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        Project icon{" "}
+                        <span className="font-normal text-muted-foreground">
+                          (optional)
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG, SVG or JPEG · Max 1 MB
+                      </p>
+                      <input
+                        className="hidden"
+                        type="file"
+                        accept=".jpg,.png,.jpeg,.svg"
+                        ref={inputRef}
+                        disabled={isPending}
+                        onChange={handleImageChange}
+                      />
+                      {field.value ? (
+                        <Button
+                          type="button"
+                          disabled={isPending}
+                          variant="muted"
+                          size="xs"
+                          className="w-fit"
+                          onClick={() => {
+                            field.onChange("");
+                            if (inputRef.current) inputRef.current.value = "";
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          disabled={isPending}
+                          variant="muted"
+                          size="xs"
+                          className="w-fit"
+                          onClick={() => inputRef.current?.click()}
+                        >
+                          Upload
+                        </Button>
+                      )}
                     </div>
-                  )}
-                />
+                  </div>
+                )}
+              />
+
+              {/* View settings */}
+              <div className="border-t border-border pt-4 flex flex-col gap-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  View settings
+                </p>
+
                 <FormField
                   name="autoHideCompletedTasks"
                   control={form.control}
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex items-start gap-x-3">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Auto-hide completed tasks</FormLabel>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="flex flex-col gap-y-0.5">
+                        <FormLabel className="text-sm font-medium leading-none">
+                          Auto-hide completed tasks
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
                           Hide tasks with "Done" status from table, kanban, and
                           calendar views
                         </p>
@@ -282,16 +281,19 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   name="autoHideChildTasks"
                   control={form.control}
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex items-start gap-x-3">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Auto-hide child tasks</FormLabel>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="flex flex-col gap-y-0.5">
+                        <FormLabel className="text-sm font-medium leading-none">
+                          Auto-hide child tasks
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
                           Hide tasks that are children of other tasks from
                           table, kanban, and calendar views
                         </p>
@@ -301,31 +303,29 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                 />
               </div>
 
-              <DottedSeparator className="py-7" />
-
-              {/* Notifications Section */}
-              <div className="flex flex-col gap-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Notifications</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage email notifications for this project
-                  </p>
-                </div>
+              {/* Notifications */}
+              <div className="border-t border-border pt-4 flex flex-col gap-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Notifications
+                </p>
 
                 <FormField
                   name="taskAssignmentEmail"
                   control={form.control}
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex items-start gap-x-3">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Task assignment email</FormLabel>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="flex flex-col gap-y-0.5">
+                        <FormLabel className="text-sm font-medium leading-none">
+                          Task assignment email
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
                           Send email notifications when tasks are assigned to
                           team members
                         </p>
@@ -334,54 +334,45 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                   )}
                 />
               </div>
-              <DottedSeparator className="py-7" />
-              <div className="flex justify-between items-center">
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="secondary"
-                  disabled={isPending}
-                  onClick={onCancel}
-                  className={cn(!onCancel && "invisible")}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isPending || !isDirty}
-                >
-                  {action} Project
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+              <Button
+                type="button"
+                variant="muted"
+                disabled={isPending}
+                onClick={onCancel}
+                className={cn(!onCancel && "invisible")}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending || !isDirty}>
+                {action} Project
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+
+      {/* Danger Zone (edit mode only) */}
       {initialValues && (
-        <div className="flex flex-col gap-y-4">
-          <DeleteDialog />
-          <Card className="w-full h-full border-none shadow-none">
-            <CardContent className="p-7">
-              <div className="flex flex-col">
-                <h3 className="font-bold">Danger Zone</h3>
-                <p className="text-sm text-muted-foreground">
-                  Deleting a project is irreversible and will remove all
-                  asociated data.
-                </p>
-                <Button
-                  className="mt-6 w-fit ml-auto"
-                  size="sm"
-                  variant="destructive"
-                  type="button"
-                  disabled={isPending}
-                  onClick={handleDelete}
-                >
-                  Delete Project
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="border border-destructive/30 bg-destructive/5 rounded-xl p-5">
+          <p className="text-sm font-semibold text-foreground">Danger Zone</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Deleting a project is irreversible and will remove all associated
+            data.
+          </p>
+          <Button
+            className="mt-4"
+            size="sm"
+            variant="destructive"
+            type="button"
+            disabled={isDeletingProject || isPending}
+            onClick={handleDelete}
+          >
+            Delete Project
+          </Button>
         </div>
       )}
     </div>
