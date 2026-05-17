@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { PencilIcon, XIcon } from "lucide-react";
+import { PencilIcon, XIcon, AlignLeftIcon } from "lucide-react";
 import { TaskWithUser } from "@/types/types";
 import { useUpdateTask } from "../api/use-update-task";
 import { Button } from "@/components/ui/button";
-import DottedSeparator from "@/components/dotted-separator";
-122333;
 import { Editor } from "@/components/editor";
 import { Preview } from "@/components/preview";
 
@@ -32,30 +30,37 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
     );
   };
 
+  const hasDescription = task.description && task.description.trim().length > 0;
+
   return (
-    <div className="p-4 border rounded-lg">
-      <div className="flex items-center justify-between">
-        <p className="tetx-lg font-semibold">Description</p>
+    <div className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+        <p className="text-sm font-semibold text-foreground">Description</p>
         <Button
           size="sm"
-          variant="secondary"
+          variant="muted"
           onClick={() => setIsEditing((prev) => !prev)}
         >
           {isEditing ? (
-            <XIcon className="size-4 mr-2" />
+            <>
+              <XIcon className="size-3.5 mr-1.5" />
+              Cancel
+            </>
           ) : (
-            <PencilIcon className="size-4 mr-2" />
+            <>
+              <PencilIcon className="size-3.5 mr-1.5" />
+              Edit
+            </>
           )}
-          {isEditing ? "Cancel" : "Edit"}
         </Button>
       </div>
-      <DottedSeparator className="my-4" />
-      {isEditing ? (
-        <div className="flex flex-col gap-y-4">
-          <Editor value={value} onChange={(e) => setValue(e)} />
 
+      {isEditing ? (
+        <div className="flex flex-col gap-y-3">
+          <Editor value={value} onChange={(e) => setValue(e)} />
           <Button
             size="sm"
+            variant="muted"
             className="w-fit ml-auto"
             onClick={handleSave}
             disabled={isPending}
@@ -63,8 +68,16 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
             {isPending ? "Saving..." : "Save"}
           </Button>
         </div>
-      ) : (
+      ) : hasDescription ? (
         <Preview value={value} />
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-y-1.5 py-6 text-center">
+          <AlignLeftIcon className="size-7 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">No description</p>
+          <p className="text-xs text-muted-foreground/70">
+            Add context, acceptance criteria, or notes for this task.
+          </p>
+        </div>
       )}
     </div>
   );

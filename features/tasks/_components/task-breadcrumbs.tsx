@@ -1,11 +1,14 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
-import { useConfirm } from "@/hooks/use-confirm";
 import { ProjectSafeDate, TaskWithUser } from "@/types/types";
-import { ChevronRightIcon, TrashIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
-import { useDeleteTask } from "../api/use-delete-task";
-import { useRouter } from "next/navigation";
+import { TaskBadge } from "./task-badge";
+import { snakeCaseToTitleCase } from "@/lib/utils";
+import TaskDate from "./task-date";
+import MemberAvatar from "@/features/members/_components/member-avatar";
+import { TaskType } from "@prisma/client";
 
 interface TaskBreadcrumbsProps {
   project: ProjectSafeDate;
@@ -13,53 +16,72 @@ interface TaskBreadcrumbsProps {
 }
 
 const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
-  const { mutate: deleteTask, isPending } = useDeleteTask();
-  const router = useRouter();
-  const [ConfirmDialog, confirm] = useConfirm(
-    "Delete Task",
-    "This action cannot be undone",
-    "destructive"
-  );
-
-  const handelDeleteTask = async () => {
-    const ok = await confirm();
-    if (!ok) return;
-    deleteTask(
-      { param: { taskId: task.id } },
-      {
-        onSuccess: () => {
-          router.push(`/workspaces/${project.workspaceId}/tasks/`);
-        },
-      }
-    );
-  };
+  const isEvent = task.taskType === TaskType.EVENT;
 
   return (
-    <div className="flex items-center gap-x-2">
-      <ConfirmDialog />
-      <ProjectAvatar
-        image={project.image ?? undefined}
-        name={project.name}
-        className="size-6 lg:size-8"
-      />
-      <Link href={`/workspaces/${project.workspaceId}/projects/${project.id}`}>
-        <p className="text-sm lg:text-lg font-semibold text-muted-foreground hover:opacity-75 transition">
-          {project.name}
-        </p>
-      </Link>
-      <ChevronRightIcon className="size-4 lg:size-5 text-muted-foreground" />
-      <p>{task.name}</p>
+    <div className="flex flex-col gap-y-2">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-x-1.5 text-sm text-muted-foreground">
+        <Link
+          href={`/workspaces/${project.workspaceId}/tasks`}
+          className="hover:text-foreground transition-colors"
+        >
+          Tasks
+        </Link>
+        <ChevronRightIcon className="size-3.5 shrink-0" />
+        <div className="flex items-center gap-x-1.5 min-w-0">
+          <ProjectAvatar
+            image={project.image ?? undefined}
+            name={project.name}
+            className="size-4 shrink-0"
+            fallbackClassName="text-[8px]"
+          />
+          <Link
+            href={`/workspaces/${project.workspaceId}/projects/${project.id}`}
+            className="hover:text-foreground transition-colors truncate"
+          >
+            {project.name}
+          </Link>
+        </div>
+      </div>
 
-      <Button
-        variant="destructive"
-        size="sm"
-        className="flex items-center ml-auto"
-        onClick={handelDeleteTask}
-        disabled={isPending}
-      >
-        <TrashIcon className="size-4 lg:mr-2" />
-        <span className="hidden lg:block">Delete Task</span>
-      </Button>
+      {/* Title */}
+      <h1 className="text-2xl font-semibold text-foreground leading-snug">
+        {task.name}
+      </h1>
+
+      {/* Metadata line */}
+      <div className="flex items-center gap-x-2.5 flex-wrap text-sm text-muted-foreground">
+        <TaskBadge variant={task.status}>
+          {snakeCaseToTitleCase(task.status)}
+        </TaskBadge>
+        <span>·</span>
+        {task.dueDate ? (
+          <TaskDate value={task.dueDate} className="text-sm" />
+        ) : (
+          <span>No due date</span>
+        )}
+        {task.assignee && (
+          <>
+            <span>·</span>
+            <div className="flex items-center gap-x-1.5">
+              <MemberAvatar
+                name={task.assignee.user.name ?? task.assignee.user.email}
+                image={task.assignee.user.image || undefined}
+                className="size-4"
+                fallbackClassName="text-[8px]"
+              />
+              <span>{task.assignee.user.name ?? task.assignee.user.email}</span>
+            </div>
+          </>
+        )}
+        {isEvent && (
+          <>
+            <span>·</span>
+            <span className="text-purple-500 dark:text-purple-400">Event</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };

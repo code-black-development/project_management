@@ -10,11 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import TaskOverviewProperty from "./task-overview-property";
-import DottedSeparator from "@/components/dotted-separator";
 import TaskChildItem from "./task-child-item";
 import useCreateChildTaskModal from "../hooks/use-create-child-task-modal";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, LinkIcon, GitBranchIcon } from "lucide-react";
 
 interface TaskChildrenProps {
   taskId: string;
@@ -22,6 +20,7 @@ interface TaskChildrenProps {
   workspaceId: string;
   tasks: TaskSafeDate[];
 }
+
 const TaskChildren = ({
   taskId,
   projectId,
@@ -29,10 +28,7 @@ const TaskChildren = ({
   tasks,
 }: TaskChildrenProps) => {
   const { data: linkableTasks, isLoading: isLinkableTasksLoading } =
-    useGetLinkableTasks({
-      taskId,
-      projectId,
-    });
+    useGetLinkableTasks({ taskId, projectId });
 
   const { mutate: linkTask, isPending: linkTaskIsPending } =
     useCreateLinkableTask();
@@ -43,36 +39,39 @@ const TaskChildren = ({
     linkTask({ json: { parentTask: taskId, childTask: childTaskId } });
   };
 
-  const handleCreateChildTask = () => {
-    console.log("Create child task button clicked", {
-      taskId,
-      projectId,
-      workspaceId,
-    });
-    openCreateChildTaskModal({
-      taskId,
-      projectId,
-      workspaceId,
-    });
-    console.log("Modal opened");
+  const handleCreateSubtask = () => {
+    openCreateChildTaskModal({ taskId, projectId, workspaceId });
   };
 
-  if (isLinkableTasksLoading) {
-    return null;
-  }
+  if (isLinkableTasksLoading) return null;
+
+  const hasSubtasks = tasks && tasks.length > 0;
+
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <p className="text-lg font-semibold">Child Tickets</p>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="primary" onClick={handleCreateChildTask}>
-            <PlusIcon className="size-4 mr-2" />
-            Create Child Task
+    <div className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+        <p className="text-sm font-semibold text-foreground">
+          Subtasks
+          {hasSubtasks && (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              {tasks.length}
+            </span>
+          )}
+        </p>
+        <div className="flex items-center gap-x-1">
+          <Button
+            size="sm"
+            variant="muted"
+            className="h-7 px-2"
+            onClick={handleCreateSubtask}
+            title="Create subtask"
+          >
+            <PlusIcon className="size-3.5" />
           </Button>
-          {Array.isArray(linkableTasks) && linkableTasks.length > 0 ? (
+          {Array.isArray(linkableTasks) && linkableTasks.length > 0 && (
             <Select onValueChange={(value) => handleLinkTask(value)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Link existing task" />
+              <SelectTrigger className="h-7 px-2 w-auto border-0 bg-neutral-200 dark:bg-muted dark:border dark:border-border text-muted-foreground hover:bg-neutral-200/80 dark:hover:bg-accent" title="Link existing task">
+                <LinkIcon className="size-3.5" />
               </SelectTrigger>
               <SelectContent>
                 {linkableTasks.map((linkableTask) => (
@@ -82,22 +81,26 @@ const TaskChildren = ({
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <p className="text-sm text-muted-foreground">No linkable tasks</p>
           )}
         </div>
       </div>
-      {tasks && tasks.length > 0 ? (
-        <div className="flex flex-col gap-y-4">
-          <DottedSeparator className="my-4" />
+
+      {hasSubtasks ? (
+        <div className="flex flex-col gap-y-2">
           {tasks.map((child) => (
             <TaskChildItem task={child} key={child.id} />
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">No child tasks</p>
+        <div className="flex flex-col items-center justify-center gap-y-1.5 py-6 text-center">
+          <GitBranchIcon className="size-7 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">No subtasks yet</p>
+          <p className="text-xs text-muted-foreground/70">
+            Break this task into smaller steps or link an existing task.
+          </p>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

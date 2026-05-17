@@ -7,7 +7,7 @@ import UserButton from "@/features/auth/components/user-button";
 
 const pathnameMap = {
   tasks: { title: "Tasks", description: "Manage all of your tasks here" },
-  project: {
+  projects: {
     title: "My Project",
     description: "Manage your project here",
   },
@@ -24,14 +24,29 @@ const defaultMap = {
 
 const Navbar = () => {
   const pathname = usePathname();
-  const { title, description } =
-    pathnameMap[pathname.split("/")[3] as keyof typeof pathnameMap] ||
-    defaultMap;
+  const parts = pathname.split("/");
+  const segment = parts[3];
+  const subSegment = parts[4];
+  const isWorkspaceRoot = !segment;
+  // Suppress generic heading on task/project detail pages — the page content provides the title
+  const isDetailPage =
+    !!subSegment && (segment === "tasks" || segment === "projects");
+  // members and reports pages have their own in-content headings
+  const isSelfHeadedPage = segment === "members" || segment === "reports";
+  const pageInfo =
+    isWorkspaceRoot || isDetailPage || isSelfHeadedPage
+      ? null
+      : pathnameMap[segment as keyof typeof pathnameMap] || defaultMap;
+
   return (
     <nav className="pt-4 px-6 flex flex-row items-center justify-between w-full">
       <div className="flex-col hidden lg:flex">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+        {pageInfo && (
+          <>
+            <h1 className="text-2xl font-semibold">{pageInfo.title}</h1>
+            <p className="text-muted-foreground">{pageInfo.description}</p>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <DarkModeSwitch />
