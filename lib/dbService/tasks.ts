@@ -549,15 +549,17 @@ type SeriesFrequency = "WEEKLY" | "FORTNIGHTLY" | "MONTHLY";
 
 function generateSeriesDates(startDate: Date, frequency: SeriesFrequency, endDate: Date): Date[] {
   const dates: Date[] = [];
-  let current = new Date(startDate);
+  let i = 1;
 
   while (true) {
-    if (frequency === "WEEKLY") current = addDays(current, 7);
-    else if (frequency === "FORTNIGHTLY") current = addDays(current, 14);
-    else current = addMonths(current, 1);
+    let current: Date;
+    if (frequency === "WEEKLY") current = addDays(startDate, 7 * i);
+    else if (frequency === "FORTNIGHTLY") current = addDays(startDate, 14 * i);
+    else current = addMonths(startDate, i);
 
     if (!isBefore(current, endDate) && !isEqual(current, endDate)) break;
-    dates.push(new Date(current));
+    dates.push(current);
+    i++;
   }
 
   return dates;
