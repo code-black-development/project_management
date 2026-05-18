@@ -4,6 +4,7 @@ import {
   getMemberByUserIdAndWorkspaceId,
   getWorkspaceMemberDetails,
 } from "@/lib/dbService/workspace-members";
+import EditMemberUsernameForm from "@/features/members/_components/edit-member-username-form";
 import { minutesToTimeEstimateString, snakeCaseToTitleCase } from "@/lib/utils";
 import { TaskBadge } from "@/features/tasks/_components/task-badge";
 import {
@@ -108,6 +109,16 @@ const MemberDetailsPage = async ({
               value={formatOptionalDate(member.stats.lastWorkedAt, "None")}
             />
           </div>
+
+          {currentMember.role === "admin" && (
+            <div className="border-t border-border pt-4">
+              <EditMemberUsernameForm
+                memberId={member.id}
+                workspaceId={workspaceId}
+                currentName={member.user.name}
+              />
+            </div>
+          )}
         </div>
 
         {/* Right column */}

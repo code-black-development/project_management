@@ -129,11 +129,11 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Enter your full name"
+                        placeholder="Enter your username"
                         disabled={isPending}
                       />
                     </FormControl>
