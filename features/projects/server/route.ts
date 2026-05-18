@@ -9,9 +9,15 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
-import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import {
+  uploadToS3,
+  deleteFromS3,
+  deleteManyFromS3,
+  extractS3KeyFromUrl,
+} from "@/lib/s3";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import {
+  getTaskAssetUrlsByProjectId,
   getProjectOverdueTasks,
   getProjectTasksInDateRange,
 } from "@/lib/dbService/tasks";
@@ -25,21 +31,16 @@ const app = new Hono()
     // Get existing project to check for image cleanup
     const existingProject = await getProjectById(projectId);
 
-    // Delete image from S3 if it exists
-    if (existingProject?.image) {
-      try {
-        const key = extractS3KeyFromUrl(existingProject.image);
-        if (key) {
-          await deleteFromS3(key);
-        }
-      } catch (error) {
-        console.error("Failed to delete image from S3:", error);
-        // Don't fail the deletion if S3 cleanup fails
-      }
-    }
+    const s3Keys = [
+      existingProject?.image ? extractS3KeyFromUrl(existingProject.image) : null,
+      ...(await getTaskAssetUrlsByProjectId(projectId)).map((url) =>
+        extractS3KeyFromUrl(url)
+      ),
+    ].filter((key): key is string => !!key);
 
     try {
       const project = await deleteProject(projectId);
+      await deleteManyFromS3(s3Keys, "project files");
       return c.json({ data: project });
     } catch (error) {
       console.error("Failed to delete project:", error);

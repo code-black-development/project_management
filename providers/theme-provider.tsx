@@ -3,6 +3,7 @@
 import { useEffect, useState, createContext, useContext } from "react";
 
 type Theme = "light" | "dark";
+type StoredTheme = Theme | "system";
 
 interface ThemeContextType {
   theme: Theme;
@@ -20,12 +21,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
 
     // Get theme from localStorage or system preference
-    const savedTheme = localStorage.getItem("theme") as Theme;
+    const savedTheme = localStorage.getItem("theme") as StoredTheme | null;
     const prefersDark = window.matchMedia(
       "(prefers-color-scheme: dark)"
     ).matches;
 
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+    const initialTheme =
+      savedTheme === "light" || savedTheme === "dark"
+        ? savedTheme
+        : prefersDark
+          ? "dark"
+          : "light";
     setTheme(initialTheme);
 
     // Apply theme to document root immediately

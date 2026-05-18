@@ -21,14 +21,14 @@ docker compose -f docker-compose.local-db.yml down
 | Field    | Value          |
 |----------|----------------|
 | Host     | localhost      |
-| Port     | 5432           |
+| Port     | 5434           |
 | Database | codeflow-local |
 | User     | localuser      |
 | Password | localpass      |
 
 Connection string:
 ```
-postgresql://localuser:localpass@localhost:5432/codeflow-local
+postgresql://localuser:localpass@localhost:5434/codeflow-local
 ```
 
 Set this as `DATABASE_URL` in your `.env` file.

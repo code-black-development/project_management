@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
 
 interface UseGetWorkspaceAnalyticsProps {
-  workspaceId: string;
+  workspaceId?: string | null;
 }
 
 export type WorkspaceAnalyticsResponseType = InferResponseType<
@@ -16,11 +16,12 @@ const useGetWorkspaceAnalytics = ({
 }: UseGetWorkspaceAnalyticsProps) => {
   return useQuery({
     queryKey: ["workspace-analytics", workspaceId],
+    enabled: !!workspaceId,
     queryFn: async () => {
       const response = await client.api.workspace[
         ":workspaceId"
       ].analytics.$get({
-        param: { workspaceId },
+        param: { workspaceId: workspaceId! },
       });
       if (!response.ok) {
         throw new Error("Failed to fetch workspace analytics");

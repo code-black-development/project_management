@@ -4,7 +4,9 @@ import {
   createTaskAssets,
   deleteLinkableTasks,
   deleteTask,
+  deleteTasksByIds,
   deleteTaskAsset,
+  getTaskAssetUrlsForTaskIds,
   getTaskAssetById,
   getHighestPositionTask,
   getLinkableTasks,
@@ -50,7 +52,12 @@ import {
   deleteTaskWorklog,
   getWorklogById,
 } from "@/lib/dbService/task-worklogs";
-import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import {
+  uploadToS3,
+  deleteFromS3,
+  deleteManyFromS3,
+  extractS3KeyFromUrl,
+} from "@/lib/s3";
 import { sendTaskAssignmentNotification } from "@/lib/mailing-functions";
 import prisma from "@/prisma/prisma";
 
@@ -467,7 +474,13 @@ const app = new Hono()
     async (c) => {
       const { ids } = c.req.valid("json");
       try {
-        await Promise.all(ids.map((id) => deleteTask(id)));
+        const assetUrls = await getTaskAssetUrlsForTaskIds(ids);
+        const assetKeys = assetUrls
+          .map((url) => extractS3KeyFromUrl(url))
+          .filter((key): key is string => !!key);
+
+        await deleteTasksByIds(ids);
+        await deleteManyFromS3(assetKeys, "task assets");
         return c.json({ data: { ids } });
       } catch (error) {
         console.error("Failed to bulk delete tasks:", error);
@@ -478,7 +491,13 @@ const app = new Hono()
   .delete("/:taskId", async (c) => {
     const { taskId } = c.req.param();
     try {
+      const assetUrls = await getTaskAssetUrlsForTaskIds([taskId]);
+      const assetKeys = assetUrls
+        .map((url) => extractS3KeyFromUrl(url))
+        .filter((key): key is string => !!key);
+
       const task = await deleteTask(taskId);
+      await deleteManyFromS3(assetKeys, "task assets");
       return c.json({ data: { id: task.id } });
     } catch (error) {
       console.error("Failed to delete task:", error);

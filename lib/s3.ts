@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
@@ -84,6 +85,30 @@ export async function getPresignedUrl(
   }
 }
 
+export async function s3ObjectExists(key: string): Promise<boolean> {
+  try {
+    const command = new HeadObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+    return true;
+  } catch (error: unknown) {
+    const s3Error = error as {
+      name?: string;
+      $metadata?: { httpStatusCode?: number };
+    };
+    const statusCode = s3Error.$metadata?.httpStatusCode;
+    if (statusCode === 404 || s3Error.name === "NotFound") {
+      return false;
+    }
+
+    console.error("Error checking S3 object existence:", error);
+    throw new Error("Failed to check S3 object existence");
+  }
+}
+
 export async function deleteFromS3(key: string): Promise<void> {
   try {
     const command = new DeleteObjectCommand({
@@ -95,6 +120,25 @@ export async function deleteFromS3(key: string): Promise<void> {
   } catch (error) {
     console.error("Error deleting from S3:", error);
     throw new Error("Failed to delete file from S3");
+  }
+}
+
+export async function deleteManyFromS3(
+  keys: Array<string | null | undefined>,
+  context: string = "S3 objects"
+): Promise<void> {
+  const uniqueKeys = [...new Set(keys.filter((key): key is string => !!key))];
+  if (uniqueKeys.length === 0) return;
+
+  const results = await Promise.allSettled(
+    uniqueKeys.map((key) => deleteFromS3(key))
+  );
+
+  const failedCount = results.filter(
+    (result) => result.status === "rejected"
+  ).length;
+  if (failedCount > 0) {
+    console.error(`Failed to delete ${failedCount} ${context} from S3`);
   }
 }
 

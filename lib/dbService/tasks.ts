@@ -284,6 +284,91 @@ export const deleteTask = async (taskId: string) => {
   });
 };
 
+export const deleteTasksByIds = async (taskIds: string[]) => {
+  return await prisma.task.deleteMany({
+    where: {
+      id: {
+        in: taskIds,
+      },
+    },
+  });
+};
+
+export const getTaskAndDescendantIds = async (taskIds: string[]) => {
+  const allTaskIds = new Set(taskIds);
+  let currentParentIds = [...allTaskIds];
+
+  while (currentParentIds.length > 0) {
+    const children = await prisma.task.findMany({
+      where: {
+        parentId: {
+          in: currentParentIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const newChildIds = children
+      .map((child) => child.id)
+      .filter((id) => !allTaskIds.has(id));
+
+    newChildIds.forEach((id) => allTaskIds.add(id));
+    currentParentIds = newChildIds;
+  }
+
+  return [...allTaskIds];
+};
+
+export const getTaskAssetUrlsForTaskIds = async (taskIds: string[]) => {
+  if (taskIds.length === 0) return [];
+
+  const idsForDeletion = await getTaskAndDescendantIds(taskIds);
+  const assets = await prisma.taskAsset.findMany({
+    where: {
+      taskId: {
+        in: idsForDeletion,
+      },
+    },
+    select: {
+      assetUrl: true,
+    },
+  });
+
+  return assets.map((asset) => asset.assetUrl);
+};
+
+export const getTaskAssetUrlsByProjectId = async (projectId: string) => {
+  const assets = await prisma.taskAsset.findMany({
+    where: {
+      task: {
+        projectId,
+      },
+    },
+    select: {
+      assetUrl: true,
+    },
+  });
+
+  return assets.map((asset) => asset.assetUrl);
+};
+
+export const getTaskAssetUrlsByWorkspaceId = async (workspaceId: string) => {
+  const assets = await prisma.taskAsset.findMany({
+    where: {
+      task: {
+        workspaceId,
+      },
+    },
+    select: {
+      assetUrl: true,
+    },
+  });
+
+  return assets.map((asset) => asset.assetUrl);
+};
+
 export const getHighestPositionTask = async (
   workspaceId: string,
   status: TaskStatus

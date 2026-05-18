@@ -13,12 +13,19 @@ import {
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
+import { getProjectImageUrlsByWorkspaceId } from "@/lib/dbService/projects";
 import { getOrCreateWorkspaceInvite } from "@/lib/dbService/workspace-invites";
 import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
-import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import {
+  uploadToS3,
+  deleteFromS3,
+  deleteManyFromS3,
+  extractS3KeyFromUrl,
+} from "@/lib/s3";
 import { TaskStatus } from "@prisma/client";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import {
+  getTaskAssetUrlsByWorkspaceId,
   getWorkspaceOverdueTasks,
   getWorkspaceTasksInDateRange,
 } from "@/lib/dbService/tasks";
@@ -134,20 +141,18 @@ const app = new Hono()
     // Get existing workspace to check for image cleanup
     const existingWorkspace = await getWorkspaceById(workspaceId);
 
-    // Delete image from S3 if it exists
-    if (existingWorkspace?.image) {
-      try {
-        const key = extractS3KeyFromUrl(existingWorkspace.image);
-        if (key) {
-          await deleteFromS3(key);
-        }
-      } catch (error) {
-        console.error("Failed to delete image from S3:", error);
-        // Don't fail the deletion if S3 cleanup fails
-      }
-    }
+    const projectImageUrls = await getProjectImageUrlsByWorkspaceId(workspaceId);
+    const taskAssetUrls = await getTaskAssetUrlsByWorkspaceId(workspaceId);
+    const s3Keys = [
+      existingWorkspace?.image
+        ? extractS3KeyFromUrl(existingWorkspace.image)
+        : null,
+      ...projectImageUrls.map((url) => extractS3KeyFromUrl(url)),
+      ...taskAssetUrls.map((url) => extractS3KeyFromUrl(url)),
+    ].filter((key): key is string => !!key);
 
     const workspace = await deleteWorkspace(workspaceId, userId);
+    await deleteManyFromS3(s3Keys, "workspace files");
     return c.json({ data: workspace });
   })
   .post(

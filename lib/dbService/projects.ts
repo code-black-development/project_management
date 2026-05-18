@@ -22,6 +22,24 @@ export const getProjectById = async (projectId: string) => {
   });
 };
 
+export const getProjectImageUrlsByWorkspaceId = async (workspaceId: string) => {
+  const projects = await prisma.project.findMany({
+    where: {
+      workspaceId,
+      image: {
+        not: null,
+      },
+    },
+    select: {
+      image: true,
+    },
+  });
+
+  return projects
+    .map((project) => project.image)
+    .filter((image): image is string => !!image);
+};
+
 export const createProject = async (data: {
   name: string;
   workspaceId: string;

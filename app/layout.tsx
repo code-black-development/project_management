@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,26 @@ const inter = Inter({
 });
 export const dynamic = "force-dynamic";
 
+const themeInitScript = `
+(() => {
+  try {
+    const storedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = storedTheme === "light" || storedTheme === "dark"
+      ? storedTheme
+      : prefersDark
+        ? "dark"
+        : "light";
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+  } catch {
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   title: "CodeFlow Pro",
   description: "Code management by Codeblack Digtal",
@@ -27,8 +48,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className, "antialiased min-h-screen")}>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeInitScript}
+        </Script>
         <ThemeProvider>
           <Toaster />
           <NuqsAdapter>
