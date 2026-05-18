@@ -14,6 +14,7 @@ export const getMembersByWorkspaceId = async (workspaceId: string) => {
   return await prisma.member.findMany({
     where: {
       workspaceId,
+      suspended: false,
     },
     include: {
       user: {
