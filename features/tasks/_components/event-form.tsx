@@ -225,6 +225,7 @@ const EventForm = ({
                                 <Checkbox
                                   checked={!field.value}
                                   onCheckedChange={() => field.onChange("")}
+                                  onClick={(e) => e.stopPropagation()}
                                 />
                                 <span className="flex min-w-0 items-center gap-x-2">
                                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -245,6 +246,7 @@ const EventForm = ({
                                     <Checkbox
                                       checked={field.value === member.id}
                                       onCheckedChange={() => field.onChange(member.id)}
+                                      onClick={(e) => e.stopPropagation()}
                                     />
                                     <span className="flex min-w-0 items-center gap-x-2">
                                       <MemberAvatar
