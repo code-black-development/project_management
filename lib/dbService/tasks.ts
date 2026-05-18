@@ -626,14 +626,24 @@ export const generateTaskSeries = async (
 export const deleteTaskSeries = async (
   seriesId: string,
   scope: "all" | "upcoming",
+  fromTaskId?: string,
 ) => {
   const where: Prisma.TaskWhereInput = { seriesId, parentId: null };
 
   if (scope === "upcoming") {
-    where.dueDate = { gte: new Date() };
+    if (fromTaskId) {
+      const fromTask = await prisma.task.findUnique({
+        where: { id: fromTaskId },
+        select: { dueDate: true },
+      });
+      if (fromTask?.dueDate) {
+        where.dueDate = { gte: fromTask.dueDate };
+      }
+    } else {
+      where.dueDate = { gte: new Date() };
+    }
   }
 
-  // Collect parent-level series tasks; children cascade-delete automatically.
   const tasks = await prisma.task.findMany({ where, select: { id: true } });
   const ids = tasks.map((t) => t.id);
 

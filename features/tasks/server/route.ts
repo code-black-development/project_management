@@ -368,15 +368,15 @@ const app = new Hono()
   .delete(
     "/series/:seriesId",
     zValidator("param", z.object({ seriesId: z.string() })),
-    zValidator("query", z.object({ scope: z.enum(["all", "upcoming"]) })),
+    zValidator("query", z.object({ scope: z.enum(["all", "upcoming"]), fromTaskId: z.string().optional() })),
     async (c) => {
       const userId = c.get("userId");
       if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
       const { seriesId } = c.req.valid("param");
-      const { scope } = c.req.valid("query");
+      const { scope, fromTaskId } = c.req.valid("query");
 
-      const deleted = await deleteTaskSeries(seriesId, scope);
+      const deleted = await deleteTaskSeries(seriesId, scope, fromTaskId);
       return c.json({ data: { deleted } });
     }
   )

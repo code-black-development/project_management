@@ -149,8 +149,8 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
   );
 
   const [ConfirmDeleteUpcomingSeries, confirmDeleteUpcomingSeries] = useConfirm(
-    "Delete upcoming tasks",
-    "This will delete all future tasks in this series. Past tasks will remain.",
+    "Delete this and upcoming tasks",
+    "This will delete this task and all tasks in the series that come after it. Earlier tasks in the series will remain.",
     "destructive"
   );
 
@@ -168,7 +168,10 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
     if (!task.seriesId) return;
     const ok = await confirmDeleteUpcomingSeries();
     if (!ok) return;
-    deleteSeries({ seriesId: task.seriesId, scope: "upcoming" });
+    deleteSeries(
+      { seriesId: task.seriesId, scope: "upcoming", fromTaskId: task.id },
+      { onSuccess: () => router.push(`/workspaces/${workspaceId}/tasks`) },
+    );
   };
 
   const patchTask = (json: Parameters<typeof updateTask>[0]["json"]) => {
@@ -491,7 +494,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                   onClick={handleDeleteSeriesUpcoming}
                   className="text-xs"
                 >
-                  Delete upcoming
+                  Delete this &amp; upcoming
                 </Button>
                 <Button
                   size="sm"

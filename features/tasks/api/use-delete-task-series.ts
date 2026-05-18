@@ -6,15 +6,18 @@ import { toast } from "sonner";
 interface DeleteTaskSeriesRequest {
   seriesId: string;
   scope: "all" | "upcoming";
+  fromTaskId?: string;
 }
 
 export const useDeleteTaskSeries = () => {
   const queryClient = useQueryClient();
 
   return useMutation<{ data: { deleted: number } }, Error, DeleteTaskSeriesRequest>({
-    mutationFn: async ({ seriesId, scope }) => {
+    mutationFn: async ({ seriesId, scope, fromTaskId }) => {
+      const params = new URLSearchParams({ scope });
+      if (fromTaskId) params.set("fromTaskId", fromTaskId);
       const response = await fetch(
-        `/api/tasks/series/${seriesId}?scope=${scope}`,
+        `/api/tasks/series/${seriesId}?${params}`,
         { method: "DELETE" },
       );
 
