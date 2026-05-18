@@ -43,6 +43,7 @@ import {
   getMemberWithUserByUserIdAndWorkspaceId,
 } from "@/lib/dbService/workspace-members";
 import { HTTPException } from "hono/http-exception";
+import type { TaskAssetFile } from "@/types/types";
 import {
   createTaskWorklog,
   updateTaskWorklog,
@@ -50,7 +51,6 @@ import {
   getWorklogById,
 } from "@/lib/dbService/task-worklogs";
 import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
-import { TaskAssetFile } from "../_components/task-assets";
 import { sendTaskAssignmentNotification } from "@/lib/mailing-functions";
 import prisma from "@/prisma/prisma";
 
