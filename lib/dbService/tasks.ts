@@ -1,7 +1,7 @@
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import type { TaskAssetFile } from "@/types/types";
-import { Prisma, Task, TaskStatus, RecurrenceFrequency } from "@prisma/client";
+import { Prisma, Task, TaskStatus } from "@prisma/client";
 import { addDays, addMonths, isBefore, isEqual } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
