@@ -33,6 +33,7 @@ export const getWorkspaceMembersWithStats = async (workspaceId: string) => {
       workspaceId: true,
       userId: true,
       role: true,
+      suspended: true,
       createdAt: true,
       updatedAt: true,
       user: {
@@ -64,6 +65,7 @@ export const getWorkspaceMemberDetails = async (
       workspaceId: true,
       userId: true,
       role: true,
+      suspended: true,
       createdAt: true,
       updatedAt: true,
       user: {

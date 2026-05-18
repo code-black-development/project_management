@@ -22,6 +22,45 @@ const app = new Hono()
     }
   )
   .patch(
+    "/:memberId/suspend",
+    zValidator("param", z.object({ memberId: z.string() })),
+    zValidator("json", z.object({ suspended: z.boolean(), workspaceId: z.string() })),
+    async (c) => {
+      const userId = c.get("userId");
+      if (!userId) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const { memberId } = c.req.valid("param");
+      const { suspended, workspaceId } = c.req.valid("json");
+
+      const isAdmin = await checkIfUserIsAdmin(userId, workspaceId);
+      if (!isAdmin) {
+        return c.json({ error: "Forbidden" }, 403);
+      }
+
+      const member = await getMemberById(memberId);
+      if (!member || member.workspaceId !== workspaceId) {
+        return c.json({ error: "Member not found" }, 404);
+      }
+
+      const currentMember = await prisma.member.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId } },
+      });
+      if (currentMember?.id === memberId) {
+        return c.json({ error: "Cannot suspend yourself" }, 400);
+      }
+
+      const updated = await prisma.member.update({
+        where: { id: memberId },
+        data: { suspended },
+        select: { id: true, suspended: true },
+      });
+
+      return c.json({ data: updated });
+    }
+  )
+  .patch(
     "/:memberId/username",
     zValidator("param", z.object({ memberId: z.string() })),
     zValidator("json", z.object({ name: z.string().min(1), workspaceId: z.string() })),
@@ -56,10 +95,35 @@ const app = new Hono()
   .delete(
     "/:memberId",
     zValidator("param", z.object({ memberId: z.string() })),
+    zValidator("query", z.object({ workspaceId: z.string() })),
     async (c) => {
+      const userId = c.get("userId");
+      if (!userId) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
       const { memberId } = c.req.valid("param");
+      const { workspaceId } = c.req.valid("query");
+
+      const isAdmin = await checkIfUserIsAdmin(userId, workspaceId);
+      if (!isAdmin) {
+        return c.json({ error: "Forbidden" }, 403);
+      }
+
+      const member = await getMemberById(memberId);
+      if (!member || member.workspaceId !== workspaceId) {
+        return c.json({ error: "Member not found" }, 404);
+      }
+
+      const currentMember = await prisma.member.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId } },
+      });
+      if (currentMember?.id === memberId) {
+        return c.json({ error: "Cannot remove yourself" }, 400);
+      }
+
       await deleteMember(memberId);
-      return c.json({ message: "Member deleted" });
+      return c.json({ message: "Member removed" });
     }
   );
 

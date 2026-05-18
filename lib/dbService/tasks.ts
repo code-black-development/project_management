@@ -125,6 +125,7 @@ export const searchTasks = async (
           workspaceId: true,
           userId: true,
           role: true,
+          suspended: true,
           createdAt: true,
           updatedAt: true,
           user: {

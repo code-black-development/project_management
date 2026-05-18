@@ -1,16 +1,9 @@
 import { auth } from "@/auth";
-import { Badge } from "@/components/ui/badge";
 import {
   getMemberByUserIdAndWorkspaceId,
   getWorkspaceMembersWithStats,
 } from "@/lib/dbService/workspace-members";
-import {
-  formatMemberRole,
-  formatOptionalDate,
-  getMemberDisplayName,
-  getMemberInitials,
-} from "@/features/members/utils";
-import Link from "next/link";
+import MembersList from "@/features/members/_components/members-list";
 import { redirect } from "next/navigation";
 
 const MembersPage = async ({
@@ -62,54 +55,12 @@ const MembersPage = async ({
       </div>
 
       {/* Member grid */}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        {members.map((member) => {
-          const displayName = getMemberDisplayName(
-            member.user.name,
-            member.user.email
-          );
-          const initials = getMemberInitials(member.user.name, member.user.email);
-
-          return (
-            <Link
-              key={member.id}
-              href={`/workspaces/${workspaceId}/members/${member.id}`}
-            >
-              <div className="group flex items-center gap-x-3.5 px-4 py-3.5 bg-card border border-border rounded-xl hover:bg-accent transition-colors cursor-pointer">
-                {/* Avatar */}
-                <div className="size-10 shrink-0 flex items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground group-hover:bg-card transition-colors">
-                  {initials}
-                </div>
-
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-x-2">
-                    <span className="text-sm font-semibold text-foreground truncate">
-                      {displayName}
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className="shrink-0 text-[11px] px-1.5 py-0"
-                    >
-                      {formatMemberRole(member.role)}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {member.user.email}
-                  </p>
-                  <div className="flex items-center gap-x-2.5 mt-1.5 text-xs text-muted-foreground/70 flex-wrap">
-                    <span>{member._count.assignedTasks} assigned</span>
-                    <span>·</span>
-                    <span>{member._count.createdTasks} created</span>
-                    <span>·</span>
-                    <span>Joined {formatOptionalDate(member.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+      <MembersList
+        members={members}
+        workspaceId={workspaceId}
+        isAdmin={currentMember.role === "admin"}
+        currentMemberId={currentMember.id}
+      />
     </div>
   );
 };
