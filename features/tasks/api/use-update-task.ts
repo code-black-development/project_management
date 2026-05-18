@@ -3,7 +3,6 @@ import { InferRequestType, InferResponseType } from "hono";
 
 import { client } from "@/lib/rpc";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 type ResponseType = InferResponseType<
   (typeof client.api.tasks)[":taskId"]["$patch"],
@@ -14,7 +13,6 @@ type RequestType = InferRequestType<
 >;
 
 export function useUpdateTask() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
@@ -31,7 +29,6 @@ export function useUpdateTask() {
     },
     onSuccess: ({ data }) => {
       toast.success("task updated");
-      router.refresh();
       queryClient.invalidateQueries({ queryKey: ["tasks", data.workspaceId] });
       queryClient.invalidateQueries({ queryKey: ["tasks", data.id] });
     },

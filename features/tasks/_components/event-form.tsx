@@ -96,7 +96,6 @@ const EventForm = ({
   const watchedRecurrenceDuration = form.watch("recurrenceDuration");
 
   const onSubmit = (values: z.infer<typeof createEventSchema>) => {
-    console.log("Event form values:", values);
     createEvent(
       { json: values },
       {

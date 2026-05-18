@@ -15,7 +15,7 @@ import { snakeCaseToTitleCase } from "@/lib/utils";
 import {
   MemberSafeDate,
   ProjectSafeDate,
-  TaskWithUser,
+  TaskListItem,
   UserSafeDate,
 } from "@/types/types";
 import { TaskStatus } from "@prisma/client";
@@ -42,7 +42,7 @@ import {
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-type DashboardTask = Omit<TaskWithUser, "children">;
+type DashboardTask = TaskListItem;
 type DashboardMember = MemberSafeDate & { user: UserSafeDate };
 
 const WorkspaceIdClient = () => {

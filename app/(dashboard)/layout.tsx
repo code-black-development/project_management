@@ -1,13 +1,6 @@
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
-import CreateProjectModal from "@/features/projects/_components/create-project-modal";
-import CreateTaskModal from "@/features/tasks/_components/create-task-modal";
-import CreateEventModal from "@/features/tasks/_components/create-event-modal";
-import CreateChildTaskModalWrapper from "@/features/tasks/_components/create-child-task-modal-wrapper";
-import CreateTaskWorklogModal from "@/features/tasks/_components/create-task-worklog-modal";
-import EditTaskModal from "@/features/tasks/_components/edit-task-modal";
-import CreateWorkspaceModal from "@/features/workspaces/_components/create-workspace-modal";
-import UserSettingsModal from "@/features/auth/components/user-settings-modal";
+import DashboardModals from "@/components/dashboard-modals";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +8,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     // Todo: could make sidebar collapsible in which case the pl of the main tag would be 56 or 0 based on the state of the sidebar
     <div className="min-h-sctreen">
-      <CreateWorkspaceModal />
-      <CreateProjectModal />
-      <CreateTaskModal />
-      <CreateEventModal />
-      <CreateChildTaskModalWrapper />
-      <EditTaskModal />
-      <CreateTaskWorklogModal />
-      <UserSettingsModal />
+      <DashboardModals />
       <div className="flex w-full h-full">
         <div className="fixed left-0 top-0 hidden lg:block h-full lg:w-[264px] overflow-y-auto">
           <Sidebar />

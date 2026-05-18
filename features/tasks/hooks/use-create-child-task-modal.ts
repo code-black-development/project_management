@@ -31,14 +31,12 @@ const useCreateChildTaskModal = () => {
     : null;
 
   const open = (taskInfo: ParentTaskInfo) => {
-    console.log("Opening child task modal with info:", taskInfo);
     setParentTaskId(taskInfo.taskId);
     setParentProjectId(taskInfo.projectId);
     setParentWorkspaceId(taskInfo.workspaceId);
   };
 
   const close = () => {
-    console.log("Closing child task modal");
     setParentTaskId(null);
     setParentProjectId(null);
     setParentWorkspaceId(null);

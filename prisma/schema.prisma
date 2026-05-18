@@ -117,6 +117,8 @@ model Project {
   taskAssignmentEmail    Boolean   @default(true)
   workspace              Workspace @relation(fields: [workspaceId], references: [id])
   Task                   Task[]
+
+  @@index([workspaceId])
 }
 
 model TaskCategory {
@@ -164,6 +166,15 @@ model Task {
 
   @@index([parentId])
   @@index([originalEventId])
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([status])
+  @@index([assigneeId])
+  @@index([dueDate])
+  @@index([workspaceId, status])
+  @@index([projectId, status])
+  @@index([workspaceId, dueDate])
+  @@index([projectId, position])
 }
 
 model TaskAsset {
@@ -175,6 +186,8 @@ model TaskAsset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
 
 model Worklog {
@@ -188,6 +201,9 @@ model Worklog {
   updatedAt       DateTime @updatedAt
   member          Member   @relation(fields: [memberId], references: [id])
   task            Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([memberId])
 }
 
 enum TaskStatus {

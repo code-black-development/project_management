@@ -30,13 +30,11 @@ export const CreateChildTaskModalProvider = ({
   );
 
   const open = (taskInfo: ParentTaskInfo) => {
-    console.log("Context: Opening child task modal with info:", taskInfo);
     setParentTaskInfo(taskInfo);
     setIsOpen(true);
   };
 
   const close = () => {
-    console.log("Context: Closing child task modal");
     setIsOpen(false);
     setParentTaskInfo(null);
   };

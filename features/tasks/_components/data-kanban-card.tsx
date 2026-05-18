@@ -1,7 +1,7 @@
 import TaskActions from "./task-actions";
 import { MoreHorizontal, CalendarIcon } from "lucide-react";
 import MemberAvatar from "@/features/members/_components/member-avatar";
-import { TaskWithUser } from "@/types/types";
+import { TaskListItem } from "@/types/types";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import DynamicIcon from "@/components/dynamic-icon";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface DataKanbanCardProps {
-  task: Omit<TaskWithUser, "children">;
+  task: TaskListItem;
 }
 
 const getDueDateStyle = (dateStr: string) => {

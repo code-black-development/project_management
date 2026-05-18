@@ -20,22 +20,15 @@ export function useCreateTask(options: UseCreateTaskOptions = {}) {
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
-      console.log("useCreateTask - Sending data:", json);
       const response = await client.api.tasks.$post({ json });
-
-      console.log("useCreateTask - Response status:", response.status);
-      console.log("useCreateTask - Response ok:", response.ok);
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.log("useCreateTask - Error response:", errorData);
         throw new Error(
           `Failed to create task: ${response.status} - ${errorData}`
         );
       }
-      const result = await response.json();
-      console.log("useCreateTask - Success result:", result);
-      return result;
+      return await response.json();
     },
     onSuccess: ({ data }) => {
       toast.success("Task created");
@@ -56,7 +49,6 @@ export function useCreateTask(options: UseCreateTaskOptions = {}) {
       }
     },
     onError: (error) => {
-      console.error("useCreateTask - Error:", error);
       toast.error(`Failed to create task: ${error.message}`);
     },
   });

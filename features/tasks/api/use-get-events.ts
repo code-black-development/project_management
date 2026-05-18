@@ -34,12 +34,10 @@ export const useGetEvents = ({
         });
 
         if (!response.ok) {
-          console.error("Events API response not ok:", response.status);
           return [];
         }
 
         const result = await response.json();
-        console.log("Events API response:", result);
 
         // Ensure we always return an array
         return Array.isArray(result.data) ? result.data : [];

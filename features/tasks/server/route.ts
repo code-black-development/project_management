@@ -362,17 +362,6 @@ const app = new Hono()
     //TODO: we should check if the user is a member of the workspace and has permission
     const taskData: any = {};
 
-    console.log("PATCH request data:", {
-      name,
-      status,
-      projectId,
-      dueDate,
-      assigneeId,
-      description,
-      timeEstimate,
-      categoryId,
-    });
-
     if (name !== undefined) taskData.name = name;
     if (status !== undefined) taskData.status = status;
     if (projectId !== undefined) taskData.projectId = projectId;
@@ -385,8 +374,6 @@ const app = new Hono()
         : null;
     }
     if (categoryId !== undefined) taskData.categoryId = categoryId;
-
-    console.log("Task data to update:", taskData);
 
     // Get the existing task BEFORE updating to check if assignee changed
     let existingTask = null;
@@ -508,7 +495,7 @@ const app = new Hono()
     "/",
     zValidator("query", taskSearchSchema, (result, c) => {
       if (!result.success) {
-        console.log("validation failed", result.error);
+        console.error("Task query validation failed", result.error);
       }
     }),
     async (c) => {
@@ -543,8 +530,6 @@ const app = new Hono()
   )
   .post("/", zValidator("json", createTaskSchema), async (c) => {
     try {
-      console.log("=== POST /api/tasks - Request started ===");
-
       let {
         name,
         status,
@@ -561,23 +546,6 @@ const app = new Hono()
         recurrenceDuration,
         recurrenceEndDate,
       } = c.req.valid("json");
-
-      console.log("Validated data:", {
-        name,
-        status,
-        workspaceId,
-        projectId,
-        dueDate,
-        assigneeId,
-        description,
-        timeEstimate,
-        categoryId,
-        taskType,
-        isRecurring,
-        recurrenceFrequency,
-        recurrenceDuration,
-        recurrenceEndDate,
-      });
 
       //TODO: we should get the taskstatus passed and check that not just hard code TDOD
       const highestPositionTask = await getHighestPositionTask(
@@ -728,17 +696,10 @@ const app = new Hono()
         c.req.valid("query");
 
       try {
-        console.log("Fetching events with params:", {
-          workspaceId,
-          projectId,
-          startDate,
-          endDate,
-        });
         let events;
 
         if (startDate && endDate) {
           // Get events in date range
-          console.log("Getting events in date range");
           events = await getEventsInDateRange(
             workspaceId,
             new Date(startDate),
@@ -746,15 +707,12 @@ const app = new Hono()
           );
         } else if (projectId) {
           // Get events by project
-          console.log("Getting events by project");
           events = await getEventsByProjectId(projectId);
         } else {
           // Get all events in workspace
-          console.log("Getting events by workspace");
           events = await getEventsByWorkspaceId(workspaceId);
         }
 
-        console.log("Fetched events:", events?.length || 0, "events");
         return c.json({ data: events || [] });
       } catch (error) {
         console.error("Failed to fetch events:", error);

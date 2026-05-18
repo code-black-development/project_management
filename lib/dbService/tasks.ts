@@ -84,10 +84,49 @@ export const searchTasks = async (
 
   return await prisma.task.findMany({
     where,
-    include: {
-      project: true,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      assigneeId: true,
+      projectId: true,
+      workspaceId: true,
+      dueDate: true,
+      status: true,
+      position: true,
+      timeEstimate: true,
+      createdById: true,
+      parentId: true,
+      categoryId: true,
+      taskType: true,
+      isRecurring: true,
+      recurrenceFrequency: true,
+      recurrenceDuration: true,
+      recurrenceEndDate: true,
+      originalEventId: true,
+      project: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          workspaceId: true,
+          createdAt: true,
+          updatedAt: true,
+          autoHideCompletedTasks: true,
+          autoHideChildTasks: true,
+          taskAssignmentEmail: true,
+        },
+      },
       assignee: {
-        include: {
+        select: {
+          id: true,
+          workspaceId: true,
+          userId: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -99,42 +138,17 @@ export const searchTasks = async (
           },
         },
       },
-      createdBy: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              emailVerified: true,
-            },
-          },
+      category: {
+        select: {
+          id: true,
+          name: true,
+          icon: true,
+          color: true,
         },
       },
-      worklogs: {
-        include: {
-          member: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  image: true,
-                  emailVerified: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: {
-          dateWorked: "desc",
-        },
-      },
-      assets: true,
-      category: true,
     },
+    orderBy: [{ status: "asc" }, { position: "asc" }, { updatedAt: "desc" }],
+    take: data.limit,
   });
 };
 
@@ -210,7 +224,7 @@ export const getTaskById = async (taskId: string) => {
 
     return result;
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to get task");
   }
 };
@@ -246,10 +260,9 @@ export const createTask = async (
   data: Omit<Task, "createdAt" | "updatedAt" | "id" | "parentId">
 ) => {
   try {
-    console.log("create task db", data);
     return await prisma.task.create({ data });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to create task");
   }
 };
@@ -271,7 +284,7 @@ export const updateTask = async (taskId: string, data: Partial<Task>) => {
       data,
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to update task");
   }
 };
@@ -451,7 +464,7 @@ export const getLinkableTasks = async (projectId: string) => {
     });
     return res;
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to get linkable tasks");
   }
 };
@@ -493,12 +506,11 @@ export const createTaskAssets = async (
       assetUrl: file.file,
       assetType: file.type,
     }));
-    console.log("data", data);
     await prisma.taskAsset.createMany({
       data,
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to create task assets");
   }
 };

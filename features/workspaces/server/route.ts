@@ -64,7 +64,6 @@ const app = new Hono()
       }
     }
 
-    console.log("file url", fileUrl);
     const workspace = await createWorkspace(name, fileUrl, userId!);
 
     return c.json({ data: workspace });
@@ -76,10 +75,6 @@ const app = new Hono()
       const userId = c.get("userId");
       const { workspaceId } = c.req.param();
       const { name, image } = c.req.valid("form");
-
-      console.log("name", name);
-      console.log("image", image);
-      console.log("user id", userId);
 
       // Get existing workspace to check for old image
       const existingWorkspace = await getWorkspaceById(workspaceId);

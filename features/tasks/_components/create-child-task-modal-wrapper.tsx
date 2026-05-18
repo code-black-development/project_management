@@ -7,15 +7,10 @@ const CreateChildTaskModalWrapper = () => {
   const { isOpen, setIsOpen, close, parentTaskInfo } =
     useCreateChildTaskModal();
 
-  console.log("Modal wrapper rendering - state:", { isOpen, parentTaskInfo });
-
   // Don't render if not open or no parent task info
   if (!isOpen || !parentTaskInfo) {
-    console.log("Modal wrapper returning null - conditions not met");
     return null;
   }
-
-  console.log("Modal wrapper rendering ResponsiveModal");
 
   return (
     <ResponsiveModal open={isOpen} onOpenChange={setIsOpen}>

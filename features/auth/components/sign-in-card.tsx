@@ -50,7 +50,6 @@ const SignInCard = () => {
       });
 
       if (result?.error) {
-        console.log("Sign-in error:", result.error);
         toast.error(
           "The credentials provided were not correct. Please try again."
         );

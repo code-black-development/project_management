@@ -18,37 +18,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       authorize: async (credentials) => {
         try {
-          console.log("🔐 Auth attempt started");
-          console.log("📧 Credentials received:", {
-            email: credentials?.email,
-            hasPassword: !!credentials?.password,
-          });
-
           const { email, password } =
             await signInSchema.parseAsync(credentials);
-          console.log("✅ Schema validation passed");
 
           // logic to verify if the user exists
           const user = await getUserByEmail(email);
-          console.log("👤 User lookup result:", {
-            found: !!user,
-            hasPassword: !!user?.password,
-            userId: user?.id,
-          });
 
           if (!user) {
-            console.log("❌ No user found with email:", email);
             return null;
           }
 
           if (!user.password) {
-            console.log("❌ User has no password set");
             return null;
           }
 
-          console.log("🔒 Comparing passwords...");
           const passwordMatch = await bcrypt.compare(password, user.password);
-          console.log("🔑 Password comparison result:", passwordMatch);
 
           if (passwordMatch) {
             try {
@@ -62,7 +46,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               console.error("Failed to update last login timestamp:", error);
             }
 
-            console.log("✅ Authentication successful for user:", user.id);
             return {
               id: user.id,
               email: user.email,
@@ -70,11 +53,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               image: user.image,
             };
           } else {
-            console.log("❌ Password mismatch for user:", email);
             return null;
           }
         } catch (error) {
-          console.error("💥 Auth error:", error);
+          console.error("Auth error:", error);
           return null;
         }
       },

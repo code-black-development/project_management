@@ -1,16 +1,30 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import PageError from "@/components/page-error";
 import PageLoader from "@/components/page-loader";
-import TaskAssets from "@/features/tasks/_components/task-assets";
 import TaskBreadcrumbs from "@/features/tasks/_components/task-breadcrumbs";
-import TaskDescription from "@/features/tasks/_components/task-description";
 import TaskOverview from "@/features/tasks/_components/task-overview";
-import TaskWorklog from "@/features/tasks/_components/task-worklog";
-import TaskChildren from "@/features/tasks/_components/task-children";
 import { useGetTask } from "@/features/tasks/api/use-get-task";
 import { useTaskId } from "@/features/tasks/hooks/use-task-id";
 import { TaskWithUser } from "@/types/types";
+
+const TaskChildren = dynamic(
+  () => import("@/features/tasks/_components/task-children"),
+  { ssr: false, loading: () => <TaskPanelLoader /> }
+);
+const TaskDescription = dynamic(
+  () => import("@/features/tasks/_components/task-description"),
+  { ssr: false, loading: () => <TaskPanelLoader /> }
+);
+const TaskWorklog = dynamic(
+  () => import("@/features/tasks/_components/task-worklog"),
+  { ssr: false, loading: () => <TaskPanelLoader /> }
+);
+const TaskAssets = dynamic(
+  () => import("@/features/tasks/_components/task-assets"),
+  { ssr: false, loading: () => <TaskPanelLoader /> }
+);
 
 export const TaskIdClient = () => {
   const taskId = useTaskId();
@@ -48,3 +62,7 @@ export const TaskIdClient = () => {
     </div>
   );
 };
+
+const TaskPanelLoader = () => (
+  <div className="min-h-[120px] rounded-lg border border-border bg-card animate-pulse" />
+);

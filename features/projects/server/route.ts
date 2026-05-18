@@ -140,7 +140,7 @@ const app = new Hono()
     "/",
     zValidator("form", createProjectSchema, (result, c) => {
       if (!result.success) {
-        console.log("Validation failed:", result.error);
+        console.error("Project validation failed:", result.error);
         return c.json(
           { error: "Validation failed", details: result.error },
           400
@@ -148,9 +148,7 @@ const app = new Hono()
       }
     }),
     async (c) => {
-      console.log("POST /api/projects - Starting project creation");
       const formData = c.req.valid("form");
-      console.log("Received form data:", formData);
 
       const {
         name,
@@ -160,14 +158,6 @@ const app = new Hono()
         autoHideCompletedTasks,
         taskAssignmentEmail,
       } = formData;
-      console.log("Extracted values:", {
-        name,
-        image: !!image,
-        workspaceId,
-        autoHideChildTasks,
-        autoHideCompletedTasks,
-        taskAssignmentEmail,
-      });
 
       //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
 
@@ -183,15 +173,6 @@ const app = new Hono()
           return c.json({ error: "Failed to upload image" }, 500);
         }
       }
-
-      console.log("About to create project with data:", {
-        name,
-        workspaceId,
-        image: fileUrl,
-        autoHideChildTasks: autoHideChildTasks || false,
-        autoHideCompletedTasks: autoHideCompletedTasks || false,
-        taskAssignmentEmail: taskAssignmentEmail ?? true,
-      });
 
       const project = await createProject({
         name,

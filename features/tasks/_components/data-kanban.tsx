@@ -10,7 +10,7 @@ import {
 
 import DataKanbanColumnHeader from "./data-kanban-column-header";
 import DataKanbanCard from "./data-kanban-card";
-import { TaskWithUser } from "@/types/types";
+import { TaskListItem } from "@/types/types";
 
 const boards: TaskStatus[] = [
   TaskStatus.BACKLOG,
@@ -21,11 +21,11 @@ const boards: TaskStatus[] = [
 ];
 
 type TasksState = {
-  [key in TaskStatus]: Omit<TaskWithUser, "children">[];
+  [key in TaskStatus]: TaskListItem[];
 };
 
 interface DataKanbanProps {
-  data: Omit<TaskWithUser, "children">[];
+  data: TaskListItem[];
   onChange: (
     tasks: { id: string; position: number; status: TaskStatus }[]
   ) => void;
@@ -90,7 +90,6 @@ const DataKanban = ({ data, onChange }: DataKanbanProps) => {
         const [movedTask] = sourceColumn.splice(source.index, 1);
 
         if (!movedTask) {
-          console.log("No task at source index");
           return prevTasks;
         }
         //are we changing position within a status or moving it into a new status

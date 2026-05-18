@@ -33,6 +33,17 @@ export type TaskWithUser = TaskSafeDate & {
     | null;
 };
 
+export type TaskListItem = TaskSafeDate & {
+  assignee: (MemberSafeDate & { user: UserSafeDate }) | null;
+  project: ProjectSafeDate;
+  category?: {
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+  } | null;
+};
+
 export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
   createdAt: string;
   updatedAt: string;

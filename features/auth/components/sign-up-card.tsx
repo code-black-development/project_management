@@ -54,7 +54,6 @@ const SignUpCard = () => {
       },
       {
         onSuccess: async (response) => {
-          console.log("Registration successful:", response);
           toast?.success("Account created successfully!");
 
           // Use the email from the registration response
