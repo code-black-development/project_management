@@ -1,10 +1,18 @@
+import { auth } from "@/auth";
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import DashboardModals from "@/components/dashboard-modals";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/sign-in");
+  }
+
   return (
     // Todo: could make sidebar collapsible in which case the pl of the main tag would be 56 or 0 based on the state of the sidebar
     <div className="min-h-sctreen">

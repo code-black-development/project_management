@@ -3,8 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Card, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 
 import { useRouter } from "next/navigation";
@@ -38,22 +36,24 @@ const WorkspaceInviteForm = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-y-4">
-      <Card className="w-full h-full border-none shadow-none">
-        <CardContent className="p-7">
+      <div className="w-full rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-5">
+          <h3 className="text-base font-semibold text-foreground">
+            Invite Members
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Invite others to collaborate on your projects in this workspace.
+            <br /> (Invites will expire after 7 days).
+          </p>
+        </div>
+        <div className="px-6 py-5">
           <div className="flex flex-col">
-            <h3 className="font-bold">Invite Members</h3>
-            <p className="text-sm text-muted-foreground">
-              Invite others to collaborate on your projects in this workspace.
-              <br /> (Invites will expire after 7 days).
-            </p>
-            <div className="mt-4">
-              <div className="flex items-center gap-x-2">
-                <EmailInput
-                  control={control}
-                  setValue={setValue}
-                  errors={errors}
-                />
-              </div>
+            <div className="flex items-center gap-x-2">
+              <EmailInput
+                control={control}
+                setValue={setValue}
+                errors={errors}
+              />
             </div>
             <Button
               className="mt-6 w-fit ml-auto"
@@ -65,8 +65,8 @@ const WorkspaceInviteForm = () => {
               Send Invites
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </form>
   );
 };

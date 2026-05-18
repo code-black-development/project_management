@@ -1,9 +1,7 @@
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useUrlBooleanParam } from "@/hooks/use-url-query-state";
+
 const useCreateProjectModal = () => {
-  const [isOpen, setIsOpen] = useQueryState(
-    "create-project",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
+  const [isOpen, setIsOpen] = useUrlBooleanParam("create-project");
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
   return {

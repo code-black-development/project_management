@@ -1,4 +1,7 @@
-import { useQueryState, parseAsString } from "nuqs";
+import {
+  useUrlQuerySetter,
+  useUrlStringParam,
+} from "@/hooks/use-url-query-state";
 
 interface ParentTaskInfo {
   taskId: string;
@@ -7,18 +10,10 @@ interface ParentTaskInfo {
 }
 
 const useCreateChildTaskModal = () => {
-  const [parentTaskId, setParentTaskId] = useQueryState(
-    "create-child-task-parent",
-    parseAsString
-  );
-  const [parentProjectId, setParentProjectId] = useQueryState(
-    "create-child-task-project",
-    parseAsString
-  );
-  const [parentWorkspaceId, setParentWorkspaceId] = useQueryState(
-    "create-child-task-workspace",
-    parseAsString
-  );
+  const [parentTaskId] = useUrlStringParam("create-child-task-parent");
+  const [parentProjectId] = useUrlStringParam("create-child-task-project");
+  const [parentWorkspaceId] = useUrlStringParam("create-child-task-workspace");
+  const setQuery = useUrlQuerySetter();
 
   const isOpen = Boolean(parentTaskId && parentProjectId && parentWorkspaceId);
 
@@ -31,15 +26,19 @@ const useCreateChildTaskModal = () => {
     : null;
 
   const open = (taskInfo: ParentTaskInfo) => {
-    setParentTaskId(taskInfo.taskId);
-    setParentProjectId(taskInfo.projectId);
-    setParentWorkspaceId(taskInfo.workspaceId);
+    setQuery({
+      "create-child-task-parent": taskInfo.taskId,
+      "create-child-task-project": taskInfo.projectId,
+      "create-child-task-workspace": taskInfo.workspaceId,
+    });
   };
 
   const close = () => {
-    setParentTaskId(null);
-    setParentProjectId(null);
-    setParentWorkspaceId(null);
+    setQuery({
+      "create-child-task-parent": null,
+      "create-child-task-project": null,
+      "create-child-task-workspace": null,
+    });
   };
 
   const setIsOpen = (open: boolean) => {

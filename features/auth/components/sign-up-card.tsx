@@ -1,13 +1,12 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormItem,
   FormField,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 //import { FcGoogle } from "react-icons/fc";
@@ -73,7 +72,9 @@ const SignUpCard = () => {
 
           if (signInResult?.error) {
             console.error("Auto sign-in failed:", signInResult.error);
-            toast?.error("Registration successful, but auto-login failed. Please sign in.");
+            toast?.error(
+              "Registration successful, but auto-login failed. Please sign in.",
+            );
             router.push("/sign-in");
           } else {
             toast?.success("Welcome! You're now signed in.");
@@ -84,20 +85,19 @@ const SignUpCard = () => {
           console.error("Registration failed:", error);
           toast?.error("Failed to create account. Please try again.");
         },
-      }
+      },
     );
   };
 
   return (
-    <Card className="w-full h-full md:w-[600px] border-none shadow-none">
-      <CardHeader className="flex items-center justify-center text-center p-7">
-        <CardTitle className="text-2xl">Welcome to Codeflow Pro</CardTitle>
-      </CardHeader>
-      <div className="px-7">
-        <DottedSeparator />
+    <div className="w-full md:w-[600px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+      <div className="border-b border-border px-6 py-5 text-center">
+        <h1 className="text-base font-semibold text-foreground">
+          Welcome to Codeflow Pro
+        </h1>
       </div>
-      <CardContent className="p-7">
-        <p className="pb-7">
+      <div className="px-6 py-5">
+        <p className="pb-5 text-sm text-muted-foreground">
           Please enter a password to complete your new account signup.
         </p>
         <Form {...form}>
@@ -107,8 +107,9 @@ const SignUpCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="password" />
+                    <Input {...field} type="password" placeholder="Password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,33 +120,25 @@ const SignUpCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Confirm password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="password" />
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Confirm password"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button size="lg" className="w-full" type="submit">
+            <Button className="w-full" type="submit">
               Create Account
             </Button>
           </form>
         </Form>
-      </CardContent>
-      <div className="px-7">
-        <DottedSeparator />
       </div>
-      {/* <CardContent className="p-7 flex flex-col gap-y-4">
-        <Button variant="secondary" size="lg" className="w-full">
-          <FcGoogle className="mr-2" />
-          Login with Google
-        </Button>
-        <Button variant="secondary" size="lg" className="w-full">
-          <FaGithub className="mr-2" />
-          Login with Github
-        </Button>
-      </CardContent> */}
-    </Card>
+    </div>
   );
 };
 export default SignUpCard;

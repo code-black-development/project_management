@@ -17,15 +17,16 @@ export function usePresignedUrl(s3Key: string | undefined | null) {
       const response = await fetch(
         `/api/s3-image?key=${encodeURIComponent(s3Key!)}`
       );
+      if (response.status === 404) {
+        return null;
+      }
+
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("S3 object not found");
-        }
         throw new Error("Failed to get presigned URL");
       }
 
       const data = await response.json();
-      return data.url as string;
+      return data.url as string | null;
     },
   });
 

@@ -13,32 +13,42 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const getPreferredTheme = (): Theme => {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const currentTheme = document.documentElement.classList.contains("dark")
+    ? "dark"
+    : document.documentElement.classList.contains("light")
+      ? "light"
+      : null;
+
+  if (currentTheme) {
+    return currentTheme;
+  }
+
+  const savedTheme = localStorage.getItem("theme") as StoredTheme | null;
+  if (savedTheme === "light" || savedTheme === "dark") {
+    return savedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(getPreferredTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-
-    // Get theme from localStorage or system preference
-    const savedTheme = localStorage.getItem("theme") as StoredTheme | null;
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    const initialTheme =
-      savedTheme === "light" || savedTheme === "dark"
-        ? savedTheme
-        : prefersDark
-          ? "dark"
-          : "light";
+    const initialTheme = getPreferredTheme();
     setTheme(initialTheme);
-
-    // Apply theme to document root immediately
     applyTheme(initialTheme);
   }, []);
 
-  // Also apply theme whenever it changes
   useEffect(() => {
     if (mounted) {
       applyTheme(theme);
@@ -48,16 +58,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement;
 
-    // Remove existing theme classes
     root.classList.remove("light", "dark");
-
-    // Add new theme class
     root.classList.add(newTheme);
-
-    // Also set data attribute for CSS targeting
     root.setAttribute("data-theme", newTheme);
-
-    // Force repaint in Firefox
     root.style.colorScheme = newTheme;
   };
 

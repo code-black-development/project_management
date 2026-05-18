@@ -1,13 +1,12 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormItem,
   FormField,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,14 +74,13 @@ export const ForgotPasswordCard = () => {
 
   if (isSubmitted) {
     return (
-      <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-        <CardHeader className="flex items-center justify-center text-center p-7">
-          <CardTitle className="text-2xl">Check Your Email</CardTitle>
-        </CardHeader>
-        <div className="px-7">
-          <DottedSeparator />
+      <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+        <div className="border-b border-border px-6 py-5 text-center">
+          <h1 className="text-base font-semibold text-foreground">
+            Check Your Email
+          </h1>
         </div>
-        <CardContent className="p-7">
+        <div className="px-6 py-5">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
               Thank you, if your email is in the system we will email you a
@@ -97,23 +95,22 @@ export const ForgotPasswordCard = () => {
               </Link>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-      <CardHeader className="flex items-center justify-center text-center p-7">
-        <CardTitle className="text-2xl">Forgot Password?</CardTitle>
-        <p className="text-muted-foreground">
+    <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+      <div className="border-b border-border px-6 py-5 text-center">
+        <h1 className="text-base font-semibold text-foreground">
+          Forgot Password?
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Enter your email address and we'll send you a reset link
         </p>
-      </CardHeader>
-      <div className="px-7">
-        <DottedSeparator />
       </div>
-      <CardContent className="p-7">
+      <div className="px-6 py-5">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -121,6 +118,7 @@ export const ForgotPasswordCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -132,12 +130,7 @@ export const ForgotPasswordCard = () => {
                 </FormItem>
               )}
             />
-            <Button
-              size="lg"
-              className="w-full"
-              type="submit"
-              disabled={isPending}
-            >
+            <Button className="w-full" type="submit" disabled={isPending}>
               {isPending ? "Sending..." : "Send Reset Link"}
             </Button>
             <div className="text-center">
@@ -151,7 +144,7 @@ export const ForgotPasswordCard = () => {
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

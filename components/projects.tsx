@@ -21,7 +21,7 @@ const Projects = () => {
           Projects
         </p>
         <RiAddCircleFill
-          className="size-5 text-neutral-500 cursor-pointer hover:opacity-75 transition"
+          className="size-5 text-muted-foreground cursor-pointer hover:text-primary transition"
           onClick={open}
         />
       </div>
@@ -35,7 +35,7 @@ const Projects = () => {
                 className={cn(
                   "flex items-center gap-2.5 p-1.5 rounded-md cursor-pointer transition text-neutral-600 hover:text-primary dark:text-white/55 dark:hover:text-primary",
                   isActive &&
-                    "bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none"
+                    "bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none",
                 )}
               >
                 <ProjectAvatar

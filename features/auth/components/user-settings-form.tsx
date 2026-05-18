@@ -7,7 +7,6 @@ import { useRef } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormField,
@@ -16,7 +15,6 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import DottedSeparator from "@/components/dotted-separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -86,7 +84,7 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
         onError: () => {
           toast.error("Failed to update profile");
         },
-      }
+      },
     );
   };
 
@@ -104,22 +102,24 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
 
   if (!session?.user) {
     return (
-      <Card className="w-full h-full border-none shadow-none">
-        <CardContent className="p-7">
-          <div className="text-center">
-            <p className="text-muted-foreground">Loading user information...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full rounded-xl border border-border bg-card px-6 py-5">
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Loading user information...
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full h-full border-none shadow-none">
-      <CardHeader className="flex p-7">
-        <CardTitle className="text-xl font-bold">User Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="p-7">
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-6 py-5">
+        <h1 className="text-base font-semibold text-foreground">
+          User Settings
+        </h1>
+      </div>
+      <div className="px-6 py-5">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Name and Email Section */}
@@ -156,10 +156,8 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
               </div>
             </div>
 
-            <DottedSeparator className="my-6" />
-
             {/* Profile Image Section */}
-            <div className="space-y-4">
+            <div className="border-t border-border pt-4 space-y-4">
               <div>
                 <Label className="text-sm font-medium">Profile Photo</Label>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -174,13 +172,13 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
                   const { presignedUrl } = usePresignedUrl(
                     typeof field.value === "string" && field.value
                       ? field.value
-                      : null
+                      : null,
                   );
 
                   return (
                     <div className="flex items-center gap-x-5">
                       {field.value ? (
-                        <div className="size-16 relative rounded-full overflow-hidden">
+                        <div className="size-12 relative rounded-full overflow-hidden">
                           <Image
                             src={
                               field.value instanceof File
@@ -193,9 +191,9 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
                           />
                         </div>
                       ) : (
-                        <Avatar className="size-16">
+                        <Avatar className="size-12">
                           <AvatarFallback>
-                            <ImageIcon className="size-8 text-neutral-400" />
+                            <ImageIcon className="size-6 text-muted-foreground" />
                           </AvatarFallback>
                         </Avatar>
                       )}
@@ -243,12 +241,9 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
               />
             </div>
 
-            <DottedSeparator className="py-7" />
-
-            <div className="flex justify-between items-center">
+            <div className="border-t border-border pt-4 flex justify-between items-center">
               <Button
                 type="button"
-                size="lg"
                 variant="secondary"
                 disabled={isPending}
                 onClick={handleCancel}
@@ -256,14 +251,14 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
               >
                 Cancel
               </Button>
-              <Button type="submit" size="lg" disabled={isPending || !isDirty}>
+              <Button type="submit" disabled={isPending || !isDirty}>
                 {isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

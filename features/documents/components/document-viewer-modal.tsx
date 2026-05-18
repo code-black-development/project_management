@@ -94,7 +94,7 @@ const DocumentViewerModal = ({
         </DialogHeader>
 
         {/* Document info */}
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-b pb-4">
+        <div className="flex flex-wrap gap-4 border-b border-border pb-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Badge variant="secondary">Task</Badge>
             <span>{document.task.name}</span>
@@ -146,7 +146,7 @@ const DocumentViewerModal = ({
                   Your browser does not support video playback.
                 </video>
               ) : (
-                <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+                <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
                   <p className="mb-4">
                     Preview not available for this file type.
                   </p>
@@ -160,7 +160,7 @@ const DocumentViewerModal = ({
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center h-96 text-gray-500">
+            <div className="flex items-center justify-center h-96 text-muted-foreground">
               <p>Failed to load document</p>
             </div>
           )}

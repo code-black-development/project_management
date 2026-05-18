@@ -15,7 +15,7 @@ const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
   const [ConfirmDialog, confirm] = useConfirm(
     "Delete File",
     "This action cannot be undone",
-    "destructive"
+    "destructive",
   );
 
   const handleDeleteAsset = async () => {
@@ -35,10 +35,10 @@ const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
       <ConfirmDialog />
       {isImage ? (
         loading ? (
-          <div className="w-24 h-24 bg-gray-200 animate-pulse rounded" />
+          <div className="w-24 h-24 bg-muted animate-pulse rounded" />
         ) : (
           <img
-            src={presignedUrl || ''}
+            src={presignedUrl || ""}
             alt=""
             className="w-24 h-24 cursor-pointer hover:opacity-50 object-cover rounded"
             onClick={() => {}}
@@ -49,7 +49,7 @@ const TaskAssetDisplay = ({ taskAsset }: TaskAssetDisplayProps) => {
       )}
       <p className="text-xs">{taskAsset.fileName}</p>
       <TrashIcon
-        className="hover:opacity-50 absolute w-6 h-6 top-0 right-0 bg-red-700 cursor-pointer"
+        className="hover:opacity-80 absolute w-6 h-6 top-0 right-0 rounded bg-destructive p-1 text-destructive-foreground cursor-pointer"
         onClick={handleDeleteAsset}
       />
     </div>

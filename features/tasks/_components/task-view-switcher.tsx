@@ -19,7 +19,7 @@ import useCreateTaskModal from "../hooks/use-create-task-modal";
 import useCreateEventModal from "../hooks/use-create-event-modal";
 import { useGetTasks } from "../api/use-get-tasks";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
-import { useQueryState } from "nuqs";
+import { useUrlStringParam } from "@/hooks/use-url-query-state";
 import DataFilters from "./data-filters";
 import useTaskFilters from "../api/use-task-filters";
 import { useCallback } from "react";
@@ -52,7 +52,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const { mutate: bulkDelete } = useBulkDeleteTasks();
-  const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
+  const [view, setView] = useUrlStringParam("task-view", "table");
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
   const { autoHideCompletedTasks, autoHideChildTasks } = useProjectAutoHide(
@@ -78,7 +78,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const { open: openEvent } = useCreateEventModal();
   return (
     <Tabs
-      defaultValue={view}
+      value={view ?? "table"}
       onValueChange={setView}
       className="flex-1 w-full border border-border rounded-lg bg-card dark:bg-card"
     >

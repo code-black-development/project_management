@@ -15,7 +15,10 @@ const AnalyticsCard = ({
   increaseValue,
 }: AnalyticsCardProps) => {
   const Icon = variant === "up" ? FaCaretUp : FaCaretDown;
-  const trendColor = variant === "up" ? "text-emerald-500" : "text-red-400";
+  const trendColor =
+    variant === "up"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : "text-red-600 dark:text-red-400";
 
   return (
     <div className="flex flex-col gap-y-1 px-6 py-4 w-full min-w-[140px]">

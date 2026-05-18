@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { signOut } from "next-auth/react";
-import DottedSeparator from "@/components/dotted-separator";
 import { LogOut, User } from "lucide-react";
 import useUserSettingsModal from "../hooks/use-user-settings-modal";
 
@@ -35,17 +34,19 @@ const UserButton = ({}: UserButtonProps) => {
         sideOffset={10}
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <MemberAvatar 
-            name={session?.user?.name || "U"} 
+          <MemberAvatar
+            name={session?.user?.name || "U"}
             image={session?.user?.image || undefined}
           />
           <div className="flex flex-col items-center justify-center">
-            <p className="text-sm text-neutral-900 font-medium">
+            <p className="text-sm text-foreground font-medium">
               {session?.user?.name || "User"}
             </p>
-            <p className="text-xs text-neutral-500"> {session?.user?.email}</p>
+            <p className="text-xs text-muted-foreground">
+              {session?.user?.email}
+            </p>
           </div>
-          <DottedSeparator className="mb-1" />
+          <div className="w-full border-t border-border" />
           <DropdownMenuItem
             className="h-10 flex flex-row gap-2 items-center justify-center font-medium cursor-pointer"
             onClick={open}
@@ -54,7 +55,7 @@ const UserButton = ({}: UserButtonProps) => {
             Edit Profile
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer"
+            className="h-10 flex items-center justify-center text-destructive focus:text-destructive font-medium cursor-pointer"
             onClick={() => signOut()}
           >
             <LogOut className="size-4 mr-2" />
