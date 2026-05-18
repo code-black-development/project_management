@@ -30,11 +30,13 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
+import { TaskStatus } from "@prisma/client";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onDeleteSelected?: (ids: string[]) => void;
+  onUpdateStatusSelected?: (ids: string[], status: TaskStatus) => void;
 }
 
 const PAGE_SIZE_STORAGE_KEY = "task-table-page-size";
@@ -57,6 +59,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   onDeleteSelected,
+  onUpdateStatusSelected,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -91,27 +94,48 @@ export function DataTable<TData, TValue>({
     );
   }, [pagination.pageSize]);
 
+  const getSelectedIds = () =>
+    selectedRows.map((row) => (row.original as any).id as string);
+
   const handleDeleteSelected = () => {
-    const ids = selectedRows.map((row) => (row.original as any).id as string);
-    onDeleteSelected?.(ids);
+    onDeleteSelected?.(getSelectedIds());
     setRowSelection({});
   };
 
+  const handleUpdateStatus = (status: TaskStatus) => {
+    onUpdateStatusSelected?.(getSelectedIds(), status);
+    setRowSelection({});
+  };
+
+  const showBulkBar = selectedCount > 0 && (onDeleteSelected || onUpdateStatusSelected);
+
   return (
     <div>
-      {selectedCount > 0 && onDeleteSelected && (
-        <div className="flex items-center gap-x-2 mb-2">
+      {showBulkBar && (
+        <div className="flex items-center gap-x-2 mb-2 flex-wrap">
           <span className="text-sm text-muted-foreground">
             {selectedCount} selected
           </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDeleteSelected}
-          >
-            <Trash2 className="size-4 mr-2" />
-            Delete selected
-          </Button>
+          {onUpdateStatusSelected && (
+            <Select onValueChange={(v) => handleUpdateStatus(v as TaskStatus)}>
+              <SelectTrigger className="h-8 w-[160px] text-sm">
+                <SelectValue placeholder="Set status…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TaskStatus.TODO}>To do</SelectItem>
+                <SelectItem value={TaskStatus.IN_PROGRESS}>In progress</SelectItem>
+                <SelectItem value={TaskStatus.IN_REVIEW}>In review</SelectItem>
+                <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
+                <SelectItem value={TaskStatus.BACKLOG}>Backlog</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          {onDeleteSelected && (
+            <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
+              <Trash2 className="size-4 mr-2" />
+              Delete selected
+            </Button>
+          )}
         </div>
       )}
       <div className="rounded-md border">

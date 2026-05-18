@@ -516,6 +516,18 @@ const app = new Hono()
     return c.json({ data: result });
   })
   .post(
+    "/bulk-status-update",
+    zValidator("json", z.object({
+      ids: z.array(z.string()),
+      status: z.nativeEnum(TaskStatus),
+    })),
+    async (c) => {
+      const { ids, status } = c.req.valid("json");
+      await prisma.task.updateMany({ where: { id: { in: ids } }, data: { status } });
+      return c.json({ data: { ids, status } });
+    }
+  )
+  .post(
     "/bulk-delete",
     zValidator("json", z.object({ ids: z.array(z.string()) })),
     async (c) => {

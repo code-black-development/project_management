@@ -84,7 +84,7 @@ export const searchTasks = async (
     };
   }
 
-  return await prisma.task.findMany({
+  const tasks = await prisma.task.findMany({
     where,
     select: {
       id: true,
@@ -151,9 +151,11 @@ export const searchTasks = async (
         },
       },
     },
-    orderBy: [{ status: "asc" }, { position: "asc" }, { updatedAt: "desc" }],
+    orderBy: [{ dueDate: "asc" }, { position: "asc" }, { updatedAt: "desc" }],
     take: data.limit,
   });
+
+  return tasks;
 };
 
 export const getTasksByProjectId = async (projectId: string) => {

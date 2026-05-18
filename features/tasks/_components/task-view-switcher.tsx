@@ -26,6 +26,7 @@ import { useCallback } from "react";
 import type { TaskStatus } from "@prisma/client";
 import { useBulkUpdateTasks } from "../api/use-bulk-update-task";
 import { useBulkDeleteTasks } from "../api/use-bulk-delete-tasks";
+import { useBulkStatusUpdateTasks } from "../api/use-bulk-status-update-tasks";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
 import { useProjectAutoHide } from "@/features/projects/hooks/use-project-auto-hide";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -53,6 +54,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const { mutate: bulkDelete } = useBulkDeleteTasks();
+  const { mutate: bulkStatusUpdate } = useBulkStatusUpdateTasks();
   const [view, setView] = useUrlStringParam("task-view", "table");
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
@@ -165,6 +167,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
               <TaskTableView
                 tasks={tasks ?? []}
                 onDeleteSelected={(ids) => bulkDelete({ json: { ids } })}
+                onUpdateStatusSelected={(ids, status) => bulkStatusUpdate({ ids, status })}
                 hideProjectColumn={hideProjectFilter}
               />
             </TabsContent>
