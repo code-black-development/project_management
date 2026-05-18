@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
 
 interface UseGetProjectAnalyticsProps {
-  projectId: string;
+  projectId?: string | null;
 }
 
 export type ProjectAnalyticsResponseType = InferResponseType<
@@ -14,9 +14,10 @@ export type ProjectAnalyticsResponseType = InferResponseType<
 const useGetProjectAnalytics = ({ projectId }: UseGetProjectAnalyticsProps) => {
   return useQuery({
     queryKey: ["project-analytics", projectId],
+    enabled: !!projectId,
     queryFn: async () => {
       const response = await client.api.projects[":projectId"].analytics.$get({
-        param: { projectId },
+        param: { projectId: projectId! },
       });
       if (!response.ok) {
         throw new Error("Failed to fetch project analytics");

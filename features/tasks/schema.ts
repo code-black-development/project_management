@@ -139,7 +139,8 @@ export const taskSearchSchema = z.object({
   assigneeId: z.string().nullish(),
   status: z.nativeEnum(TaskStatus).nullish(),
   search: z.string().nullish(),
-  dueDate: z.date().nullish(),
+  dueDate: z.coerce.date().nullish(),
+  limit: z.coerce.number().int().min(1).max(500).default(250),
 });
 
 export const createWorklogSchema = z.object({

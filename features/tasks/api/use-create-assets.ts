@@ -25,7 +25,6 @@ export function useCreateAssets() {
       return await response.json();
     },
     onSuccess: ({ data }) => {
-      console.log(data);
       toast.success("Assets created");
       queryClient.invalidateQueries({ queryKey: ["tasks", data] });
     },

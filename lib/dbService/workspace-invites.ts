@@ -54,7 +54,7 @@ export const getWorkspaceInvite = async (code: string) => {
     });
     return res;
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to get workspace invite");
   }
 };

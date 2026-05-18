@@ -28,8 +28,6 @@ export async function sendEmail(to: string, subject: string, html: string) {
       subject,
       html,
     });
-
-    console.log("Email sent successfully to:", to);
   } catch (error) {
     console.error("Failed to send email to:", to, error);
     throw new Error(
@@ -43,16 +41,12 @@ export async function generateEmailTemplate(
   invitorName: string
 ) {
   try {
-    console.log("verificationLink:", verificationLink);
-    console.log("invitorName:", invitorName);
     // Get the base URL for the application
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.VERCEL_URL ||
       "http://localhost:3000";
     const templateUrl = `${baseUrl}/email-templates/invite.html`;
-
-    console.log("Fetching email template from:", templateUrl);
 
     // Fetch the template from the public folder
     const response = await fetch(templateUrl);
@@ -75,8 +69,6 @@ export async function generateEmailTemplate(
     console.error("Error generating email template:", error);
 
     // Fallback to a simple inline template if fetching fails
-    console.log("Using fallback inline email template");
-
     return `
       <!doctype html>
       <html lang="en">
@@ -259,10 +251,6 @@ export async function sendTaskAssignmentNotification(
     );
 
     await sendEmail(assigneeEmail, `Task Assigned: ${taskName}`, emailHtml);
-
-    console.log(
-      `Task assignment notification sent to ${assigneeEmail} for task: ${taskName}`
-    );
   } catch (error) {
     console.error("Failed to send task assignment notification:", error);
     // Don't throw the error to prevent task creation/update from failing

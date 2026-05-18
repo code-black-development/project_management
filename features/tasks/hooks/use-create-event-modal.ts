@@ -1,10 +1,7 @@
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { useUrlBooleanParam } from "@/hooks/use-url-query-state";
 
 const useCreateEventModal = () => {
-  const [isOpen, setIsOpen] = useQueryState(
-    "create-event",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
+  const [isOpen, setIsOpen] = useUrlBooleanParam("create-event");
 
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);

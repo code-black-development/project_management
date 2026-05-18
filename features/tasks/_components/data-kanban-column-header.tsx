@@ -49,7 +49,7 @@ const DataKanbanColumnHeader = ({
         </div>
       </div>
       <Button onClick={open} variant="ghost" size="icon" className="size-5">
-        <PlusIcon className="size-4 text-neutral-500" />
+        <PlusIcon className="size-4 text-muted-foreground" />
       </Button>
     </div>
   );

@@ -1,50 +1,38 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+const PRESIGNED_URL_STALE_TIME = 55 * 60 * 1000;
 
 export function usePresignedUrl(s3Key: string | undefined | null) {
-  const [presignedUrl, setPresignedUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isDirectUrl =
+    !!s3Key && (s3Key.startsWith("http") || s3Key.startsWith("/"));
+  const shouldFetch = !!s3Key && !isDirectUrl;
 
-  useEffect(() => {
-    if (!s3Key) {
-      setPresignedUrl(null);
-      return;
-    }
+  const query = useQuery({
+    queryKey: ["presigned-url", s3Key],
+    enabled: shouldFetch,
+    staleTime: PRESIGNED_URL_STALE_TIME,
+    gcTime: PRESIGNED_URL_STALE_TIME + 5 * 60 * 1000,
+    retry: false,
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/s3-image?key=${encodeURIComponent(s3Key!)}`
+      );
+      if (response.status === 404) {
+        return null;
+      }
 
-    // If it's already a full HTTP URL (legacy), use it directly
-    if (s3Key.startsWith("http")) {
-      setPresignedUrl(s3Key);
-      return;
-    }
+      if (!response.ok) {
+        throw new Error("Failed to get presigned URL");
+      }
 
-    // If it's a local path (starts with /), use it directly
-    if (s3Key.startsWith("/")) {
-      setPresignedUrl(s3Key);
-      return;
-    }
+      const data = await response.json();
+      return data.url as string | null;
+    },
+  });
 
-    // Otherwise, it's an S3 key, generate presigned URL
-    setLoading(true);
-    setError(null);
-
-    fetch(`/api/s3-image?key=${encodeURIComponent(s3Key)}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to get presigned URL");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setPresignedUrl(data.url);
-      })
-      .catch((err) => {
-        setError(err.message);
-        console.error("Error fetching presigned URL:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [s3Key]);
-
-  return { presignedUrl, loading, error };
+  return {
+    presignedUrl: isDirectUrl ? s3Key : query.data ?? null,
+    loading: shouldFetch ? query.isLoading || query.isFetching : false,
+    error: query.error instanceof Error ? query.error.message : null,
+  };
 }

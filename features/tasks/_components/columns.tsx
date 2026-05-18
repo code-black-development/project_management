@@ -10,12 +10,12 @@ import TaskDate from "./task-date";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
-import { TaskWithUser } from "@/types/types";
+import { TaskListItem } from "@/types/types";
 import DynamicIcon from "@/components/dynamic-icon";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-export const columns: ColumnDef<Omit<TaskWithUser, "children">>[] = [
+export const columns: ColumnDef<TaskListItem>[] = [
   {
     id: "select",
     header: ({ table }) => (

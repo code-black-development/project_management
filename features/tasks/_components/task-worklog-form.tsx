@@ -9,7 +9,6 @@ import {
   timeEstimateStringToMinutes,
 } from "@/lib/utils";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormField,
@@ -18,7 +17,6 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import DottedSeparator from "@/components/dotted-separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -95,7 +93,7 @@ const TaskWorklogForm = ({ id, onCancel, worklogId }: TaskWorklogFormProps) => {
               onCancel();
             }
           },
-        }
+        },
       );
     } else {
       // Create new worklog
@@ -115,23 +113,20 @@ const TaskWorklogForm = ({ id, onCancel, worklogId }: TaskWorklogFormProps) => {
               onCancel();
             }
           },
-        }
+        },
       );
     }
   };
 
   return (
     <div className="flex flex-col gap-y-4">
-      <Card className="w-full h-full border-none shadow-none">
-        <CardHeader className={cn("flex p-7")}>
-          <CardTitle className="text-xl font-bold">
+      <div className="w-full overflow-hidden rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-5">
+          <h1 className="text-base font-semibold text-foreground">
             {isEditing ? "Edit Worklog" : "Create Worklog"}
-          </CardTitle>
-        </CardHeader>
-        <div className="px-7">
-          <DottedSeparator />
+          </h1>
         </div>
-        <CardContent className="p-7">
+        <div className="px-6 py-5">
           <div className="flex items-center gap-x-2 mb-4">
             <MemberAvatar
               className="w-12 h-12"
@@ -195,11 +190,9 @@ const TaskWorklogForm = ({ id, onCancel, worklogId }: TaskWorklogFormProps) => {
                   )}
                 />
               </div>
-              <DottedSeparator className="py-7" />
-              <div className="flex justify-between items-center">
+              <div className="border-t border-border pt-4 flex justify-between items-center">
                 <Button
                   type="button"
-                  size="lg"
                   variant="secondary"
                   disabled={isPending}
                   onClick={onCancel}
@@ -209,7 +202,6 @@ const TaskWorklogForm = ({ id, onCancel, worklogId }: TaskWorklogFormProps) => {
                 </Button>
                 <Button
                   type="submit"
-                  size="lg"
                   disabled={isPending || (isEditing && !worklogData)}
                 >
                   {isPending
@@ -223,8 +215,8 @@ const TaskWorklogForm = ({ id, onCancel, worklogId }: TaskWorklogFormProps) => {
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

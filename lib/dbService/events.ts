@@ -23,7 +23,6 @@ export const createEvent = async (
   >
 ) => {
   try {
-    console.log("create event db", data);
     return await prisma.task.create({
       data: {
         ...data,
@@ -31,7 +30,7 @@ export const createEvent = async (
       },
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to create event");
   }
 };

@@ -1,22 +1,24 @@
-import { useQueryState, parseAsString } from "nuqs";
+import {
+  useUrlQuerySetter,
+  useUrlStringParam,
+} from "@/hooks/use-url-query-state";
 
 const useCreateTaskWorklogModal = () => {
-  const [taskId, setTaskId] = useQueryState("create-worklog", parseAsString);
-  const [worklogId, setWorklogId] = useQueryState("edit-worklog", parseAsString);
-  
+  const [taskId, setTaskId] = useUrlStringParam("create-worklog");
+  const [worklogId] = useUrlStringParam("edit-worklog");
+  const setQuery = useUrlQuerySetter();
+
   const open = (id: string) => setTaskId(id);
   const close = () => {
-    setTaskId(null);
-    setWorklogId(null);
+    setQuery({ "create-worklog": null, "edit-worklog": null });
   };
-  
+
   const openEdit = (taskId: string, worklogId: string) => {
-    setTaskId(taskId);
-    setWorklogId(worklogId);
+    setQuery({ "create-worklog": taskId, "edit-worklog": worklogId });
   };
-  
+
   const isEditing = !!worklogId;
-  
+
   return {
     taskId,
     worklogId,

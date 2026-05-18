@@ -1,17 +1,14 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormItem,
   FormField,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
@@ -50,9 +47,8 @@ const SignInCard = () => {
       });
 
       if (result?.error) {
-        console.log("Sign-in error:", result.error);
         toast.error(
-          "The credentials provided were not correct. Please try again."
+          "The credentials provided were not correct. Please try again.",
         );
       } else if (result?.ok) {
         toast.success("Successfully signed in!");
@@ -69,14 +65,14 @@ const SignInCard = () => {
   };
 
   return (
-    <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-      <CardHeader className="flex items-center justify-center text-center p-7">
-        <CardTitle className="text-2xl">Welcome</CardTitle>
-      </CardHeader>
-      <div className="px-7">
-        <DottedSeparator />
+    <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+      <div className="border-b border-border px-6 py-5 text-center">
+        <h1 className="text-base font-semibold text-foreground">Welcome</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sign in to continue to your workspace.
+        </p>
       </div>
-      <CardContent className="p-7">
+      <div className="px-6 py-5">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -84,8 +80,13 @@ const SignInCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="Email" />
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="you@example.com"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,20 +97,16 @@ const SignInCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="password" />
+                    <Input {...field} type="password" placeholder="Password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button
-              size="lg"
-              className="w-full"
-              type="submit"
-              disabled={isPending}
-            >
-              {isPending ? "Signing In..." : "Log In"}
+            <Button className="w-full" type="submit" disabled={isPending}>
+              {isPending ? "Signing in..." : "Log in"}
             </Button>
             <div className="text-center">
               <Link
@@ -121,21 +118,8 @@ const SignInCard = () => {
             </div>
           </form>
         </Form>
-      </CardContent>
-      <div className="px-7">
-        <DottedSeparator />
       </div>
-      {/* <CardContent className="p-7 flex flex-col gap-y-4">
-        <Button variant="secondary" size="lg" className="w-full">
-          <FcGoogle className="mr-2" />
-          Login with Google
-        </Button>
-        <Button variant="secondary" size="lg" className="w-full">
-          <FaGithub className="mr-2" />
-          Login with Github
-        </Button>
-      </CardContent> */}
-    </Card>
+    </div>
   );
 };
 export default SignInCard;

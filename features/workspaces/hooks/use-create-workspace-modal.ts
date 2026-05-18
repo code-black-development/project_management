@@ -1,9 +1,7 @@
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useUrlBooleanParam } from "@/hooks/use-url-query-state";
+
 const useCreateWorkspaceModal = () => {
-  const [isOpen, setIsOpen] = useQueryState(
-    "create-workspace",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
+  const [isOpen, setIsOpen] = useUrlBooleanParam("create-workspace");
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
   return {

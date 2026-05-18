@@ -8,7 +8,6 @@ import { TimeReportCard } from "../components/time-report-card";
 import { ProjectTimeGrid } from "../components/project-time-grid";
 import { UserTimeTable } from "../components/user-time-table";
 import { BarChart3Icon, BuildingIcon, UsersIcon } from "lucide-react";
-import DottedSeparator from "@/components/dotted-separator";
 
 const ReportsClient = () => {
   const workspaceId = useWorkspaceId();
@@ -54,7 +53,7 @@ const ReportsClient = () => {
         />
       </div>
 
-      <DottedSeparator />
+      <div className="border-t border-border" />
 
       {/* Projects Breakdown */}
       <div>
@@ -62,7 +61,7 @@ const ReportsClient = () => {
         <ProjectTimeGrid projects={projects} />
       </div>
 
-      <DottedSeparator />
+      <div className="border-t border-border" />
 
       {/* Users Breakdown */}
       <div>

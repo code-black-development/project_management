@@ -1,14 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardTitle,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import Link from "next/link";
 
 //import { useJoinWorkspace } from "../api/use-join-workspace";
@@ -42,17 +34,16 @@ const JoinWorkspaceForm = ({ initialValues }: JoinWorkspaceFormProps) => {
   };
 
   return (
-    <Card className="w-full h-full border-none shadow-none">
-      <CardHeader className="p-7">
-        <CardTitle className="text-xl font-bold">Join Workspace</CardTitle>
-        <CardDescription>
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-6 py-5">
+        <h1 className="text-base font-semibold text-foreground">
+          Join Workspace
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           You've been invited to join the workspace - <strong>{name}</strong>.
-        </CardDescription>
-      </CardHeader>
-      <div className="">
-        <DottedSeparator />
+        </p>
       </div>
-      <CardContent className="p-7">
+      <div className="px-6 py-5">
         <div className="flex flex-col lg:flex-row gap-2 items-center justify-between">
           <Button
             className="w-full lg:w-fit"
@@ -62,12 +53,12 @@ const JoinWorkspaceForm = ({ initialValues }: JoinWorkspaceFormProps) => {
           >
             <Link href="/">Cancel</Link>
           </Button>
-          <Button className="w-full lg:w-fit" size="lg" type="button">
+          <Button className="w-full lg:w-fit" type="button">
             Join Workspace
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 export default JoinWorkspaceForm;

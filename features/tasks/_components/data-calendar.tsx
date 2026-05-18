@@ -14,7 +14,7 @@ import { enUS } from "date-fns/locale";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 
 import { useState } from "react";
-import { TaskWithUser } from "@/types/types";
+import { TaskListItem } from "@/types/types";
 
 import {
   CalendarIcon,
@@ -46,7 +46,7 @@ import useCreateEventModal from "../hooks/use-create-event-modal";
 import useTaskFilters from "../api/use-task-filters";
 
 interface DataCalendarProps {
-  data: Omit<TaskWithUser, "children">[];
+  data: TaskListItem[];
   hideProjectInfo?: boolean;
 }
 

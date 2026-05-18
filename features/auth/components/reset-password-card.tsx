@@ -1,13 +1,12 @@
 "use client";
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormItem,
   FormField,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,7 +83,7 @@ export const ResetPasswordCard = () => {
         toast.success("Password reset successfully!");
       } else {
         toast.error(
-          result.error || "Failed to reset password. Please try again."
+          result.error || "Failed to reset password. Please try again.",
         );
       }
     } catch (error) {
@@ -97,14 +96,13 @@ export const ResetPasswordCard = () => {
 
   if (isSuccess) {
     return (
-      <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-        <CardHeader className="flex items-center justify-center text-center p-7">
-          <CardTitle className="text-2xl">Password Reset Complete</CardTitle>
-        </CardHeader>
-        <div className="px-7">
-          <DottedSeparator />
+      <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+        <div className="border-b border-border px-6 py-5 text-center">
+          <h1 className="text-base font-semibold text-foreground">
+            Password Reset Complete
+          </h1>
         </div>
-        <CardContent className="p-7">
+        <div className="px-6 py-5">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
               Your password has been successfully reset. You can now sign in
@@ -116,21 +114,20 @@ export const ResetPasswordCard = () => {
               </Link>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (!token) {
     return (
-      <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-        <CardHeader className="flex items-center justify-center text-center p-7">
-          <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
-        </CardHeader>
-        <div className="px-7">
-          <DottedSeparator />
+      <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+        <div className="border-b border-border px-6 py-5 text-center">
+          <h1 className="text-base font-semibold text-foreground">
+            Invalid Reset Link
+          </h1>
         </div>
-        <CardContent className="p-7">
+        <div className="px-6 py-5">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
               This reset link is invalid or has expired. Please request a new
@@ -142,21 +139,22 @@ export const ResetPasswordCard = () => {
               </Link>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full h-full md:w-[487px] border-none shadow-none">
-      <CardHeader className="flex items-center justify-center text-center p-7">
-        <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-        <p className="text-muted-foreground">Enter your new password below</p>
-      </CardHeader>
-      <div className="px-7">
-        <DottedSeparator />
+    <div className="w-full md:w-[487px] overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:shadow-none">
+      <div className="border-b border-border px-6 py-5 text-center">
+        <h1 className="text-base font-semibold text-foreground">
+          Reset Your Password
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter your new password below
+        </p>
       </div>
-      <CardContent className="p-7">
+      <div className="px-6 py-5">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -164,6 +162,7 @@ export const ResetPasswordCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>New password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -195,6 +194,7 @@ export const ResetPasswordCard = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Confirm password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
@@ -223,12 +223,7 @@ export const ResetPasswordCard = () => {
                 </FormItem>
               )}
             />
-            <Button
-              size="lg"
-              className="w-full"
-              type="submit"
-              disabled={isPending}
-            >
+            <Button className="w-full" type="submit" disabled={isPending}>
               {isPending ? "Resetting..." : "Reset Password"}
             </Button>
             <div className="text-center">
@@ -242,7 +237,7 @@ export const ResetPasswordCard = () => {
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

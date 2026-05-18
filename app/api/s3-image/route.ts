@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPresignedUrl, extractS3KeyFromUrl } from "@/lib/s3";
+import { getPresignedUrl, extractS3KeyFromUrl, s3ObjectExists } from "@/lib/s3";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +23,14 @@ export async function GET(request: NextRequest) {
 
     if (!key) {
       return NextResponse.json({ error: "Invalid S3 key" }, { status: 400 });
+    }
+
+    const exists = await s3ObjectExists(key);
+    if (!exists) {
+      return NextResponse.json(
+        { error: "S3 object not found" },
+        { status: 404 }
+      );
     }
 
     // Generate presigned URL

@@ -1,4 +1,5 @@
 "use client";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,19 +19,30 @@ import useCreateTaskModal from "../hooks/use-create-task-modal";
 import useCreateEventModal from "../hooks/use-create-event-modal";
 import { useGetTasks } from "../api/use-get-tasks";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
-import { useQueryState } from "nuqs";
+import { useUrlStringParam } from "@/hooks/use-url-query-state";
 import DataFilters from "./data-filters";
 import useTaskFilters from "../api/use-task-filters";
-import { DataTable } from "./data-table";
-import { columns } from "./columns";
-import DataKanban from "./data-kanban";
 import { useCallback } from "react";
-import { TaskStatus } from "@prisma/client";
+import type { TaskStatus } from "@prisma/client";
 import { useBulkUpdateTasks } from "../api/use-bulk-update-task";
 import { useBulkDeleteTasks } from "../api/use-bulk-delete-tasks";
-import DataCalendar from "./data-calendar";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
 import { useProjectAutoHide } from "@/features/projects/hooks/use-project-auto-hide";
+
+const TaskTableView = dynamic(() => import("./task-table-view"), {
+  ssr: false,
+  loading: () => <TaskViewLoading />,
+});
+
+const TaskKanbanView = dynamic(() => import("./task-kanban-view"), {
+  ssr: false,
+  loading: () => <TaskViewLoading />,
+});
+
+const DataCalendar = dynamic(() => import("./data-calendar"), {
+  ssr: false,
+  loading: () => <TaskViewLoading />,
+});
 
 interface TaskViewSwitcherProps {
   hideProjectFilter?: boolean;
@@ -40,7 +52,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const { mutate: bulkDelete } = useBulkDeleteTasks();
-  const [view, setView] = useQueryState("task-view", { defaultValue: "table" });
+  const [view, setView] = useUrlStringParam("task-view", "table");
   const workspaceId = useWorkspaceId();
   const paramProjectId = useProjectId();
   const { autoHideCompletedTasks, autoHideChildTasks } = useProjectAutoHide(
@@ -66,7 +78,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const { open: openEvent } = useCreateEventModal();
   return (
     <Tabs
-      defaultValue={view}
+      value={view ?? "table"}
       onValueChange={setView}
       className="flex-1 w-full border border-border rounded-lg bg-card dark:bg-card"
     >
@@ -127,17 +139,19 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
         ) : (
           <>
             <TabsContent value="table" className="mt-0">
-              <DataTable
-                columns={columns}
-                data={tasks ?? []}
+              <TaskTableView
+                tasks={tasks ?? []}
                 onDeleteSelected={(ids) => bulkDelete({ json: { ids } })}
               />
             </TabsContent>
             <TabsContent value="kanban" className="mt-0">
-              <DataKanban data={tasks ?? []} onChange={onKanbanChange} />
+              <TaskKanbanView tasks={tasks ?? []} onChange={onKanbanChange} />
             </TabsContent>
             <TabsContent value="calendar" className="mt-0 h-full pb-4">
-              <DataCalendar data={tasks ?? []} hideProjectInfo={hideProjectFilter} />
+              <DataCalendar
+                data={tasks ?? []}
+                hideProjectInfo={hideProjectFilter}
+              />
             </TabsContent>
           </>
         )}
@@ -145,5 +159,11 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
     </Tabs>
   );
 };
+
+const TaskViewLoading = () => (
+  <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
+    <Loader2 className="animate-spin" />
+  </div>
+);
 
 export default TaskViewSwitcher;

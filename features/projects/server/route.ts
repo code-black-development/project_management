@@ -9,9 +9,15 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
-import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import {
+  uploadToS3,
+  deleteFromS3,
+  deleteManyFromS3,
+  extractS3KeyFromUrl,
+} from "@/lib/s3";
 import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import {
+  getTaskAssetUrlsByProjectId,
   getProjectOverdueTasks,
   getProjectTasksInDateRange,
 } from "@/lib/dbService/tasks";
@@ -25,21 +31,16 @@ const app = new Hono()
     // Get existing project to check for image cleanup
     const existingProject = await getProjectById(projectId);
 
-    // Delete image from S3 if it exists
-    if (existingProject?.image) {
-      try {
-        const key = extractS3KeyFromUrl(existingProject.image);
-        if (key) {
-          await deleteFromS3(key);
-        }
-      } catch (error) {
-        console.error("Failed to delete image from S3:", error);
-        // Don't fail the deletion if S3 cleanup fails
-      }
-    }
+    const s3Keys = [
+      existingProject?.image ? extractS3KeyFromUrl(existingProject.image) : null,
+      ...(await getTaskAssetUrlsByProjectId(projectId)).map((url) =>
+        extractS3KeyFromUrl(url)
+      ),
+    ].filter((key): key is string => !!key);
 
     try {
       const project = await deleteProject(projectId);
+      await deleteManyFromS3(s3Keys, "project files");
       return c.json({ data: project });
     } catch (error) {
       console.error("Failed to delete project:", error);
@@ -139,7 +140,7 @@ const app = new Hono()
     "/",
     zValidator("form", createProjectSchema, (result, c) => {
       if (!result.success) {
-        console.log("Validation failed:", result.error);
+        console.error("Project validation failed:", result.error);
         return c.json(
           { error: "Validation failed", details: result.error },
           400
@@ -147,9 +148,7 @@ const app = new Hono()
       }
     }),
     async (c) => {
-      console.log("POST /api/projects - Starting project creation");
       const formData = c.req.valid("form");
-      console.log("Received form data:", formData);
 
       const {
         name,
@@ -159,14 +158,6 @@ const app = new Hono()
         autoHideCompletedTasks,
         taskAssignmentEmail,
       } = formData;
-      console.log("Extracted values:", {
-        name,
-        image: !!image,
-        workspaceId,
-        autoHideChildTasks,
-        autoHideCompletedTasks,
-        taskAssignmentEmail,
-      });
 
       //await onlyWorkspaceMember(c, userId, workspaceId, true); //this will return from the route if the logged in user is not an admin of the workspace
 
@@ -182,15 +173,6 @@ const app = new Hono()
           return c.json({ error: "Failed to upload image" }, 500);
         }
       }
-
-      console.log("About to create project with data:", {
-        name,
-        workspaceId,
-        image: fileUrl,
-        autoHideChildTasks: autoHideChildTasks || false,
-        autoHideCompletedTasks: autoHideCompletedTasks || false,
-        taskAssignmentEmail: taskAssignmentEmail ?? true,
-      });
 
       const project = await createProject({
         name,

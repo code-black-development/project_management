@@ -54,8 +54,8 @@ export function EmailInput({ control, setValue, errors }: EmailInputProps) {
             className={cn(
               "border rounded-lg p-2 flex flex-wrap items-center gap-2 min-h-[40px]",
               {
-                "border-red-500": errors.invites,
-              }
+                "border-destructive": errors.invites,
+              },
             )}
           >
             {field.value?.map((email: string) => (
@@ -70,7 +70,7 @@ export function EmailInput({ control, setValue, errors }: EmailInputProps) {
                   onClick={() => removeEmail(email)}
                   className="ml-1"
                 >
-                  <X className="w-6 h-6 font-bold p-1 bg-white rounded-full text-red-500 hover:text-red-700" />
+                  <X className="w-6 h-6 font-bold p-1 bg-background rounded-full text-destructive hover:text-destructive/80" />
                 </button>
               </Badge>
             ))}
@@ -86,7 +86,7 @@ export function EmailInput({ control, setValue, errors }: EmailInputProps) {
         )}
       />
       {errors.invites && (
-        <p className="text-red-500 text-sm">{errors.invites.message}</p>
+        <p className="text-destructive text-sm">{errors.invites.message}</p>
       )}
     </div>
   );

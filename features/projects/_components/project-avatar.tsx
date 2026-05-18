@@ -30,7 +30,10 @@ const ProjectAvatar = ({
   if (loading) {
     return (
       <div
-        className={cn("size-5 relative rounded-md overflow-hidden bg-gray-200 animate-pulse", className)}
+        className={cn(
+          "size-5 relative rounded-md overflow-hidden bg-muted animate-pulse",
+          className,
+        )}
       />
     );
   }
@@ -38,8 +41,8 @@ const ProjectAvatar = ({
     <Avatar className={cn("size-5 rounded-md", className)}>
       <AvatarFallback
         className={cn(
-          "text-white bg-blue-600 font-semibold text-sm uppercase rounded-md",
-          fallbackClassName
+          "text-primary-foreground bg-primary font-semibold text-sm uppercase rounded-md",
+          fallbackClassName,
         )}
       >
         {name[0]}

@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
@@ -43,11 +42,9 @@ const TaskFormWrapper = ({
 
   if (isLoading) {
     return (
-      <Card className="w-full h-[714px] border-none shadow-none">
-        <CardContent className="flex items-center justify-center h-full">
-          <Loader className="size-5 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="bg-card border border-border rounded-xl min-h-[520px] flex items-center justify-center">
+        <Loader className="size-5 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 

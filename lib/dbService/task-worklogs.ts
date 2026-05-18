@@ -12,7 +12,7 @@ export const createTaskWorklog = async (
       data: worklog,
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to create worklog");
   }
 };
@@ -27,7 +27,7 @@ export const updateTaskWorklog = async (
       data: worklog,
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to update worklog");
   }
 };
@@ -40,7 +40,7 @@ export const deleteTaskWorklog = async (
       where: { id: worklogId },
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to delete worklog");
   }
 };
@@ -60,7 +60,7 @@ export const getWorklogById = async (
       },
     });
   } catch (e) {
-    console.log(JSON.stringify(e));
+    console.error(JSON.stringify(e));
     throw new Error("Failed to get worklog");
   }
 };

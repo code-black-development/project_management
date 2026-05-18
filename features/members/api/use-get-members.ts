@@ -1,18 +1,17 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
-import { MemberSafeDate, UserSafeDate } from "@/types/types";
-
 interface UseGetMembersProps {
-  workspaceId: string;
+  workspaceId?: string | null;
 }
 
 export const useGetMembers = ({ workspaceId }: UseGetMembersProps) => {
   return useQuery({
     queryKey: ["members", workspaceId],
+    enabled: !!workspaceId,
     queryFn: async () => {
       const response = await client.api.members.$get({
-        query: { workspaceId },
+        query: { workspaceId: workspaceId! },
       });
 
       if (!response.ok) {

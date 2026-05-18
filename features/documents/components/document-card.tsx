@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileIcon, ImageIcon, FileTextIcon, VideoIcon } from "lucide-react";
 import { usePresignedUrl } from "@/hooks/use-presigned-url";
@@ -43,75 +42,74 @@ const DocumentCard = ({ document, onClick }: DocumentCardProps) => {
   const FileIconComponent = getFileIcon(document.assetType);
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
+    <button
+      type="button"
+      className="w-full cursor-pointer rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
       onClick={onClick}
     >
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Thumbnail */}
-          <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-            {isImage && presignedUrl && !loading ? (
-              <img
-                src={presignedUrl}
-                alt={document.fileName}
-                className="w-full h-full object-cover"
-              />
-            ) : loading ? (
-              <div className="w-full h-full bg-gray-200 animate-pulse" />
-            ) : (
-              <FileIconComponent className="w-12 h-12 text-gray-400" />
-            )}
-          </div>
+      <div className="space-y-3">
+        {/* Thumbnail */}
+        <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+          {isImage && presignedUrl && !loading ? (
+            <img
+              src={presignedUrl}
+              alt={document.fileName}
+              className="w-full h-full object-cover"
+            />
+          ) : loading ? (
+            <div className="w-full h-full bg-muted animate-pulse" />
+          ) : (
+            <FileIconComponent className="w-12 h-12 text-muted-foreground" />
+          )}
+        </div>
 
-          {/* File name */}
-          <div>
-            <h3
-              className="font-medium text-sm truncate"
-              title={document.fileName}
+        {/* File name */}
+        <div>
+          <h3
+            className="font-medium text-sm truncate text-foreground"
+            title={document.fileName}
+          >
+            {document.fileName}
+          </h3>
+        </div>
+
+        {/* Task and Project info */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              Task
+            </Badge>
+            <span
+              className="text-xs text-muted-foreground truncate"
+              title={document.task.name}
             >
-              {document.fileName}
-            </h3>
+              {document.task.name}
+            </span>
           </div>
 
-          {/* Task and Project info */}
-          <div className="space-y-2">
+          {document.task.project && (
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                Task
-              </Badge>
+              <ProjectAvatar
+                image={document.task.project.image || undefined}
+                name={document.task.project.name}
+                className="size-4"
+              />
               <span
-                className="text-xs text-gray-600 truncate"
-                title={document.task.name}
+                className="text-xs text-muted-foreground truncate"
+                title={document.task.project.name}
               >
-                {document.task.name}
+                {document.task.project.name}
               </span>
             </div>
-
-            {document.task.project && (
-              <div className="flex items-center gap-2">
-                <ProjectAvatar
-                  image={document.task.project.image || undefined}
-                  name={document.task.project.name}
-                  className="size-4"
-                />
-                <span
-                  className="text-xs text-gray-600 truncate"
-                  title={document.task.project.name}
-                >
-                  {document.task.project.name}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Upload date */}
-          <div className="text-xs text-gray-500">
-            {format(new Date(document.createdAt), "MMM d, yyyy")}
-          </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Upload date */}
+        <div className="text-xs text-muted-foreground">
+          {format(new Date(document.createdAt), "MMM d, yyyy")}
+        </div>
+      </div>
+    </button>
   );
 };
 

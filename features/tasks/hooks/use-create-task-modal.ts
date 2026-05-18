@@ -1,9 +1,7 @@
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useUrlBooleanParam } from "@/hooks/use-url-query-state";
+
 const useCreateTaskModal = () => {
-  const [isOpen, setIsOpen] = useQueryState(
-    "create-task",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
-  );
+  const [isOpen, setIsOpen] = useUrlBooleanParam("create-task");
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
   return {
