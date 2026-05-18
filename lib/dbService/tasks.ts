@@ -1,7 +1,9 @@
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
 import type { TaskAssetFile } from "@/types/types";
-import { Prisma, Task, TaskStatus } from "@prisma/client";
+import { Prisma, Task, TaskStatus, RecurrenceFrequency } from "@prisma/client";
+import { addDays, addMonths, isBefore, isEqual } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 // Safe user select to exclude sensitive fields
@@ -106,6 +108,7 @@ export const searchTasks = async (
       recurrenceDuration: true,
       recurrenceEndDate: true,
       originalEventId: true,
+      seriesId: true,
       project: {
         select: {
           id: true,
@@ -537,5 +540,111 @@ export const getTaskCategories = async () => {
     orderBy: {
       name: "asc",
     },
+  });
+};
+
+// ── Task Series ──────────────────────────────────────────────────────────────
+
+type SeriesFrequency = "WEEKLY" | "FORTNIGHTLY" | "MONTHLY";
+
+function generateSeriesDates(startDate: Date, frequency: SeriesFrequency, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  let current = new Date(startDate);
+
+  while (true) {
+    if (frequency === "WEEKLY") current = addDays(current, 7);
+    else if (frequency === "FORTNIGHTLY") current = addDays(current, 14);
+    else current = addMonths(current, 1);
+
+    if (!isBefore(current, endDate) && !isEqual(current, endDate)) break;
+    dates.push(new Date(current));
+  }
+
+  return dates;
+}
+
+async function copyDescendants(
+  originalParentId: string,
+  newParentId: string,
+  memberId: string,
+) {
+  const children = await prisma.task.findMany({
+    where: { parentId: originalParentId },
+  });
+
+  for (const child of children) {
+    const { id, createdAt, updatedAt, parentId: _p, seriesId: _s, ...childData } = child;
+    void id; void createdAt; void updatedAt; void _p; void _s;
+    const childCopy = await prisma.task.create({
+      data: { ...childData, parentId: newParentId, createdById: memberId, seriesId: null },
+    });
+    await copyDescendants(child.id, childCopy.id, memberId);
+  }
+}
+
+export const generateTaskSeries = async (
+  taskId: string,
+  frequency: SeriesFrequency,
+  endDate: Date,
+  memberId: string,
+) => {
+  const original = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!original || !original.dueDate) {
+    throw new Error("Task must have a due date to create a series");
+  }
+
+  const seriesId = uuidv4();
+
+  await prisma.task.update({ where: { id: taskId }, data: { seriesId } });
+
+  const dates = generateSeriesDates(original.dueDate, frequency, endDate);
+
+  const highestPos = await getHighestPositionTask(original.workspaceId, original.status);
+  let nextPosition = highestPos ? highestPos.position + 1 : 0;
+
+  const { id, createdAt, updatedAt, parentId, seriesId: _s, ...taskData } = original;
+  void id; void createdAt; void updatedAt; void parentId; void _s;
+
+  for (const date of dates) {
+    const copy = await prisma.task.create({
+      data: {
+        ...taskData,
+        dueDate: date,
+        seriesId,
+        createdById: memberId,
+        position: nextPosition++,
+      },
+    });
+    await copyDescendants(taskId, copy.id, memberId);
+  }
+
+  return { seriesId, count: dates.length };
+};
+
+export const deleteTaskSeries = async (
+  seriesId: string,
+  scope: "all" | "upcoming",
+) => {
+  const where: Prisma.TaskWhereInput = { seriesId, parentId: null };
+
+  if (scope === "upcoming") {
+    where.dueDate = { gte: new Date() };
+  }
+
+  // Collect parent-level series tasks; children cascade-delete automatically.
+  const tasks = await prisma.task.findMany({ where, select: { id: true } });
+  const ids = tasks.map((t) => t.id);
+
+  if (ids.length === 0) return 0;
+
+  await prisma.task.deleteMany({ where: { id: { in: ids } } });
+  return ids.length;
+};
+
+export const getSeriesTasks = async (seriesId: string) => {
+  return await prisma.task.findMany({
+    where: { seriesId, parentId: null },
+    select: { id: true, name: true, dueDate: true, status: true },
+    orderBy: { dueDate: "asc" },
   });
 };

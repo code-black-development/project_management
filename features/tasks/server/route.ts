@@ -14,6 +14,9 @@ import {
   getTaskCategories,
   searchTasks,
   updateTask,
+  generateTaskSeries,
+  deleteTaskSeries,
+  getSeriesTasks,
 } from "@/lib/dbService/tasks";
 import {
   createEvent,
@@ -323,6 +326,60 @@ const app = new Hono()
       return c.json({ data: updatedTasks });
     }
   )
+  .post(
+    "/:taskId/series",
+    zValidator("param", z.object({ taskId: z.string() })),
+    zValidator("json", z.object({
+      frequency: z.enum(["WEEKLY", "FORTNIGHTLY", "MONTHLY"]),
+      endDate: z.string(),
+    })),
+    async (c) => {
+      const userId = c.get("userId");
+      if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+      const { taskId } = c.req.valid("param");
+      const { frequency, endDate } = c.req.valid("json");
+
+      const task = await getTaskById(taskId);
+      if (!task) return c.json({ error: "Task not found" }, 404);
+
+      const member = await getMemberByUserIdAndWorkspaceId(userId, task.workspaceId);
+      if (!member) return c.json({ error: "Forbidden" }, 403);
+
+      const result = await generateTaskSeries(
+        taskId,
+        frequency,
+        new Date(endDate),
+        member.id,
+      );
+
+      return c.json({ data: result });
+    }
+  )
+  .get(
+    "/series/:seriesId",
+    zValidator("param", z.object({ seriesId: z.string() })),
+    async (c) => {
+      const { seriesId } = c.req.valid("param");
+      const tasks = await getSeriesTasks(seriesId);
+      return c.json({ data: tasks });
+    }
+  )
+  .delete(
+    "/series/:seriesId",
+    zValidator("param", z.object({ seriesId: z.string() })),
+    zValidator("query", z.object({ scope: z.enum(["all", "upcoming"]) })),
+    async (c) => {
+      const userId = c.get("userId");
+      if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+      const { seriesId } = c.req.valid("param");
+      const { scope } = c.req.valid("query");
+
+      const deleted = await deleteTaskSeries(seriesId, scope);
+      return c.json({ data: { deleted } });
+    }
+  )
   .get("/:taskId", async (c) => {
     const { taskId } = c.req.param();
     //TODO: we should check if the user is a member of the workspace and has permission
@@ -603,6 +660,7 @@ const app = new Hono()
           ? new Date(recurrenceEndDate)
           : null,
         originalEventId: null,
+        seriesId: null,
       };
 
       const task = await createTask(taskData);

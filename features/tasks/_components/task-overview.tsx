@@ -8,6 +8,7 @@ import {
   CopyIcon,
   ExternalLinkIcon,
   MoreHorizontalIcon,
+  RefreshCwIcon,
   TrashIcon,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ import { useCloneTask } from "../api/use-clone-task";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteEvent } from "../api/use-delete-event";
 import { useDeleteTask } from "../api/use-delete-task";
+import { useDeleteTaskSeries } from "../api/use-delete-task-series";
 import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useGetTaskCategories } from "../hooks/use-get-task-categories";
@@ -46,6 +48,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import CreateSeriesModal from "./create-series-modal";
 
 interface TaskOverviewProps {
   task: TaskWithUser;
@@ -116,6 +119,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
   const { mutate: cloneTask, isPending: isCloningTask } = useCloneTask();
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask();
   const { mutate: deleteEvent, isPending: isDeletingEvent } = useDeleteEvent();
+  const { mutate: deleteSeries, isPending: isDeletingSeries } = useDeleteTaskSeries();
   const router = useRouter();
   const isEvent = task.taskType === TaskType.EVENT;
   const isDeleting = isDeletingTask || isDeletingEvent;
@@ -123,6 +127,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
 
   const [name, setName] = useState(task.name);
   const [timeEstimate, setTimeEstimate] = useState(task.timeEstimate ?? "");
+  const [seriesModalOpen, setSeriesModalOpen] = useState(false);
 
   useEffect(() => {
     setName(task.name);
@@ -136,6 +141,35 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
       : "This action cannot be undone.",
     "destructive"
   );
+
+  const [ConfirmDeleteAllSeries, confirmDeleteAllSeries] = useConfirm(
+    "Delete entire series",
+    "This will delete all tasks in this series, including past ones. This cannot be undone.",
+    "destructive"
+  );
+
+  const [ConfirmDeleteUpcomingSeries, confirmDeleteUpcomingSeries] = useConfirm(
+    "Delete upcoming tasks",
+    "This will delete all future tasks in this series. Past tasks will remain.",
+    "destructive"
+  );
+
+  const handleDeleteSeriesAll = async () => {
+    if (!task.seriesId) return;
+    const ok = await confirmDeleteAllSeries();
+    if (!ok) return;
+    deleteSeries(
+      { seriesId: task.seriesId, scope: "all" },
+      { onSuccess: () => router.push(`/workspaces/${workspaceId}/tasks`) },
+    );
+  };
+
+  const handleDeleteSeriesUpcoming = async () => {
+    if (!task.seriesId) return;
+    const ok = await confirmDeleteUpcomingSeries();
+    if (!ok) return;
+    deleteSeries({ seriesId: task.seriesId, scope: "upcoming" });
+  };
 
   const patchTask = (json: Parameters<typeof updateTask>[0]["json"]) => {
     updateTask({
@@ -182,6 +216,15 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
   return (
     <>
       <ConfirmDialog />
+      <ConfirmDeleteAllSeries />
+      <ConfirmDeleteUpcomingSeries />
+      <CreateSeriesModal
+        taskId={task.id}
+        taskName={task.name}
+        taskDueDate={task.dueDate}
+        open={seriesModalOpen}
+        onClose={() => setSeriesModalOpen(false)}
+      />
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
           <p className="text-sm font-semibold text-foreground">Overview</p>
@@ -191,7 +234,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 <MoreHorizontalIcon className="size-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="dark:bg-card dark:text-foreground">
               <DropdownMenuItem
                 onClick={() => cloneTask({ taskId: task.id })}
                 disabled={isCloningTask}
@@ -199,6 +242,12 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 <CopyIcon className="size-4 mr-2" />
                 Clone task
               </DropdownMenuItem>
+              {!isEvent && (
+                <DropdownMenuItem onClick={() => setSeriesModalOpen(true)}>
+                  <RefreshCwIcon className="size-4 mr-2" />
+                  Create repeated task
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleDelete}
@@ -427,6 +476,34 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 </EditableRow>
               )}
             </>
+          )}
+
+          {task.seriesId && !isEvent && (
+            <div className="border-t border-border pt-4 flex flex-col gap-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Repeated task series
+              </p>
+              <div className="flex items-center gap-x-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isDeletingSeries}
+                  onClick={handleDeleteSeriesUpcoming}
+                  className="text-xs"
+                >
+                  Delete upcoming
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={isDeletingSeries}
+                  onClick={handleDeleteSeriesAll}
+                  className="text-xs"
+                >
+                  Delete all
+                </Button>
+              </div>
+            </div>
           )}
 
           {isUpdating && (

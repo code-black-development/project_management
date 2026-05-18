@@ -1,0 +1,37 @@
+"use client";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+interface DeleteTaskSeriesRequest {
+  seriesId: string;
+  scope: "all" | "upcoming";
+}
+
+export const useDeleteTaskSeries = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ data: { deleted: number } }, Error, DeleteTaskSeriesRequest>({
+    mutationFn: async ({ seriesId, scope }) => {
+      const response = await fetch(
+        `/api/tasks/series/${seriesId}?scope=${scope}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to delete series");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, { scope }) => {
+      const label = scope === "all" ? "All series tasks deleted" : "Upcoming series tasks deleted";
+      toast.success(`${label} (${data.data.deleted} removed)`);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete series");
+    },
+  });
+};

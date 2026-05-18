@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Editor } from "@/components/editor";
 
-import { ArrowLeftIcon, UserRound } from "lucide-react";
+import { ArrowLeftIcon, RefreshCwIcon, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { TaskStatus } from "@prisma/client";
 
@@ -32,6 +32,7 @@ import { useUpdateTask } from "../api/use-update-task";
 import { useCreateTask } from "../api/use-create-task";
 import { useDeleteTask } from "../api/use-delete-task";
 import { useCreateChildTask } from "../hooks/use-create-child-task";
+import { useCreateTaskSeries } from "../api/use-create-task-series";
 import { useGetTaskCategories } from "../hooks/use-get-task-categories";
 import DatePicker from "@/components/date-picker";
 import {
@@ -126,14 +127,19 @@ const TaskForm = ({
   const { mutate: updateTask, isPending: isUpdating } = useUpdateTask();
   const { mutate: createTask, isPending: isCreating } = useCreateTask({
     redirectOnSuccess: false,
-    onSuccess: handleFormSuccess,
   });
   const { mutate: createChildTask, isPending: isCreatingChild } =
     useCreateChildTask();
+  const { mutate: createSeries, isPending: isCreatingSeries } = useCreateTaskSeries();
 
-  const isPending = isUpdating || isCreating || isCreatingChild;
+  const isPending = isUpdating || isCreating || isCreatingChild || isCreatingSeries;
 
   const { mutate: deleteTask } = useDeleteTask();
+
+  const isCreateMode = !initialValues && !parentTaskInfo;
+  const [seriesEnabled, setSeriesEnabled] = useState(false);
+  const [seriesFrequency, setSeriesFrequency] = useState<"WEEKLY" | "FORTNIGHTLY" | "MONTHLY">("WEEKLY");
+  const [seriesEndDate, setSeriesEndDate] = useState<Date | undefined>(undefined);
 
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Task",
@@ -281,19 +287,33 @@ const TaskForm = ({
         }
       );
     } else {
-      createTask({
-        json: {
-          name: values.name,
-          status: values.status,
-          projectId: values.projectId,
-          workspaceId: values.workspaceId,
-          dueDate: values.dueDate || null,
-          assigneeId: values.assigneeId || null,
-          description: values.description || null,
-          timeEstimate: values.timeEstimate || null,
-          categoryId: values.categoryId || null,
+      createTask(
+        {
+          json: {
+            name: values.name,
+            status: values.status,
+            projectId: values.projectId,
+            workspaceId: values.workspaceId,
+            dueDate: values.dueDate || null,
+            assigneeId: values.assigneeId || null,
+            description: values.description || null,
+            timeEstimate: values.timeEstimate || null,
+            categoryId: values.categoryId || null,
+          },
         },
-      });
+        {
+          onSuccess: ({ data }) => {
+            if (seriesEnabled && seriesEndDate) {
+              createSeries(
+                { taskId: data.id, frequency: seriesFrequency, endDate: seriesEndDate.toISOString() },
+                { onSuccess: handleFormSuccess },
+              );
+            } else {
+              handleFormSuccess();
+            }
+          },
+        },
+      );
     }
   };
 
@@ -696,6 +716,64 @@ const TaskForm = ({
                       </FormItem>
                     )}
                   />
+
+                  {isCreateMode && (
+                    <div className="flex flex-col gap-y-3 border-t border-border pt-4">
+                      <div
+                        role="button"
+                        className={cn(
+                          "flex items-center gap-x-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors cursor-pointer",
+                          seriesEnabled
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border bg-background text-muted-foreground hover:bg-accent"
+                        )}
+                        onClick={() => setSeriesEnabled((v) => !v)}
+                      >
+                        <Checkbox
+                          checked={seriesEnabled}
+                          onCheckedChange={(checked) => setSeriesEnabled(Boolean(checked))}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <RefreshCwIcon className="size-3.5 shrink-0" />
+                        <span>Repeat this task</span>
+                      </div>
+
+                      {seriesEnabled && (
+                        <div className="flex flex-col gap-y-3 pl-1">
+                          <div className="flex flex-col gap-y-1.5">
+                            <p className="text-xs text-muted-foreground">Frequency</p>
+                            <Select
+                              value={seriesFrequency}
+                              onValueChange={(v) => setSeriesFrequency(v as typeof seriesFrequency)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="WEEKLY">Weekly</SelectItem>
+                                <SelectItem value="FORTNIGHTLY">Fortnightly</SelectItem>
+                                <SelectItem value="MONTHLY">Monthly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex flex-col gap-y-1.5">
+                            <p className="text-xs text-muted-foreground">
+                              End date <span className="text-destructive">*</span>
+                            </p>
+                            <DatePicker
+                              value={seriesEndDate}
+                              onChange={setSeriesEndDate}
+                              placeholder="Pick an end date"
+                            />
+                            {!seriesEndDate && (
+                              <p className="text-xs text-destructive">Required for repeated tasks</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -710,7 +788,7 @@ const TaskForm = ({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending || (seriesEnabled && !seriesEndDate)}>
                 {action} Task
               </Button>
             </div>

@@ -10,7 +10,7 @@ type RequestType = InferRequestType<(typeof client.api.tasks)["$post"]>;
 
 interface UseCreateTaskOptions {
   redirectOnSuccess?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (data: ResponseType["data"]) => void;
 }
 
 export function useCreateTask(options: UseCreateTaskOptions = {}) {
@@ -34,9 +34,8 @@ export function useCreateTask(options: UseCreateTaskOptions = {}) {
       toast.success("Task created");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       
-      // Call the provided onSuccess callback first
       if (onSuccess) {
-        onSuccess();
+        onSuccess(data);
       }
       
       // Redirect to task detail page for new tasks
