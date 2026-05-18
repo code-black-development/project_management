@@ -460,7 +460,7 @@ const TaskForm = ({
                               <div
                                 role="button"
                                 className={optionClassName(!field.value)}
-                                onClick={() => field.onChange("")}
+                                onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(""); }}
                               >
                                 <Checkbox
                                   checked={!field.value}
@@ -484,7 +484,7 @@ const TaskForm = ({
                                     className={optionClassName(
                                       field.value === member.id
                                     )}
-                                    onClick={() => field.onChange(member.id)}
+                                    onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(member.id); }}
                                   >
                                     <Checkbox
                                       checked={field.value === member.id}
@@ -614,7 +614,7 @@ const TaskForm = ({
                                   className={compactOptionClassName(
                                     !field.value
                                   )}
-                                  onClick={() => field.onChange("")}
+                                  onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(""); }}
                                 >
                                   <Checkbox
                                     checked={!field.value}
@@ -631,7 +631,7 @@ const TaskForm = ({
                                   className={compactOptionClassName(
                                     field.value === category.id
                                   )}
-                                  onClick={() => field.onChange(category.id)}
+                                  onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(category.id); }}
                                 >
                                   <Checkbox
                                     checked={field.value === category.id}

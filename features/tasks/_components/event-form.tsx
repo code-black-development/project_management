@@ -220,7 +220,7 @@ const EventForm = ({
                               <div
                                 role="button"
                                 className={optionClassName(!field.value)}
-                                onClick={() => field.onChange("")}
+                                onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(""); }}
                               >
                                 <Checkbox
                                   checked={!field.value}
@@ -241,7 +241,7 @@ const EventForm = ({
                                     key={`${member.workspaceId}_${member.userId}`}
                                     role="button"
                                     className={optionClassName(field.value === member.id)}
-                                    onClick={() => field.onChange(member.id)}
+                                    onClick={(e) => { if ((e.target as HTMLElement).tagName === "INPUT") return; field.onChange(member.id); }}
                                   >
                                     <Checkbox
                                       checked={field.value === member.id}
