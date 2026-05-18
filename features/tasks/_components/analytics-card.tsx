@@ -21,7 +21,7 @@ const AnalyticsCard = ({
       : "text-red-600 dark:text-red-400";
 
   return (
-    <div className="flex flex-col gap-y-1 px-6 py-4 w-full min-w-[140px]">
+    <div className="flex flex-col gap-y-1 px-6 py-4 w-full">
       <span className="text-3xl font-semibold tracking-tight text-foreground">
         {value}
       </span>

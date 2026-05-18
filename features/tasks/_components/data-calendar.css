@@ -10,8 +10,12 @@
   @apply text-sm font-normal text-muted-foreground;
 }
 
+.data-calendar .rbc-month-view {
+  overflow: visible;
+}
+
 .rbc-month-row {
-  @apply min-h-[180px] border-t border-x;
+  @apply min-h-[180px] flex-1 basis-0 border-t border-x;
 }
 
 .rbc-month-row:last-of-type {

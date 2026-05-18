@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -199,6 +200,27 @@ export const columns: ColumnDef<TaskListItem>[] = [
       const status = row.original.status!;
       return (
         <TaskBadge variant={status}>{snakeCaseToTitleCase(status)}</TaskBadge>
+      );
+    },
+  },
+  {
+    accessorKey: "createdAt",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Created
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      return (
+        <span className="text-sm text-muted-foreground">
+          {format(new Date(row.original.createdAt), "MMM d, yyyy")}
+        </span>
       );
     },
   },

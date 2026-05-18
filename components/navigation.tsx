@@ -60,7 +60,7 @@ const Navigation = () => {
         const isActive = pathname === fullPath;
         const Icon = isActive ? route.activeIcon : route.icon;
         return (
-          <Link href={fullPath} key={route.href}>
+          <Link href={fullPath} key={route.href} className="block text-inherit">
             <div
               className={cn(
                 "flex items-center gap-2.5 p-2.5 rounded-md font-medium transition text-neutral-600 hover:text-primary dark:text-white/55 dark:hover:text-primary",

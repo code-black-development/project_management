@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import MobileSidebar from "./mobile-sidebar";
-import DarkModeSwitch from "./dark-mode-switch";
 import UserButton from "@/features/auth/components/user-button";
 
 const pathnameMap = {
@@ -49,7 +48,6 @@ const Navbar = () => {
         )}
       </div>
       <div className="flex items-center gap-4">
-        <DarkModeSwitch />
         <UserButton />
       </div>
       <MobileSidebar />
