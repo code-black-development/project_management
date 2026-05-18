@@ -1,6 +1,6 @@
-import { TaskAssetFile } from "@/features/tasks/_components/task-assets";
 import { taskSearchSchema } from "@/features/tasks/schema";
 import prisma from "@/prisma/prisma";
+import type { TaskAssetFile } from "@/types/types";
 import { Prisma, Task, TaskStatus } from "@prisma/client";
 import { z } from "zod";
 

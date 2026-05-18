@@ -71,6 +71,12 @@ export type AssetSafeDate = Omit<TaskAsset, "createdAt" | "updatedAt"> & {
   updatedAt: string;
 };
 
+export type TaskAssetFile = {
+  name: string;
+  file: string;
+  type: string;
+};
+
 export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt"> & {
   createdAt: string;
   updatedAt: string;

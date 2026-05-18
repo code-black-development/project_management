@@ -26,7 +26,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
-import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
 

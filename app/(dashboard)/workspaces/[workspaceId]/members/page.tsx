@@ -12,7 +12,6 @@ import {
 } from "@/features/members/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 const MembersPage = async ({
   params,
