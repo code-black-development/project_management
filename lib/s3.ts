@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
+import prisma from "@/prisma/prisma";
 
 // S3 client configuration - AWS SDK will automatically read from env variables
 const s3Client = new S3Client({
@@ -18,6 +19,37 @@ const BUCKET_NAME = process.env.S3_BUCKET_NAME!;
 export interface UploadResult {
   key: string;
   url: string;
+}
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+};
+
+async function queueS3Cleanup(
+  key: string,
+  context: string,
+  error: unknown
+): Promise<void> {
+  try {
+    await prisma.s3CleanupJob.upsert({
+      where: { key },
+      update: {
+        context,
+        attempts: { increment: 1 },
+        lastError: getErrorMessage(error),
+        processedAt: null,
+      },
+      create: {
+        key,
+        context,
+        attempts: 1,
+        lastError: getErrorMessage(error),
+      },
+    });
+  } catch (queueError) {
+    console.error("Failed to queue S3 cleanup retry:", queueError);
+  }
 }
 
 export async function uploadToS3(
@@ -127,6 +159,10 @@ export async function deleteManyFromS3(
   keys: Array<string | null | undefined>,
   context: string = "S3 objects"
 ): Promise<void> {
+  await retryQueuedS3Cleanups(10).catch((error) => {
+    console.error("Failed to retry queued S3 cleanups:", error);
+  });
+
   const uniqueKeys = [...new Set(keys.filter((key): key is string => !!key))];
   if (uniqueKeys.length === 0) return;
 
@@ -134,11 +170,61 @@ export async function deleteManyFromS3(
     uniqueKeys.map((key) => deleteFromS3(key))
   );
 
-  const failedCount = results.filter(
-    (result) => result.status === "rejected"
-  ).length;
+  const failedResults = results
+    .map((result, index) => ({ result, key: uniqueKeys[index] }))
+    .filter(
+      (
+        entry
+      ): entry is {
+        result: PromiseRejectedResult;
+        key: string;
+      } => entry.result.status === "rejected"
+    );
+
+  await Promise.all(
+    failedResults.map(({ key, result }) =>
+      queueS3Cleanup(key, context, result.reason)
+    )
+  );
+
+  const failedCount = failedResults.length;
   if (failedCount > 0) {
-    console.error(`Failed to delete ${failedCount} ${context} from S3`);
+    console.error(
+      `Failed to delete ${failedCount} ${context} from S3; queued for retry`
+    );
+  }
+}
+
+export async function retryQueuedS3Cleanups(limit: number = 25): Promise<void> {
+  const jobs = await prisma.s3CleanupJob.findMany({
+    where: {
+      processedAt: null,
+    },
+    orderBy: {
+      updatedAt: "asc",
+    },
+    take: limit,
+  });
+
+  for (const job of jobs) {
+    try {
+      await deleteFromS3(job.key);
+      await prisma.s3CleanupJob.update({
+        where: { id: job.id },
+        data: {
+          processedAt: new Date(),
+          lastError: null,
+        },
+      });
+    } catch (error) {
+      await prisma.s3CleanupJob.update({
+        where: { id: job.id },
+        data: {
+          attempts: { increment: 1 },
+          lastError: getErrorMessage(error),
+        },
+      });
+    }
   }
 }
 

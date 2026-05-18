@@ -18,7 +18,6 @@ import { getOrCreateWorkspaceInvite } from "@/lib/dbService/workspace-invites";
 import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
 import {
   uploadToS3,
-  deleteFromS3,
   deleteManyFromS3,
   extractS3KeyFromUrl,
 } from "@/lib/s3";
@@ -64,7 +63,13 @@ const app = new Hono()
       }
     }
 
-    const workspace = await createWorkspace(name, fileUrl, userId!);
+    let workspace;
+    try {
+      workspace = await createWorkspace(name, fileUrl, userId!);
+    } catch (error) {
+      await deleteManyFromS3([fileUrl], "uploaded workspace image rollback");
+      throw error;
+    }
 
     return c.json({ data: workspace });
   })
@@ -83,18 +88,14 @@ const app = new Hono()
       }
 
       let fileUrl: string | null = existingWorkspace.image;
+      let uploadedImageKey: string | null = null;
+      const oldImageKey = existingWorkspace.image
+        ? extractS3KeyFromUrl(existingWorkspace.image)
+        : null;
 
       // Handle image update
       if (image instanceof File && image.size > 0) {
         try {
-          // Delete old image from S3 if it exists
-          if (existingWorkspace.image) {
-            const oldKey = extractS3KeyFromUrl(existingWorkspace.image);
-            if (oldKey) {
-              await deleteFromS3(oldKey);
-            }
-          }
-
           // Upload new image to S3
           const uploadResult = await uploadToS3(
             image,
@@ -102,29 +103,35 @@ const app = new Hono()
             image.name
           );
           fileUrl = uploadResult.url;
+          uploadedImageKey = uploadResult.key;
         } catch (error) {
           console.error("Failed to upload image:", error);
           return c.json({ error: "Failed to upload image" }, 500);
         }
       } else if (!image) {
-        // If no image provided, remove existing image
-        if (existingWorkspace.image) {
-          try {
-            const oldKey = extractS3KeyFromUrl(existingWorkspace.image);
-            if (oldKey) {
-              await deleteFromS3(oldKey);
-            }
-          } catch (error) {
-            console.error("Failed to delete old image:", error);
-          }
-        }
         fileUrl = null;
       }
 
-      const response = await updateWorkspace(userId, workspaceId, {
-        name,
-        image: fileUrl,
-      });
+      let response;
+      try {
+        response = await updateWorkspace(userId, workspaceId, {
+          name,
+          image: fileUrl,
+        });
+      } catch (error) {
+        if (uploadedImageKey) {
+          await deleteManyFromS3(
+            [uploadedImageKey],
+            "uploaded workspace image rollback"
+          );
+        }
+        throw error;
+      }
+
+      const newImageKey = fileUrl ? extractS3KeyFromUrl(fileUrl) : null;
+      if (oldImageKey && oldImageKey !== newImageKey) {
+        await deleteManyFromS3([oldImageKey], "old workspace image");
+      }
 
       return c.json({ data: response });
     }

@@ -54,7 +54,6 @@ import {
 } from "@/lib/dbService/task-worklogs";
 import {
   uploadToS3,
-  deleteFromS3,
   deleteManyFromS3,
   extractS3KeyFromUrl,
 } from "@/lib/s3";
@@ -78,15 +77,8 @@ const app = new Hono()
     // Get the asset to find the S3 key before deleting
     const asset = await getTaskAssetById(assetId);
     if (asset?.assetUrl) {
-      try {
-        const key = extractS3KeyFromUrl(asset.assetUrl);
-        if (key) {
-          await deleteFromS3(key);
-        }
-      } catch (error) {
-        console.error("Failed to delete asset from S3:", error);
-        // Don't fail the deletion if S3 cleanup fails
-      }
+      const key = extractS3KeyFromUrl(asset.assetUrl);
+      await deleteManyFromS3([key], "task asset");
     }
 
     const deletedAsset = await deleteTaskAsset(assetId);
@@ -104,11 +96,13 @@ const app = new Hono()
       }
 
       const uploadedFiles: TaskAssetFile[] = [];
+      const uploadedKeys: string[] = [];
 
       for (const file of files) {
         try {
           // Upload file to S3
           const uploadResult = await uploadToS3(file, "task-assets", file.name);
+          uploadedKeys.push(uploadResult.key);
 
           uploadedFiles.push({
             name: file.name,
@@ -117,15 +111,24 @@ const app = new Hono()
           });
         } catch (error) {
           console.error(`Failed to upload file ${file.name}:`, error);
+          await deleteManyFromS3(
+            uploadedKeys,
+            "uploaded task assets rollback"
+          );
           return c.json({ error: `Failed to upload file ${file.name}` }, 500);
         }
       }
 
-      await createTaskAssets(taskId, uploadedFiles);
+      try {
+        await createTaskAssets(taskId, uploadedFiles);
+      } catch (error) {
+        await deleteManyFromS3(uploadedKeys, "uploaded task assets rollback");
+        throw error;
+      }
       return c.json({ data: taskId });
     } catch (e) {
       console.error(e);
-      return c.json({ data: e });
+      return c.json({ error: "Failed to upload task assets" }, 500);
     }
   })
   .delete(

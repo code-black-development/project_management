@@ -206,6 +206,19 @@ model Worklog {
   @@index([memberId])
 }
 
+model S3CleanupJob {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  context     String?
+  attempts    Int       @default(0)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  @@index([processedAt, updatedAt])
+}
+
 enum TaskStatus {
   BACKLOG
   TODO

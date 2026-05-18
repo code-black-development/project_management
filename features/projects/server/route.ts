@@ -11,7 +11,6 @@ import { z } from "zod";
 import { createProjectSchema, updateProjectSchema } from "../schema";
 import {
   uploadToS3,
-  deleteFromS3,
   deleteManyFromS3,
   extractS3KeyFromUrl,
 } from "@/lib/s3";
@@ -87,37 +86,23 @@ const app = new Hono()
       }
 
       let fileUrl: string | null = existingProject.image;
+      let uploadedImageKey: string | null = null;
+      const oldImageKey = existingProject.image
+        ? extractS3KeyFromUrl(existingProject.image)
+        : null;
 
       // Handle image update
       if (image instanceof File && image.size > 0) {
         try {
-          // Delete old image from S3 if it exists
-          if (existingProject.image) {
-            const oldKey = extractS3KeyFromUrl(existingProject.image);
-            if (oldKey) {
-              await deleteFromS3(oldKey);
-            }
-          }
-
           // Upload new image to S3
           const uploadResult = await uploadToS3(image, "projects", image.name);
           fileUrl = uploadResult.url;
+          uploadedImageKey = uploadResult.key;
         } catch (error) {
           console.error("Failed to upload image:", error);
           return c.json({ error: "Failed to upload image" }, 500);
         }
       } else if (!image) {
-        // If no image provided, remove existing image
-        if (existingProject.image) {
-          try {
-            const oldKey = extractS3KeyFromUrl(existingProject.image);
-            if (oldKey) {
-              await deleteFromS3(oldKey);
-            }
-          } catch (error) {
-            console.error("Failed to delete old image:", error);
-          }
-        }
         fileUrl = null;
       }
 
@@ -131,7 +116,23 @@ const app = new Hono()
       if (taskAssignmentEmail !== undefined)
         updateData.taskAssignmentEmail = taskAssignmentEmail;
 
-      const project = await updateProject(projectId, updateData);
+      let project;
+      try {
+        project = await updateProject(projectId, updateData);
+      } catch (error) {
+        if (uploadedImageKey) {
+          await deleteManyFromS3(
+            [uploadedImageKey],
+            "uploaded project image rollback"
+          );
+        }
+        throw error;
+      }
+
+      const newImageKey = fileUrl ? extractS3KeyFromUrl(fileUrl) : null;
+      if (oldImageKey && oldImageKey !== newImageKey) {
+        await deleteManyFromS3([oldImageKey], "old project image");
+      }
 
       return c.json({ data: project });
     }
@@ -174,14 +175,20 @@ const app = new Hono()
         }
       }
 
-      const project = await createProject({
-        name,
-        workspaceId,
-        image: fileUrl,
-        autoHideChildTasks: autoHideChildTasks || false,
-        autoHideCompletedTasks: autoHideCompletedTasks || false,
-        taskAssignmentEmail: taskAssignmentEmail ?? true,
-      });
+      let project;
+      try {
+        project = await createProject({
+          name,
+          workspaceId,
+          image: fileUrl,
+          autoHideChildTasks: autoHideChildTasks || false,
+          autoHideCompletedTasks: autoHideCompletedTasks || false,
+          taskAssignmentEmail: taskAssignmentEmail ?? true,
+        });
+      } catch (error) {
+        await deleteManyFromS3([fileUrl], "uploaded project image rollback");
+        throw error;
+      }
 
       return c.json({ data: project });
     }

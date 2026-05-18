@@ -3,7 +3,7 @@ import prisma from "@/prisma/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import bcrypt from "bcrypt";
-import { uploadToS3, deleteFromS3, extractS3KeyFromUrl } from "@/lib/s3";
+import { uploadToS3, deleteManyFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import {
   sendEmail,
   generatePasswordResetEmailTemplate,
@@ -188,22 +188,13 @@ const app = new Hono()
       });
 
       let imageUrl: string | null = currentUser?.image || null;
+      let uploadedImageKey: string | null = null;
+      const oldImageKey = currentUser?.image
+        ? extractS3KeyFromUrl(currentUser.image)
+        : null;
 
       // Handle image upload/update
       if (imageFile && imageFile.size > 0) {
-        // Delete old image from S3 if it exists
-        if (currentUser?.image) {
-          try {
-            const oldKey = extractS3KeyFromUrl(currentUser.image);
-            if (oldKey) {
-              await deleteFromS3(oldKey);
-            }
-          } catch (error) {
-            console.error("Failed to delete old profile image from S3:", error);
-            // Don't fail the update if S3 cleanup fails
-          }
-        }
-
         // Upload new image to S3
         const uploadResult = await uploadToS3(
           imageFile,
@@ -211,36 +202,44 @@ const app = new Hono()
           imageFile.name
         );
         imageUrl = uploadResult.key; // Store S3 key instead of full URL
+        uploadedImageKey = uploadResult.key;
       }
 
       // Handle image removal (when empty string is sent)
       const imageValue = formData.get("image");
       if (imageValue === "" && currentUser?.image) {
-        // Delete old image from S3
-        try {
-          const oldKey = extractS3KeyFromUrl(currentUser.image);
-          if (oldKey) {
-            await deleteFromS3(oldKey);
-          }
-        } catch (error) {
-          console.error("Failed to delete profile image from S3:", error);
-        }
         imageUrl = null;
       }
 
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          name: name.trim(),
-          ...(imageFile || imageValue === "" ? { image: imageUrl } : {}),
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-        },
-      });
+      let user;
+      try {
+        user = await prisma.user.update({
+          where: { id: userId },
+          data: {
+            name: name.trim(),
+            ...(imageFile || imageValue === "" ? { image: imageUrl } : {}),
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        });
+      } catch (error) {
+        if (uploadedImageKey) {
+          await deleteManyFromS3(
+            [uploadedImageKey],
+            "uploaded profile image rollback"
+          );
+        }
+        throw error;
+      }
+
+      const newImageKey = imageUrl ? extractS3KeyFromUrl(imageUrl) : null;
+      if (oldImageKey && oldImageKey !== newImageKey) {
+        await deleteManyFromS3([oldImageKey], "old profile image");
+      }
 
       return c.json({ data: user });
     } catch (error) {
