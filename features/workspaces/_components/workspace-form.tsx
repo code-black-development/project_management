@@ -204,7 +204,7 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
                       <input
                         className="hidden"
                         type="file"
-                        accept=".jpg,.png,.jpeg,.svg"
+                        accept=".jpg,.png,.jpeg,.svg,.webp"
                         ref={inputRef}
                         disabled={isPending}
                         onChange={handleImageChange}

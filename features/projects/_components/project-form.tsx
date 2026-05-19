@@ -210,7 +210,7 @@ const ProjectForm = ({ initialValues, onCancel }: ProjectFormProps) => {
                       <input
                         className="hidden"
                         type="file"
-                        accept=".jpg,.png,.jpeg,.svg"
+                        accept=".jpg,.png,.jpeg,.svg,.webp"
                         ref={inputRef}
                         disabled={isPending}
                         onChange={handleImageChange}

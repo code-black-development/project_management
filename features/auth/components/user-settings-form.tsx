@@ -201,7 +201,7 @@ const UserSettingsForm = ({ onCancel }: UserSettingsFormProps) => {
                         <input
                           className="hidden"
                           type="file"
-                          accept=".jpg, .png, .jpeg"
+                          accept=".jpg,.png,.jpeg,.webp"
                           ref={inputRef}
                           disabled={isPending}
                           onChange={handleImageChange}

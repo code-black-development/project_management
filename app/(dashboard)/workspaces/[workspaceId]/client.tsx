@@ -80,6 +80,8 @@ const WorkspaceIdClient = () => {
   const taskGroups = getTaskGroups(tasks, currentMember?.id);
   const projectHotspots = getProjectHotspots(projects, taskGroups.overdue);
   const recentActivity = getRecentActivity(tasks, projects, members.data);
+  const overdueCount = taskGroups.overdue.length;
+  const unassignedCount = taskGroups.unassigned.length;
 
   return (
     <div className="h-full flex flex-col gap-y-6">
@@ -94,11 +96,10 @@ const WorkspaceIdClient = () => {
       </div>
 
       <SummaryStrip
-        overdue={taskGroups.overdue.length}
-        dueSoon={taskGroups.dueSoon.length}
-        assignedToMe={taskGroups.myTasks.length}
-        unassigned={taskGroups.unassigned.length}
-        inReview={taskGroups.inReview.length}
+        overdue={overdueCount}
+        unassigned={unassignedCount}
+        recentlyCompleted={taskGroups.recentlyCompleted.length}
+        needsAttention={taskGroups.needsAttention.length}
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
@@ -108,27 +109,13 @@ const WorkspaceIdClient = () => {
             workspaceId={workspaceId}
           />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <TaskQueueSection
-              title="My tasks"
-              description="Prioritized by overdue and upcoming deadlines."
-              tasks={taskGroups.myTasks}
+            <UnassignedSection
+              tasks={taskGroups.unassigned}
               workspaceId={workspaceId}
-              emptyMessage="Nothing is assigned to you right now."
-              ctaHref={
-                currentMember
-                  ? `/workspaces/${workspaceId}/tasks?assigneeId=${currentMember.id}`
-                  : `/workspaces/${workspaceId}/tasks`
-              }
-              ctaLabel="View my tasks"
             />
-            <TaskQueueSection
-              title="Due soon"
-              description="Open tasks due in the next 7 days."
-              tasks={taskGroups.dueSoon}
+            <RecentlyCompletedSection
+              tasks={taskGroups.recentlyCompleted}
               workspaceId={workspaceId}
-              emptyMessage="No upcoming deadlines in the next week."
-              ctaHref={`/workspaces/${workspaceId}/tasks`}
-              ctaLabel="Open task list"
             />
           </div>
         </div>
@@ -150,23 +137,20 @@ const WorkspaceIdClient = () => {
 
 const SummaryStrip = ({
   overdue,
-  dueSoon,
-  assignedToMe,
   unassigned,
-  inReview,
+  recentlyCompleted,
+  needsAttention,
 }: {
   overdue: number;
-  dueSoon: number;
-  assignedToMe: number;
   unassigned: number;
-  inReview: number;
+  recentlyCompleted: number;
+  needsAttention: number;
 }) => {
   const stats = [
     { value: overdue, label: "overdue" },
-    { value: dueSoon, label: "due soon" },
-    { value: assignedToMe, label: "assigned to me" },
+    { value: needsAttention, label: "needs attention" },
     { value: unassigned, label: "unassigned" },
-    { value: inReview, label: "in review" },
+    { value: recentlyCompleted, label: "completed recently" },
   ];
 
   return (
@@ -200,7 +184,7 @@ const NeedsAttentionSection = ({
       <div>
         <p className="text-sm font-semibold text-foreground">Needs attention</p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Overdue, due today, unassigned, in review, or stale.
+          Your overdue and upcoming todo and in-progress tasks.
         </p>
       </div>
       <Button variant="muted" size="sm" asChild>
@@ -221,38 +205,55 @@ const NeedsAttentionSection = ({
   </section>
 );
 
-const TaskQueueSection = ({
-  title,
-  description,
+const UnassignedSection = ({
   tasks,
   workspaceId,
-  emptyMessage,
-  ctaHref,
-  ctaLabel,
 }: {
-  title: string;
-  description: string;
   tasks: DashboardTask[];
   workspaceId: string;
-  emptyMessage: string;
-  ctaHref: string;
-  ctaLabel: string;
 }) => (
   <section className="bg-card border border-border rounded-xl p-5">
     <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
       <div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        <p className="text-sm font-semibold text-foreground">Unassigned</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Open tasks with no owner.
+        </p>
       </div>
       <Button variant="muted" size="sm" asChild>
-        <Link href={ctaHref}>{ctaLabel}</Link>
+        <Link href={`/workspaces/${workspaceId}/tasks`}>View all</Link>
       </Button>
     </div>
     <TaskRows
       tasks={tasks}
       workspaceId={workspaceId}
       limit={5}
-      emptyMessage={emptyMessage}
+      emptyMessage="All open tasks have an owner."
+    />
+  </section>
+);
+
+const RecentlyCompletedSection = ({
+  tasks,
+  workspaceId,
+}: {
+  tasks: DashboardTask[];
+  workspaceId: string;
+}) => (
+  <section className="bg-card border border-border rounded-xl p-5">
+    <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Recently completed</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Tasks marked done across the workspace.
+        </p>
+      </div>
+    </div>
+    <TaskRows
+      tasks={tasks}
+      workspaceId={workspaceId}
+      limit={5}
+      emptyMessage="No tasks have been completed yet."
     />
   </section>
 );
@@ -501,7 +502,9 @@ const getTaskGroups = (tasks: DashboardTask[], currentMemberId?: string) => {
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
   const soonEnd = endOfDay(addDays(now, 7));
-  const openTasks = tasks.filter((task) => task.status !== TaskStatus.DONE);
+  const openTasks = tasks.filter(
+    (task) => task.status !== TaskStatus.DONE && task.status !== TaskStatus.BACKLOG
+  );
   const overdue = openTasks.filter(
     (task) => task.dueDate && isBefore(new Date(task.dueDate), todayStart)
   );
@@ -523,26 +526,46 @@ const getTaskGroups = (tasks: DashboardTask[], currentMemberId?: string) => {
   const myTasks = currentMemberId
     ? openTasks.filter((task) => task.assigneeId === currentMemberId)
     : [];
-  const unassigned = openTasks.filter((task) => !task.assigneeId);
-  const inReview = openTasks.filter((task) => task.status === TaskStatus.IN_REVIEW);
-  const staleUnowned = unassigned.filter((task) =>
-    isBefore(new Date(task.updatedAt), addDays(now, -7))
+  const unassigned = sortByUrgency(
+    openTasks.filter(
+      (task) =>
+        !task.assigneeId &&
+        (task.status === TaskStatus.TODO || task.status === TaskStatus.IN_PROGRESS)
+    )
+  );
+  const recentlyCompleted = sortByUpdatedAt(
+    tasks.filter((task) => task.status === TaskStatus.DONE)
+  ).slice(0, 10);
+
+  const myActiveTasks = myTasks.filter(
+    (task) =>
+      task.status === TaskStatus.TODO || task.status === TaskStatus.IN_PROGRESS
+  );
+  const myOverdue = myActiveTasks.filter(
+    (task) => task.dueDate && isBefore(new Date(task.dueDate), todayStart)
+  );
+  const myDueToday = myActiveTasks.filter(
+    (task) =>
+      task.dueDate &&
+      isWithinInterval(new Date(task.dueDate), { start: todayStart, end: todayEnd })
+  );
+  const myDueSoon = myActiveTasks.filter(
+    (task) =>
+      task.dueDate &&
+      isAfter(new Date(task.dueDate), todayEnd) &&
+      isWithinInterval(new Date(task.dueDate), { start: todayStart, end: soonEnd })
   );
 
   const needsAttention = uniqueTasks([
-    ...sortByUrgency(overdue),
-    ...sortByUrgency(dueToday),
-    ...sortByUpdatedAt(inReview),
-    ...sortByUrgency(unassigned),
-    ...sortByUpdatedAt(staleUnowned),
+    ...sortByUrgency(myOverdue),
+    ...sortByUrgency(myDueToday),
+    ...sortByUrgency(myDueSoon),
   ]);
 
   return {
     overdue: sortByUrgency(overdue),
-    dueSoon: sortByUrgency([...dueToday, ...dueSoon]),
-    myTasks: sortByUrgency(myTasks),
-    unassigned: sortByUrgency(unassigned),
-    inReview: sortByUpdatedAt(inReview),
+    unassigned,
+    recentlyCompleted,
     needsAttention,
   };
 };
@@ -578,27 +601,11 @@ const uniqueTasks = (tasks: DashboardTask[]) => {
 const getAttentionReason = (task: DashboardTask) => {
   if (task.dueDate) {
     const dueDate = new Date(task.dueDate);
-
-    if (isBefore(dueDate, startOfDay(new Date()))) {
-      return "Overdue";
-    }
-
-    if (isToday(dueDate)) {
-      return "Due today";
-    }
+    if (isBefore(dueDate, startOfDay(new Date()))) return "Overdue";
+    if (isToday(dueDate)) return "Due today";
+    return "Due soon";
   }
-
-  if (task.status === TaskStatus.IN_REVIEW) {
-    return "In review";
-  }
-
-  if (!task.assigneeId) {
-    return isBefore(new Date(task.updatedAt), addDays(new Date(), -7))
-      ? "No owner"
-      : "Unassigned";
-  }
-
-  return "Needs attention";
+  return "No due date";
 };
 
 const formatDueDate = (task: DashboardTask) => {
