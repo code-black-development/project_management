@@ -1,38 +1,29 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-if (!process.env.SMTP_HOST) {
-  throw new Error("SMTP_HOST is not set");
-}
-if (!process.env.SMTP_USER) {
-  throw new Error("SMTP_USER is not set");
-}
-if (!process.env.SMTP_PASS) {
-  throw new Error("SMTP_PASS is not set");
-}
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  try {
-    await transporter.sendMail({
-      from: '"fasta.work" <noreply@fasta.work>',
-      to,
-      subject,
-      html,
-    });
-  } catch (error) {
+  if (!resend) {
+    // In development without a Resend key, log the email instead of sending
+    console.log(`[EMAIL - no RESEND_API_KEY set]`);
+    console.log(`  To: ${to}`);
+    console.log(`  Subject: ${subject}`);
+    console.log(`  Body preview: ${html.slice(0, 200).replace(/<[^>]+>/g, "")}...`);
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: "fasta.work <noreply@fasta.work>",
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
     console.error("Failed to send email to:", to, error);
-    throw new Error(
-      `Failed to send invitation email: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
+    throw new Error(`Failed to send email: ${error.message}`);
   }
 }
 
@@ -116,6 +107,61 @@ export async function generateEmailTemplate(
       </html>
     `;
   }
+}
+
+export function generateVerificationEmailTemplate(verifyLink: string, userName: string) {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head><meta charset="utf-8"><title>Verify your email</title></head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Verify your email</h1>
+        </div>
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #3B82F6;">
+          <p style="font-size: 16px;">Hi ${userName || "there"},</p>
+          <p style="font-size: 16px;">Thanks for signing up to fasta.work. Please verify your email address to get started.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verifyLink}" style="background: #3B82F6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+              Verify email address
+            </a>
+          </div>
+          <p style="color: #6c757d; font-size: 14px;">This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p>
+          <p style="color: #6c757d; font-size: 14px;">Or copy this link: ${verifyLink}</p>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+export function generateFrozenWorkspaceEmailTemplate(
+  workspaceNames: string[],
+  deletionDate: string,
+  upgradeLink: string
+) {
+  const list = workspaceNames.map((n) => `<li>${n}</li>`).join("");
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head><meta charset="utf-8"><title>Workspace frozen</title></head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #f59e0b; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Workspace frozen</h1>
+        </div>
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+          <p style="font-size: 16px;">The following workspace(s) have been frozen due to a plan downgrade:</p>
+          <ul>${list}</ul>
+          <p style="font-size: 16px;">These workspaces are <strong>read-only</strong> and will be <strong>permanently deleted on ${deletionDate}</strong>.</p>
+          <p style="font-size: 16px;">To restore them, upgrade your plan before the deletion date.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${upgradeLink}" style="background: #3B82F6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+              Upgrade plan
+            </a>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
 }
 
 export function generateInviteLink(code: string) {

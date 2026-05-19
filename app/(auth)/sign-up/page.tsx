@@ -3,23 +3,24 @@ import { getWorkspaceInvite } from "@/lib/dbService/workspace-invites";
 
 interface SignUpProps {
   searchParams: Promise<{
-    inviteCode: string;
+    inviteCode?: string;
   }>;
 }
+
 const SignUp = async ({ searchParams }: SignUpProps) => {
   const { inviteCode } = await searchParams;
 
-  const invite = await getWorkspaceInvite(inviteCode);
+  let workspaceName: string | undefined;
 
-  if (!invite) {
-    return (
-      <p>
-        The invite code provided is invalid - it may have already been used or
-        expired.
-      </p>
-    );
+  if (inviteCode) {
+    const invite = await getWorkspaceInvite(inviteCode);
+    if (invite) {
+      workspaceName = invite.workspace.name;
+    }
+    // If invite code is invalid we still show the form, just without workspace name
   }
 
-  return <SignUpCard />;
+  return <SignUpCard inviteCode={inviteCode} workspaceName={workspaceName} />;
 };
+
 export default SignUp;

@@ -7,6 +7,7 @@ import { uploadToS3, deleteManyFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import {
   sendEmail,
   generatePasswordResetEmailTemplate,
+  generateVerificationEmailTemplate,
 } from "@/lib/mailing-functions";
 import { randomBytes } from "crypto";
 
@@ -125,44 +126,101 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-        password: z.string(),
-        inviteCode: z.string(),
+        email: z.string().email(),
+        password: z.string().min(8),
+        name: z.string().optional(),
+        inviteCode: z.string().optional(),
       })
     ),
     async (c) => {
-      const { password, inviteCode } = c.req.valid("json");
-      // check for invitation code
-      const invitee = await getWorkspaceInvite(inviteCode);
-      if (!invitee) {
-        return c.json({ error: "Invalid invite code" }, 400);
+      const { email, password, name, inviteCode } = c.req.valid("json");
+
+      // If invite code provided, validate it first
+      let invitee: Awaited<ReturnType<typeof getWorkspaceInvite>> = null;
+      if (inviteCode) {
+        invitee = await getWorkspaceInvite(inviteCode);
+        if (!invitee) {
+          return c.json({ error: "Invalid invite code" }, 400);
+        }
+        // Invite email must match
+        if (invitee.inviteeEmail.toLowerCase() !== email.toLowerCase()) {
+          return c.json({ error: "Email does not match invite" }, 400);
+        }
       }
+
+      // Check if user already exists
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        return c.json({ error: "An account with this email already exists" }, 400);
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Look up Starter plan
+      const starterPlan = await prisma.plan.findUnique({ where: { name: "Starter" } });
+
       const user = await prisma.$transaction(async (tx) => {
-        //add user to users table
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await tx.user.create({
+        const newUser = await tx.user.create({
           data: {
-            email: invitee.inviteeEmail,
+            email,
             password: hashedPassword,
-          },
-        });
-        //add user to workspace members table
-        await tx.member.create({
-          data: {
-            userId: user.id,
-            workspaceId: invitee.workspaceId,
+            name: name ?? null,
           },
         });
 
-        //remove entry from invites table
-        await tx.workspaceInvites.delete({
-          where: {
-            code: inviteCode,
-          },
-        });
+        if (invitee && inviteCode) {
+          await tx.member.create({
+            data: {
+              userId: newUser.id,
+              workspaceId: invitee.workspaceId,
+            },
+          });
+          await tx.workspaceInvites.delete({
+            where: { code: inviteCode },
+          });
+        }
 
-        return user;
+        return newUser;
       });
-      return c.json({ data: user });
+
+      // Create subscription (non-fatal)
+      if (starterPlan) {
+        try {
+          await prisma.subscription.create({
+            data: {
+              userId: user.id,
+              planId: starterPlan.id,
+            },
+          });
+        } catch (err) {
+          console.error("Failed to create subscription for user:", user.id, err);
+        }
+      } else {
+        console.warn("Starter plan not found — skipping subscription creation");
+      }
+
+      // Send verification email (non-fatal)
+      try {
+        const token = randomBytes(32).toString("hex");
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await prisma.verificationToken.create({
+          data: {
+            identifier: email,
+            token,
+            expires,
+          },
+        });
+
+        const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN ?? "http://app.localhost:3000";
+        const verifyLink = `${appOrigin}/api/auth/verify-email?token=${token}`;
+        const emailHtml = generateVerificationEmailTemplate(verifyLink, name ?? email);
+        await sendEmail(email, "Verify your email — fasta.work", emailHtml);
+      } catch (err) {
+        console.error("Failed to send verification email:", err);
+      }
+
+      return c.json({ data: { id: user.id, email: user.email } });
     }
   )
   .patch("/profile", async (c) => {

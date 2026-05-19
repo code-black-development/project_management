@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { InferRequestType, InferResponseType } from "hono";
 
 import { client } from "@/lib/rpc";
@@ -19,11 +19,13 @@ export function useSignUp() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to register user");
+        const body = await response.json().catch(() => null);
+        const message =
+          (body as { error?: string } | null)?.error ?? "Failed to register user";
+        throw new Error(message);
       }
       return await response.json();
     },
-    //onSuccess: ({ data }) => {},
   });
   return mutation;
 }

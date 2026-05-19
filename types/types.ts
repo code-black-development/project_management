@@ -88,9 +88,10 @@ export type TaskAssetFile = {
   type: string;
 };
 
-export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt"> & {
+export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt" | "frozenAt"> & {
   createdAt: string;
   updatedAt: string;
+  frozenAt: string | null;
 };
 
 export type WorklogType = Omit<

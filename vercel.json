@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-frozen-workspaces",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

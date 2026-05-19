@@ -13,7 +13,12 @@ const CreateChildTaskModalWrapper = () => {
   }
 
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={setIsOpen}>
+    <ResponsiveModal
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      title="Create child task"
+      contentClassName="sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[92vh]"
+    >
       <TaskFormWrapper onCancel={close} parentTaskInfo={parentTaskInfo} />
     </ResponsiveModal>
   );

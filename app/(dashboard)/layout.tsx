@@ -3,6 +3,7 @@ import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 import DashboardModals from "@/components/dashboard-modals";
 import { redirect } from "next/navigation";
+import prisma from "@/prisma/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,16 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
   if (!session?.user?.id) {
     redirect("/sign-in");
+  }
+
+  // Check emailVerified — fetch from DB since JWT doesn't carry it
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { emailVerified: true },
+  });
+
+  if (!dbUser?.emailVerified) {
+    redirect(`/verify-email?email=${encodeURIComponent(session.user.email ?? "")}`);
   }
 
   return (

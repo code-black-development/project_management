@@ -82,6 +82,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.image = token.image as string;
       }
 
+      if (session.user) {
+        session.user.planName = token.planName as string | undefined;
+        session.user.subscriptionStatus = token.subscriptionStatus as string | undefined;
+      }
+
       return session;
     },
     async jwt({ token, user, trigger, session }) {
@@ -91,6 +96,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.email = user.email;
         token.name = user.name;
         token.image = user.image;
+
+        // Attach subscription info
+        try {
+          const sub = await prisma.subscription.findUnique({
+            where: { userId: user.id },
+            include: { plan: true },
+          });
+          token.planName = sub?.plan.name ?? "Starter";
+          token.subscriptionStatus = sub?.status ?? "ACTIVE";
+        } catch (error) {
+          console.error("Failed to fetch subscription in JWT callback:", error);
+          token.planName = "Starter";
+          token.subscriptionStatus = "ACTIVE";
+        }
       }
 
       // Handle session updates (when user.update is called)

@@ -13,6 +13,7 @@ import {
   getWorkspaceByUserId,
   updateWorkspace,
 } from "@/lib/dbService/workspaces";
+import prisma from "@/prisma/prisma";
 import { getProjectImageUrlsByWorkspaceId } from "@/lib/dbService/projects";
 import { getOrCreateWorkspaceInvite } from "@/lib/dbService/workspace-invites";
 import { checkIfUserIsAdmin } from "@/lib/dbService/workspace-members";
@@ -50,6 +51,24 @@ const app = new Hono()
     const { name, image } = c.req.valid("form");
     const userId = c.get("userId");
 
+    // Check workspace limit against subscription plan
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId },
+      include: { plan: true },
+    });
+    if (subscription?.plan) {
+      const { maxWorkspaces } = subscription.plan;
+      if (maxWorkspaces !== -1) {
+        const count = await prisma.workspace.count({ where: { user: userId } });
+        if (count >= maxWorkspaces) {
+          return c.json(
+            { error: "Workspace limit reached. Upgrade your plan to create more workspaces." },
+            403
+          );
+        }
+      }
+    }
+
     let fileUrl: string | null = null;
 
     // Upload image to S3 if provided
@@ -85,6 +104,11 @@ const app = new Hono()
       const existingWorkspace = await getWorkspaceById(workspaceId);
       if (!existingWorkspace) {
         return c.json({ error: "Workspace not found" }, 404);
+      }
+
+      // Frozen workspace check
+      if (existingWorkspace.status === "FROZEN") {
+        return c.json({ error: "This workspace is frozen and cannot be modified." }, 403);
       }
 
       let fileUrl: string | null = existingWorkspace.image;
@@ -143,6 +167,11 @@ const app = new Hono()
     // Get existing workspace to check for image cleanup
     const existingWorkspace = await getWorkspaceById(workspaceId);
 
+    // Frozen workspace check
+    if (existingWorkspace?.status === "FROZEN") {
+      return c.json({ error: "This workspace is frozen and cannot be modified." }, 403);
+    }
+
     const projectImageUrls = await getProjectImageUrlsByWorkspaceId(workspaceId);
     const taskAssetUrls = await getTaskAssetUrlsByWorkspaceId(workspaceId);
     const s3Keys = [
@@ -179,6 +208,29 @@ const app = new Hono()
         throw new HTTPException(404, {
           message: "Inviter or workspace not found",
         });
+      }
+
+      // Frozen workspace check
+      if (workspace.status === "FROZEN") {
+        return c.json({ error: "This workspace is frozen and cannot be modified." }, 403);
+      }
+
+      // Check member limit against subscription plan
+      const inviteSubscription = await prisma.subscription.findUnique({
+        where: { userId },
+        include: { plan: true },
+      });
+      if (inviteSubscription?.plan) {
+        const { maxMembers } = inviteSubscription.plan;
+        if (maxMembers !== -1) {
+          const memberCount = await prisma.member.count({ where: { workspaceId } });
+          if (memberCount >= maxMembers) {
+            return c.json(
+              { error: "Member limit reached for this workspace. Upgrade your plan to add more members." },
+              403
+            );
+          }
+        }
       }
 
       const results: {

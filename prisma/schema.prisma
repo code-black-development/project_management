@@ -39,18 +39,19 @@ model Session {
 }
 
 model User {
-  id               String    @id @default(cuid())
+  id               String        @id @default(cuid())
   name             String?
-  email            String    @unique
+  email            String        @unique
   password         String?
-  emailVerified    DateTime? @map("email_verified")
+  emailVerified    DateTime?     @map("email_verified")
   image            String?
   lastLoginAt      DateTime?
-  resetToken       String?   @unique
+  resetToken       String?       @unique
   resetTokenExpiry DateTime?
   members          Member[]
   accounts         Account[]
   sessions         Session[]
+  subscription     Subscription?
 
   @@map("users")
 }
@@ -69,6 +70,8 @@ model Workspace {
   user      String
   name      String
   image     String?
+  status    WorkspaceStatus    @default(ACTIVE)
+  frozenAt  DateTime?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
   members   Member[]
@@ -220,6 +223,50 @@ model S3CleanupJob {
   processedAt DateTime?
 
   @@index([processedAt, updatedAt])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  stripePriceId String?        @unique
+  maxWorkspaces Int
+  maxMembers    Int
+  priceMonthly  Int
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialEndsAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 Plan               @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  FROZEN
 }
 
 enum TaskStatus {
