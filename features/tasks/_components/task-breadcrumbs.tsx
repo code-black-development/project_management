@@ -43,6 +43,18 @@ const TaskBreadcrumbs = ({ project, task }: TaskBreadcrumbsProps) => {
             {project.name}
           </Link>
         </div>
+        {task.parent && (
+          <>
+            <ChevronRightIcon className="size-3.5 shrink-0" />
+            <Link
+              href={`/workspaces/${project.workspaceId}/tasks/${task.parent.id}`}
+              className="hover:text-foreground transition-colors truncate max-w-[200px]"
+              title={task.parent.name}
+            >
+              {task.parent.name}
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Title */}

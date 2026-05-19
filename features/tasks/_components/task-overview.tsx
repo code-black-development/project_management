@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import DatePicker from "@/components/date-picker";
 import DynamicIcon from "@/components/dynamic-icon";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import {
@@ -285,16 +286,23 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
           </div>
 
           <EditableRow label="Task name">
-            <Input
+            <Textarea
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                event.target.style.height = "auto";
+                event.target.style.height = `${event.target.scrollHeight}px`;
+              }}
               onBlur={commitName}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
                   event.currentTarget.blur();
                 }
               }}
               disabled={isUpdating}
+              rows={1}
+              className="resize-none overflow-hidden min-h-0"
             />
           </EditableRow>
 

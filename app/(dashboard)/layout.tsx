@@ -14,14 +14,21 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect("/sign-in");
   }
 
-  // Check emailVerified — fetch from DB since JWT doesn't carry it
+  // Check emailVerified — only block if there's an active verification token.
+  // Existing users (created before email verification was introduced) have no
+  // emailVerified and no pending token — they must not be blocked.
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { emailVerified: true },
+    select: { emailVerified: true, email: true },
   });
 
   if (!dbUser?.emailVerified) {
-    redirect(`/verify-email?email=${encodeURIComponent(session.user.email ?? "")}`);
+    const pendingToken = await prisma.verificationToken.findFirst({
+      where: { identifier: dbUser?.email ?? "" },
+    });
+    if (pendingToken) {
+      redirect(`/verify-email?email=${encodeURIComponent(session.user.email ?? "")}`);
+    }
   }
 
   return (

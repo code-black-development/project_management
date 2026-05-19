@@ -57,7 +57,11 @@ const BillingPage = async () => {
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
           <p className="text-sm font-semibold text-foreground">Current plan</p>
-          {hasStripeCustomer && <BillingPortalButton />}
+          {hasStripeCustomer ? (
+            <BillingPortalButton />
+          ) : subscription?.plan && subscription.plan.priceMonthly > 0 ? (
+            <span className="text-xs text-muted-foreground">Managed plan — contact support</span>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-x-4">
@@ -79,7 +83,7 @@ const BillingPage = async () => {
               <p className="text-xs text-muted-foreground">
                 {subscription.plan.priceMonthly === 0
                   ? "Free"
-                  : `$${subscription.plan.priceMonthly}/month`}
+                  : `$${(subscription.plan.priceMonthly / 100).toFixed(0)}/month`}
               </p>
             )}
           </div>
@@ -166,7 +170,7 @@ const BillingPage = async () => {
                   ) : (
                     <>
                       <span className="text-2xl font-semibold text-foreground">
-                        ${plan.priceMonthly}
+                        ${(plan.priceMonthly / 100).toFixed(0)}
                       </span>
                       <span className="text-xs text-muted-foreground">/month</span>
                     </>
