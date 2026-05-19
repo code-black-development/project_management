@@ -3,7 +3,7 @@ import { getWorkspaceInvitesByEmail } from "@/lib/dbService/workspace-invites";
 import { getWorkspaceByUserId } from "@/lib/dbService/workspaces";
 import { redirect } from "next/navigation";
 
-const DashboardPage = async () => {
+const WorkspacesPage = async () => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -25,4 +25,4 @@ const DashboardPage = async () => {
   }
 };
 
-export default DashboardPage;
+export default WorkspacesPage;

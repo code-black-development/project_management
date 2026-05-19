@@ -23,7 +23,7 @@ const transporter = nodemailer.createTransport({
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
     await transporter.sendMail({
-      from: '"codeflow from codeblack digital" <info@codeblack.digital>',
+      from: '"fasta.work" <noreply@fasta.work>',
       to,
       subject,
       html,
@@ -84,12 +84,12 @@ export async function generateEmailTemplate(
         <body>
           <div class="container">
             <div class="header">
-              <h2>Welcome to CodeFlow Pro!</h2>
+              <h2>Welcome to fasta.work!</h2>
             </div>
             <div class="content">
               <p>Hello,</p>
               <p>
-                You have been invited to join a workspace in CodeFlow Pro by
+                You have been invited to join a workspace in fasta.work by
                 ${invitorName}. We are excited to have you on board. Click the button
                 below to verify your email:
               </p>
@@ -280,7 +280,7 @@ export async function generatePasswordResetEmailTemplate(
               Hello ${userName},
             </p>
             <p style="font-size: 16px; margin-bottom: 20px;">
-              We received a request to reset your password for your CodeFlow Pro account. Click the button below to reset your password:
+              We received a request to reset your password for your fasta.work account. Click the button below to reset your password:
             </p>
             
             <div style="text-align: center; margin: 30px 0;">

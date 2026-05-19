@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 import { QueryProvider } from "@/components/query-provider";
@@ -12,6 +12,12 @@ import { SessionProviderBoundary } from "@/components/session-provider-boundary"
 
 const inter = Inter({
   subsets: ["latin"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-brand",
+  weight: ["400", "600", "700"],
 });
 export const dynamic = "force-dynamic";
 
@@ -36,8 +42,8 @@ const themeInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "CodeFlow Pro",
-  description: "Code management by Codeblack Digtal",
+  title: "fasta.work",
+  description: "Project management that moves as fast as you do.",
 };
 
 export default function RootLayout({
@@ -53,7 +59,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
       </head>
-      <body className={cn(inter.className, "antialiased min-h-screen")}>
+      <body className={cn(inter.className, plusJakartaSans.variable, "antialiased min-h-screen")}>
         <ThemeProvider>
           <Toaster />
           <SessionProviderBoundary>

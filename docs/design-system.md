@@ -476,7 +476,7 @@ Sonner (`sonner`) for toast notifications. Use `toast.success()`, `toast.error()
 | `navigation.tsx` | Primary nav links |
 | `projects.tsx` | Project list in sidebar |
 | `workspace-switcher.tsx` | Workspace selection dropdown |
-| `logo.tsx` | App logo |
+| `logo.tsx` | App logo — renders "fasta.work" in Plus Jakarta Sans (`font-brand`). Do not change this to Syncopate or Inter. |
 | `editor.tsx` | Rich text editor (Quill) wrapper |
 | `responsive-modal.tsx` | Modal that adapts to screen size |
 | `dotted-separator.tsx` | Legacy — auth layouts only |

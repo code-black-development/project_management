@@ -14,6 +14,7 @@ export default {
     extend: {
       fontFamily: {
         syncopate: ["Syncopate", "sans-serif"],
+        brand: ["var(--font-brand)", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",

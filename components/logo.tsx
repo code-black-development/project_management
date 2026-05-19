@@ -2,9 +2,9 @@ import React from "react";
 
 const Logo = () => {
   return (
-    <h1 className="font-syncopate text-xl">
-      <span className="text-foreground">CODEFLOW</span>{" "}
-      <span className="text-blue-500 font-bold">PRO</span>
+    <h1 className="font-brand text-xl font-semibold tracking-tight">
+      <span className="text-foreground">fasta</span>
+      <span className="text-primary">.work</span>
     </h1>
   );
 };
