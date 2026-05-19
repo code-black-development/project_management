@@ -38,6 +38,9 @@ const ProfileForm = () => {
   });
 
   const { isDirty } = form.formState;
+  const imageValue = form.watch("image");
+  const s3Key = typeof imageValue === "string" && imageValue ? imageValue : null;
+  const { presignedUrl } = usePresignedUrl(s3Key);
 
   const onSubmit = (values: z.infer<typeof updateUserProfileSchema>) => {
     if (!session?.user?.id) {
@@ -106,11 +109,7 @@ const ProfileForm = () => {
             <FormField
               name="image"
               control={form.control}
-              render={({ field }) => {
-                const { presignedUrl } = usePresignedUrl(
-                  typeof field.value === "string" && field.value ? field.value : null
-                );
-                return (
+              render={({ field }) => (
                   <div className="flex items-center gap-x-4">
                     {field.value ? (
                       <div className="size-12 relative rounded-full overflow-hidden shrink-0">
@@ -135,7 +134,7 @@ const ProfileForm = () => {
                     <input
                       className="hidden"
                       type="file"
-                      accept=".jpg,.png,.jpeg"
+                      accept=".jpg,.png,.jpeg,.webp"
                       ref={inputRef}
                       disabled={isPending}
                       onChange={handleImageChange}
@@ -165,8 +164,7 @@ const ProfileForm = () => {
                       </Button>
                     )}
                   </div>
-                );
-              }}
+              )}
             />
           </div>
 

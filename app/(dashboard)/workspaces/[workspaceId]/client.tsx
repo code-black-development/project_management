@@ -508,21 +508,6 @@ const getTaskGroups = (tasks: DashboardTask[], currentMemberId?: string) => {
   const overdue = openTasks.filter(
     (task) => task.dueDate && isBefore(new Date(task.dueDate), todayStart)
   );
-  const dueToday = openTasks.filter(
-    (task) => task.dueDate && isWithinInterval(new Date(task.dueDate), {
-      start: todayStart,
-      end: todayEnd,
-    })
-  );
-  const dueSoon = openTasks.filter(
-    (task) =>
-      task.dueDate &&
-      isAfter(new Date(task.dueDate), todayEnd) &&
-      isWithinInterval(new Date(task.dueDate), {
-        start: todayStart,
-        end: soonEnd,
-      })
-  );
   const myTasks = currentMemberId
     ? openTasks.filter((task) => task.assigneeId === currentMemberId)
     : [];
