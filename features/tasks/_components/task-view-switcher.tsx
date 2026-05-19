@@ -29,6 +29,8 @@ import { useBulkDeleteTasks } from "../api/use-bulk-delete-tasks";
 import { useBulkStatusUpdateTasks } from "../api/use-bulk-status-update-tasks";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
 import { useProjectAutoHide } from "@/features/projects/hooks/use-project-auto-hide";
+import { useGetMembers } from "@/features/members/api/use-get-members";
+import { useSession } from "next-auth/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 const TaskTableView = dynamic(() => import("./task-table-view"), {
@@ -48,9 +50,10 @@ const DataCalendar = dynamic(() => import("./data-calendar"), {
 
 interface TaskViewSwitcherProps {
   hideProjectFilter?: boolean;
+  myTasksOnly?: boolean;
 }
 
-const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
+const TaskViewSwitcher = ({ hideProjectFilter, myTasksOnly }: TaskViewSwitcherProps) => {
   const [{ status, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const { mutate: bulkDelete } = useBulkDeleteTasks();
@@ -61,10 +64,15 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
   const { autoHideCompletedTasks, autoHideChildTasks } = useProjectAutoHide(
     paramProjectId || projectId || undefined
   );
+  const { data: session } = useSession();
+  const { data: membersData } = useGetMembers({ workspaceId });
+  const currentMemberId = myTasksOnly
+    ? membersData?.data.find((m) => m.user.id === session?.user?.id)?.id
+    : undefined;
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
     status,
-    assigneeId,
+    assigneeId: myTasksOnly ? (currentMemberId ?? null) : assigneeId,
     projectId: paramProjectId || projectId,
     dueDate,
     search,
@@ -155,7 +163,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
           </div>
         </Tooltip.Provider>
         <div className="border-b border-border my-4" />
-        <DataFilters hideProjectFilter={hideProjectFilter} />
+        <DataFilters hideProjectFilter={hideProjectFilter} hideAssigneeFilter={myTasksOnly} />
         <div className="border-b border-border my-4" />
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
@@ -169,6 +177,7 @@ const TaskViewSwitcher = ({ hideProjectFilter }: TaskViewSwitcherProps) => {
                 onDeleteSelected={(ids) => bulkDelete({ json: { ids } })}
                 onUpdateStatusSelected={(ids, status) => bulkStatusUpdate({ ids, status })}
                 hideProjectColumn={hideProjectFilter}
+                hideAssigneeColumn={myTasksOnly}
               />
             </TabsContent>
             <TabsContent value="kanban" className="mt-0">

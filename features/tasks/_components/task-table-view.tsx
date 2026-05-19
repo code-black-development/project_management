@@ -10,12 +10,16 @@ interface TaskTableViewProps {
   onDeleteSelected: (ids: string[]) => void;
   onUpdateStatusSelected: (ids: string[], status: TaskStatus) => void;
   hideProjectColumn?: boolean;
+  hideAssigneeColumn?: boolean;
 }
 
-const TaskTableView = ({ tasks, onDeleteSelected, onUpdateStatusSelected, hideProjectColumn }: TaskTableViewProps) => {
-  const visibleColumns = hideProjectColumn
-    ? columns.filter((col) => (col as any).accessorKey !== "project")
-    : columns;
+const TaskTableView = ({ tasks, onDeleteSelected, onUpdateStatusSelected, hideProjectColumn, hideAssigneeColumn }: TaskTableViewProps) => {
+  const visibleColumns = columns.filter((col) => {
+    const key = (col as any).accessorKey;
+    if (hideProjectColumn && key === "project") return false;
+    if (hideAssigneeColumn && key === "assignee") return false;
+    return true;
+  });
 
   return (
     <DataTable

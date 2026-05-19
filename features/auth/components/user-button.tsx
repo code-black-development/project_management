@@ -7,16 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { signOut } from "next-auth/react";
 import { LogOut, User } from "lucide-react";
-import useUserSettingsModal from "../hooks/use-user-settings-modal";
+import Link from "next/link";
 
-interface UserButtonProps {}
-
-const UserButton = ({}: UserButtonProps) => {
+const UserButton = () => {
   const { data: session } = useSession();
-  const { open } = useUserSettingsModal();
 
   return (
     <DropdownMenu modal={false}>
@@ -47,12 +43,11 @@ const UserButton = ({}: UserButtonProps) => {
             </p>
           </div>
           <div className="w-full border-t border-border" />
-          <DropdownMenuItem
-            className="h-10 flex flex-row gap-2 items-center justify-center font-medium cursor-pointer"
-            onClick={open}
-          >
-            <User className="size-4 mr-2" />
-            Edit Profile
+          <DropdownMenuItem asChild className="h-10 w-full cursor-pointer">
+            <Link href="/profile" className="flex flex-row gap-2 items-center justify-center font-medium">
+              <User className="size-4 mr-2" />
+              My Profile
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="h-10 flex items-center justify-center text-destructive focus:text-destructive font-medium cursor-pointer"

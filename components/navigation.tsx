@@ -5,7 +5,6 @@ import {
   UsersIcon,
   BarChart3Icon,
   FileTextIcon,
-  CreditCardIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -52,14 +51,6 @@ const routes = [
   },
 ];
 
-const globalRoutes = [
-  {
-    icon: CreditCardIcon,
-    activeIcon: CreditCardIcon,
-    label: "Billing",
-    href: "/billing",
-  },
-];
 
 const Navigation = () => {
   const workspaceId = useWorkspaceId();
@@ -72,24 +63,6 @@ const Navigation = () => {
         const Icon = isActive ? route.activeIcon : route.icon;
         return (
           <Link href={fullPath} key={route.href} className="block text-inherit">
-            <div
-              className={cn(
-                "flex items-center gap-2.5 p-2.5 rounded-md font-medium transition text-neutral-600 hover:text-primary dark:text-white/55 dark:hover:text-primary",
-                isActive &&
-                  "bg-white shadow-sm text-primary dark:bg-primary/10 dark:border-l-2 dark:border-primary dark:text-primary dark:shadow-none"
-              )}
-            >
-              <Icon className={cn("size-5 text-neutral-500 dark:text-white/45 transition", isActive && "text-primary dark:text-primary")} />
-              {route.label}
-            </div>
-          </Link>
-        );
-      })}
-      {globalRoutes.map((route) => {
-        const isActive = pathname === route.href;
-        const Icon = isActive ? route.activeIcon : route.icon;
-        return (
-          <Link href={route.href} key={route.href} className="block text-inherit">
             <div
               className={cn(
                 "flex items-center gap-2.5 p-2.5 rounded-md font-medium transition text-neutral-600 hover:text-primary dark:text-white/55 dark:hover:text-primary",

@@ -27,9 +27,10 @@ import { useState } from "react";
 
 interface DataFiltersProps {
   hideProjectFilter?: boolean;
+  hideAssigneeFilter?: boolean;
 }
 
-const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
+const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps) => {
   const workspaceId = useWorkspaceId();
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
     workspaceId,
@@ -79,7 +80,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
 
   const hasActiveFilters = Boolean(
     status ||
-      assigneeId ||
+      (!hideAssigneeFilter && assigneeId) ||
       (!hideProjectFilter && projectId) ||
       dueDate ||
       search
@@ -88,7 +89,7 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
   const onClearFilters = () => {
     setfilters({
       status: null,
-      assigneeId: null,
+      assigneeId: hideAssigneeFilter ? assigneeId : null,
       projectId: null,
       dueDate: null,
       search: null,
@@ -148,26 +149,28 @@ const DataFilters = ({ hideProjectFilter }: DataFiltersProps) => {
           <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
         </SelectContent>
       </Select>
-      <Select
-        defaultValue={assigneeId ?? undefined}
-        onValueChange={(value) => onAssigneeChange(value)}
-      >
-        <SelectTrigger className="w-full lg:w-auto h-8">
-          <div className="flex items-center pr-2">
-            <UserIcon className="size-4 mr-2" />
-            <SelectValue placeholder="All members" />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All members</SelectItem>
-          <SelectSeparator />
-          {memberOptions?.map((member) => (
-            <SelectItem key={member.value} value={member.value}>
-              {member.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {!hideAssigneeFilter && (
+        <Select
+          defaultValue={assigneeId ?? undefined}
+          onValueChange={(value) => onAssigneeChange(value)}
+        >
+          <SelectTrigger className="w-full lg:w-auto h-8">
+            <div className="flex items-center pr-2">
+              <UserIcon className="size-4 mr-2" />
+              <SelectValue placeholder="All members" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All members</SelectItem>
+            <SelectSeparator />
+            {memberOptions?.map((member) => (
+              <SelectItem key={member.value} value={member.value}>
+                {member.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {!hideProjectFilter && (
         <Select
           defaultValue={projectId ?? undefined}
