@@ -161,7 +161,7 @@ const STATUS_COLORS: Record<string, string> = {
   DONE: "#34d399",
 };
 
-const BarTooltip = ({ active, payload, label }: any) => {
+const BarTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs shadow-md">
@@ -171,7 +171,7 @@ const BarTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const DonutTooltip = ({ active, payload }: any) => {
+const DonutTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[] }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs shadow-md">
