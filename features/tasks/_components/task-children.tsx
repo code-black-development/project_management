@@ -1,5 +1,5 @@
 "use client";
-import { TaskSafeDate } from "@/types/types";
+import { TaskWithUser } from "@/types/types";
 import { useCreateLinkableTask } from "../api/use-create-linkable-task";
 import { useGetLinkableTasks } from "../api/use-get-linkable-tasks";
 import {
@@ -18,7 +18,7 @@ interface TaskChildrenProps {
   taskId: string;
   projectId: string;
   workspaceId: string;
-  tasks: TaskSafeDate[];
+  tasks: TaskWithUser[];
 }
 
 const TaskChildren = ({
@@ -86,7 +86,7 @@ const TaskChildren = ({
       </div>
 
       {hasSubtasks ? (
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col gap-y-1.5">
           {tasks.map((child) => (
             <TaskChildItem task={child} key={child.id} />
           ))}

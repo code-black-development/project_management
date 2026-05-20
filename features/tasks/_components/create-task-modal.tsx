@@ -13,6 +13,7 @@ const CreateTaskModal = ({}: CreateTaskModalProps) => {
       onOpenChange={setIsOpen}
       title="Create task"
       contentClassName="sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[92vh]"
+      dismissible={false}
     >
       <TaskFormWrapper onCancel={close} />
     </ResponsiveModal>

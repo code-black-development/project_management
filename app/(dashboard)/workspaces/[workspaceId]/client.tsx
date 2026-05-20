@@ -22,14 +22,30 @@ import { TaskStatus } from "@prisma/client";
 import {
   addDays,
   endOfDay,
+  endOfMonth,
+  endOfWeek,
   format,
   formatDistanceToNow,
   isAfter,
   isBefore,
+  isSameDay,
   isToday,
   isWithinInterval,
   startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
 } from "date-fns";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+} from "recharts";
 import {
   ActivityIcon,
   AlertCircleIcon,
@@ -102,6 +118,8 @@ const WorkspaceIdClient = () => {
         needsAttention={taskGroups.needsAttention.length}
       />
 
+      <ProgressSection tasks={tasks} />
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
         <div className="flex flex-col gap-4">
           <NeedsAttentionSection
@@ -129,6 +147,197 @@ const WorkspaceIdClient = () => {
           {projectHotspots.length > 0 && (
             <ProjectHotspots items={projectHotspots} workspaceId={workspaceId} />
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  BACKLOG: "#f472b6",
+  TODO: "#f87171",
+  IN_PROGRESS: "#facc15",
+  IN_REVIEW: "#60a5fa",
+  DONE: "#34d399",
+};
+
+const BarTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs shadow-md">
+      <p className="font-medium text-foreground mb-0.5">{label}</p>
+      <p className="text-muted-foreground">{payload[0].value} completed</p>
+    </div>
+  );
+};
+
+const DonutTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs shadow-md">
+      <p className="font-medium text-foreground">{payload[0].name}</p>
+      <p className="text-muted-foreground">{payload[0].value} tasks</p>
+    </div>
+  );
+};
+
+const ProgressSection = ({ tasks }: { tasks: DashboardTask[] }) => {
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const monthStart = startOfMonth(now);
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const monthEnd = endOfMonth(now);
+
+  const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE);
+  const openTasks = tasks.filter(
+    (t) => t.status !== TaskStatus.DONE && t.status !== TaskStatus.BACKLOG
+  );
+
+  const completedThisWeek = completedTasks.filter((t) =>
+    isWithinInterval(new Date(t.updatedAt), { start: weekStart, end: weekEnd })
+  ).length;
+
+  const completedThisMonth = completedTasks.filter((t) =>
+    isWithinInterval(new Date(t.updatedAt), { start: monthStart, end: monthEnd })
+  ).length;
+
+  const dueThisWeek = openTasks.filter(
+    (t) =>
+      t.dueDate &&
+      isWithinInterval(new Date(t.dueDate), { start: now, end: weekEnd })
+  ).length;
+
+  const dueThisMonth = openTasks.filter(
+    (t) =>
+      t.dueDate &&
+      isWithinInterval(new Date(t.dueDate), { start: now, end: monthEnd })
+  ).length;
+
+  const barData = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(now, 6 - i);
+    return {
+      label: format(date, "EEE"),
+      count: completedTasks.filter((t) =>
+        isSameDay(new Date(t.updatedAt), date)
+      ).length,
+    };
+  });
+
+  const donutData = (
+    [
+      TaskStatus.TODO,
+      TaskStatus.IN_PROGRESS,
+      TaskStatus.IN_REVIEW,
+      TaskStatus.BACKLOG,
+      TaskStatus.DONE,
+    ] as const
+  )
+    .map((status) => ({
+      name: snakeCaseToTitleCase(status),
+      value: tasks.filter((t) => t.status === status).length,
+      color: STATUS_COLORS[status],
+    }))
+    .filter((d) => d.value > 0);
+
+  const totalTasks = tasks.length;
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-5">
+      <p className="text-sm font-semibold text-foreground border-b border-border pb-4 mb-5">
+        Progress
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+        {/* Bar chart — completions last 7 days */}
+        <div className="flex flex-col gap-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Completions — last 7 days
+          </p>
+          <div className="h-[140px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} barCategoryGap="30%">
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                />
+                <Tooltip content={<BarTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                <Bar dataKey="count" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center gap-x-4 text-xs text-muted-foreground">
+            <span>
+              <span className="font-semibold text-foreground">{completedThisWeek}</span>{" "}
+              this week
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{completedThisMonth}</span>{" "}
+              this month
+            </span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="hidden lg:block w-px self-stretch bg-border" />
+
+        {/* Right column: donut + due stats */}
+        <div className="flex flex-col gap-y-4">
+          <div className="flex items-center gap-x-6">
+            {/* Donut */}
+            <div className="relative shrink-0">
+              <div className="w-[100px] h-[100px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={28}
+                      outerRadius={44}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {donutData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<DonutTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-lg font-semibold text-foreground leading-none">{totalTasks}</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">total</span>
+              </div>
+            </div>
+
+            {/* Legend + due stats */}
+            <div className="flex flex-col gap-y-1.5 min-w-0">
+              {donutData.map((d) => (
+                <div key={d.name} className="flex items-center gap-x-2">
+                  <span
+                    className="size-2 rounded-full shrink-0"
+                    style={{ backgroundColor: d.color }}
+                  />
+                  <span className="text-xs text-muted-foreground truncate">{d.name}</span>
+                  <span className="ml-auto text-xs font-medium text-foreground pl-2">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Due this week / month */}
+          <div className="flex items-center gap-x-6 border-t border-border pt-3 text-xs text-muted-foreground">
+            <span>
+              <span className="font-semibold text-foreground">{dueThisWeek}</span>{" "}
+              due this week
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{dueThisMonth}</span>{" "}
+              due this month
+            </span>
+          </div>
         </div>
       </div>
     </div>

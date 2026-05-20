@@ -25,6 +25,10 @@ const TaskAssets = dynamic(
   () => import("@/features/tasks/_components/task-assets"),
   { ssr: false, loading: () => <TaskPanelLoader /> }
 );
+const TaskSeriesPanel = dynamic(
+  () => import("@/features/tasks/_components/task-series-panel"),
+  { ssr: false, loading: () => <TaskPanelLoader /> }
+);
 
 export const TaskIdClient = () => {
   const taskId = useTaskId();
@@ -46,16 +50,17 @@ export const TaskIdClient = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
         <div className="flex flex-col gap-y-4 min-w-0">
           <TaskOverview task={task} />
+          <TaskWorklog task={task} />
+          {task.seriesId && <TaskSeriesPanel task={task} />}
+        </div>
+        <div className="flex flex-col gap-y-4">
+          <TaskDescription task={task} />
           <TaskChildren
             taskId={task.id}
             projectId={task.projectId}
             workspaceId={task.workspaceId}
             tasks={task.children}
           />
-        </div>
-        <div className="flex flex-col gap-y-4">
-          <TaskDescription task={task} />
-          <TaskWorklog task={task} />
           <TaskAssets task={task} />
         </div>
       </div>

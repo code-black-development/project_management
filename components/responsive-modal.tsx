@@ -11,6 +11,7 @@ interface ResponsiveModalProps {
   onOpenChange: (open: boolean) => void;
   contentClassName?: string;
   title?: string;
+  dismissible?: boolean;
 }
 const ResponsiveModal = ({
   children,
@@ -18,6 +19,7 @@ const ResponsiveModal = ({
   onOpenChange,
   contentClassName,
   title = "Modal",
+  dismissible = true,
 }: ResponsiveModalProps) => {
   const isDesktop = useMedia("(min-width: 1024px)", true);
   if (isDesktop) {
@@ -28,6 +30,7 @@ const ResponsiveModal = ({
             "w-full sm:max-w-lg p-0 border-none overflow-y-auto hide-scrollbar max-h-[85vh]",
             contentClassName
           )}
+          onInteractOutside={dismissible ? undefined : (e) => e.preventDefault()}
         >
           <VisuallyHidden.Root>
             <DialogTitle>{title}</DialogTitle>
@@ -38,7 +41,7 @@ const ResponsiveModal = ({
     );
   }
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange} dismissible={dismissible}>
       <DrawerContent className={contentClassName}>
         <VisuallyHidden.Root>
           <DialogTitle>{title}</DialogTitle>

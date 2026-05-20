@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
+import { TaskStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, MoreVertical } from "lucide-react";
@@ -15,6 +16,154 @@ import { TaskListItem } from "@/types/types";
 import DynamicIcon from "@/components/dynamic-icon";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUpdateTask } from "../api/use-update-task";
+import { useGetMembers } from "@/features/members/api/use-get-members";
+import { useGetTaskCategories } from "../hooks/use-get-task-categories";
+
+const STATUS_OPTIONS = [
+  TaskStatus.BACKLOG,
+  TaskStatus.TODO,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.IN_REVIEW,
+  TaskStatus.DONE,
+];
+
+const StatusCell = ({ task }: { task: TaskListItem }) => {
+  const { mutate: updateTask, isPending } = useUpdateTask();
+
+  const handleChange = (status: string) => {
+    updateTask({ param: { taskId: task.id }, json: { status: status as TaskStatus } });
+  };
+
+  return (
+    <Select value={task.status} onValueChange={handleChange} disabled={isPending}>
+      <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden">
+        <SelectValue>
+          <TaskBadge variant={task.status} className="cursor-pointer">
+            {snakeCaseToTitleCase(task.status)}
+          </TaskBadge>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {STATUS_OPTIONS.map((s) => (
+          <SelectItem key={s} value={s}>
+            <TaskBadge variant={s}>{snakeCaseToTitleCase(s)}</TaskBadge>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+const AssigneeCell = ({ task }: { task: TaskListItem }) => {
+  const { mutate: updateTask, isPending } = useUpdateTask();
+  const { data: membersData } = useGetMembers({ workspaceId: task.workspaceId });
+  const members = membersData?.data ?? [];
+
+  const handleChange = (value: string) => {
+    updateTask({
+      param: { taskId: task.id },
+      json: { assigneeId: value === "unassigned" ? null : value },
+    });
+  };
+
+  const currentName =
+    (task.assignee?.user?.name ?? task.assignee?.user?.email) || "Unassigned";
+
+  return (
+    <Select
+      value={task.assignee?.id ?? "unassigned"}
+      onValueChange={handleChange}
+      disabled={isPending}
+    >
+      <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden">
+        <SelectValue>
+          <div className="flex items-center gap-x-2 text-sm">
+            <MemberAvatar
+              className="size-6"
+              name={currentName}
+              image={task.assignee?.user?.image || undefined}
+            />
+            {currentName}
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="unassigned">
+          <span className="text-muted-foreground">Unassigned</span>
+        </SelectItem>
+        {members.map((member) => (
+          <SelectItem key={member.id} value={member.id}>
+            {member.user.name || member.user.email}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+const CategoryCell = ({ task }: { task: TaskListItem }) => {
+  const { mutate: updateTask, isPending } = useUpdateTask();
+  const { data: categories } = useGetTaskCategories();
+
+  const handleChange = (value: string) => {
+    updateTask({
+      param: { taskId: task.id },
+      json: { categoryId: value === "none" ? null : value },
+    });
+  };
+
+  const currentCategory = task.category;
+
+  return (
+    <Select
+      value={currentCategory?.id ?? "none"}
+      onValueChange={handleChange}
+      disabled={isPending}
+    >
+      <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden">
+        <SelectValue>
+          {currentCategory ? (
+            <div className="flex items-center gap-x-2">
+              <DynamicIcon
+                iconName={currentCategory.icon || "tag"}
+                className="size-4 text-muted-foreground"
+              />
+              <Badge variant="secondary" className="text-xs">
+                {currentCategory.name}
+              </Badge>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">
+          <span className="text-muted-foreground">No category</span>
+        </SelectItem>
+        {categories?.map((cat) => (
+          <SelectItem key={cat.id} value={cat.id}>
+            <div className="flex items-center gap-x-2">
+              <DynamicIcon
+                iconName={cat.icon || "tag"}
+                className="size-4 text-muted-foreground"
+              />
+              {cat.name}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
 
 export const columns: ColumnDef<TaskListItem>[] = [
   {
@@ -108,24 +257,7 @@ export const columns: ColumnDef<TaskListItem>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => {
-      return (
-        <div className="flex items-center gap-x-2 text-sm">
-          <MemberAvatar
-            className="size-6"
-            name={
-              (row.original.assignee?.user?.name ??
-                row.original.assignee?.user?.email) ||
-              "Unassigned"
-            }
-            image={row.original.assignee?.user?.image || undefined}
-          />
-          {(row.original.assignee?.user.name ??
-            row.original.assignee?.user.email) ||
-            "Unassigned"}
-        </div>
-      );
-    },
+    cell: ({ row }) => <AssigneeCell task={row.original} />,
   },
   {
     accessorKey: "dueDate",
@@ -164,23 +296,7 @@ export const columns: ColumnDef<TaskListItem>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const category = row.original.category;
-      if (!category) {
-        return <span className="text-muted-foreground">-</span>;
-      }
-      return (
-        <div className="flex items-center gap-x-2">
-          <DynamicIcon
-            iconName={category.icon || "tag"}
-            className="size-4 text-muted-foreground"
-          />
-          <Badge variant="secondary" className="text-xs">
-            {category.name}
-          </Badge>
-        </div>
-      );
-    },
+    cell: ({ row }) => <CategoryCell task={row.original} />,
   },
   {
     accessorKey: "status",
@@ -196,12 +312,7 @@ export const columns: ColumnDef<TaskListItem>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => {
-      const status = row.original.status!;
-      return (
-        <TaskBadge variant={status}>{snakeCaseToTitleCase(status)}</TaskBadge>
-      );
-    },
+    cell: ({ row }) => <StatusCell task={row.original} />,
   },
   {
     accessorKey: "createdAt",
