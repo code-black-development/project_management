@@ -33,7 +33,7 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
   const hasDescription = task.description && task.description.trim().length > 0;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
+    <div className="min-w-0 overflow-hidden bg-card border border-border rounded-xl p-5">
       <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
         <p className="text-sm font-semibold text-foreground">Description</p>
         <Button
@@ -56,7 +56,7 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
       </div>
 
       {isEditing ? (
-        <div className="flex flex-col gap-y-3">
+        <div className="flex min-w-0 flex-col gap-y-3">
           <Editor value={value} onChange={(e) => setValue(e)} />
           <Button
             size="sm"

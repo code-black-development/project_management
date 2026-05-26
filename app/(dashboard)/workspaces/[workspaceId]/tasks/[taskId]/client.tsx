@@ -53,7 +53,7 @@ export const TaskIdClient = () => {
           <TaskWorklog task={task} />
           {task.seriesId && <TaskSeriesPanel task={task} />}
         </div>
-        <div className="flex flex-col gap-y-4">
+        <div className="flex flex-col gap-y-4 min-w-0">
           <TaskDescription task={task} />
           <TaskChildren
             taskId={task.id}

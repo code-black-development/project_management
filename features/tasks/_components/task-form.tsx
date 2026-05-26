@@ -379,8 +379,8 @@ const TaskForm = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="px-6 py-5 flex flex-col gap-y-5">
-              <div className="grid gap-5 lg:min-h-[calc(92vh-210px)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
-                <div className="flex min-h-0 flex-1 flex-col gap-y-4">
+              <div className="grid min-w-0 gap-5 lg:min-h-[calc(92vh-210px)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-y-4">
                   <FormField
                     name="name"
                     control={form.control}
@@ -403,14 +403,14 @@ const TaskForm = ({
                     name="description"
                     control={form.control}
                     render={({ field }) => (
-                      <FormItem className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+                      <FormItem className="min-w-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
                         <FormLabel>
                           Description{" "}
                           <span className="text-muted-foreground text-sm">
                             (optional)
                           </span>
                         </FormLabel>
-                        <div className="flex flex-col overflow-hidden rounded-md border border-input bg-background [&_.ql-container]:min-h-[220px] [&_.ql-editor]:min-h-[220px] lg:flex-1 lg:min-h-0 lg:[&_.ql-container]:min-h-0 lg:[&_.ql-editor]:min-h-0 lg:[&_.quill]:flex lg:[&_.quill]:flex-col lg:[&_.quill]:h-full lg:[&_.ql-toolbar]:shrink-0 lg:[&_.ql-container]:flex-1 lg:[&_.ql-container]:overflow-hidden lg:[&_.ql-editor]:h-full lg:[&_.ql-editor]:overflow-y-auto">
+                        <div className="flex min-w-0 max-w-full flex-col overflow-hidden rounded-md border border-input bg-background [&_.ql-container]:min-h-[220px] [&_.ql-editor]:min-h-[220px] lg:flex-1 lg:min-h-0 lg:[&_.ql-container]:min-h-0 lg:[&_.ql-editor]:min-h-0 lg:[&_.quill]:flex lg:[&_.quill]:flex-col lg:[&_.quill]:h-full lg:[&_.ql-toolbar]:shrink-0 lg:[&_.ql-container]:flex-1 lg:[&_.ql-container]:overflow-hidden lg:[&_.ql-editor]:h-full lg:[&_.ql-editor]:overflow-y-auto">
                           <Editor
                             value={field.value ?? ""}
                             onChange={field.onChange}
