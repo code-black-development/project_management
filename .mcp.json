@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "project-management-tasks": {
+      "command": "node",
+      "args": [
+        "--env-file=.env",
+        "./mcp/task-manager-server.mjs"
+      ]
+    }
+  }
+}
