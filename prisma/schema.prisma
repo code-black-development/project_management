@@ -119,7 +119,7 @@ model Project {
   autoHideCompletedTasks Boolean   @default(false)
   autoHideChildTasks     Boolean?
   taskAssignmentEmail    Boolean   @default(true)
-  workspace              Workspace @relation(fields: [workspaceId], references: [id])
+  workspace              Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   Task                   Task[]
 
   @@index([workspaceId])

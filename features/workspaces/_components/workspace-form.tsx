@@ -28,6 +28,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteWorkspace } from "../api/use-delete-workspace";
 import { WorkspaceSafeDates } from "@/types/types";
 import WorkspaceInviteForm from "./workspace-invites-form";
+import { useGetProjects } from "@/features/projects/api/use-get-projects";
 
 interface WorkspaceFormProps {
   initialValues?: Partial<WorkspaceSafeDates>;
@@ -47,9 +48,18 @@ const WorkspaceForm = ({ initialValues, onCancel }: WorkspaceFormProps) => {
   const { mutate: deleteWorkspace, isPending: isDeletingWorkspace } =
     useDeleteWorkspace();
 
+  const { data: projects } = useGetProjects({
+    workspaceId: initialValues?.id,
+  });
+  const projectCount = projects?.length ?? 0;
+  const confirmMessage =
+    projectCount > 0
+      ? `This workspace contains ${projectCount} project${projectCount === 1 ? "" : "s"} — all projects, tasks, and associated data will be permanently deleted. This action cannot be undone.`
+      : "This action cannot be undone.";
+
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Workspace",
-    "This action cannot be undone",
+    confirmMessage,
     "destructive"
   );
 

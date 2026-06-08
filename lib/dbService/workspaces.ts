@@ -86,7 +86,6 @@ export const updateWorkspace = async (
     throw new Error("Error updating workspace");
   }
 };
-//TODO - delete the workspace members, projects and tasks as well
 export const deleteWorkspace = async (workspaceId: string, userId: string) => {
   try {
     const workspace = await prisma.workspace.delete({

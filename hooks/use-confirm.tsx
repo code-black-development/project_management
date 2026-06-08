@@ -13,7 +13,7 @@ import {
 
 export const useConfirm = (
   title: string,
-  message: string,
+  message: React.ReactNode,
   variant: ButtonProps["variant"] = "primary"
 ): [() => React.JSX.Element, () => Promise<unknown>] => {
   const [promise, setPromise] = useState<{
