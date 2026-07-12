@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/select";
 import WorkspaceAvatar from "@/features/workspaces/_components/workspace-avatar";
 import { useRouter } from "next/navigation";
-import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import useCreateWorkspaceModal from "@/features/workspaces/hooks/use-create-workspace-modal";
 import { WorkspaceSafeDates } from "@/types/types";
+import { useActiveWorkspaceId } from "@/features/workspaces/hooks/use-active-workspace-id";
 
 const WorkspaceSwitcher = () => {
-  const workspaceId = useWorkspaceId();
+  const workspaceId = useActiveWorkspaceId();
   const router = useRouter();
   const { data } = useGetWorkspaces();
   const { open } = useCreateWorkspaceModal();
@@ -37,7 +37,7 @@ const WorkspaceSwitcher = () => {
           onClick={open}
         />
       </div>
-      <Select onValueChange={onSelect} value={workspaceId}>
+      <Select onValueChange={onSelect} value={workspaceId ?? undefined}>
         <SelectTrigger className="w-full bg-neutral-200 dark:bg-muted dark:text-foreground dark:border-border font-medium p-1">
           <SelectValue placeholder="No workspace selected" />
         </SelectTrigger>

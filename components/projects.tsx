@@ -1,6 +1,5 @@
 "use client";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
-import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { usePathname } from "next/navigation";
 import { RiAddCircleFill } from "react-icons/ri";
 import Link from "next/link";
@@ -8,12 +7,18 @@ import { cn } from "@/lib/utils";
 import useCreateProjectModal from "@/features/projects/hooks/use-create-project-modal";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import { ProjectSafeDate } from "@/types/types";
+import { useActiveWorkspaceId } from "@/features/workspaces/hooks/use-active-workspace-id";
 
 const Projects = () => {
-  const workspaceId = useWorkspaceId();
+  const workspaceId = useActiveWorkspaceId();
   const { data } = useGetProjects({ workspaceId });
   const pathname = usePathname();
   const { open } = useCreateProjectModal();
+
+  if (!workspaceId) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-y-2">
       <div className="flex items-center justify-between">

@@ -15,7 +15,7 @@ import {
 } from "react-icons/go";
 
 import { usePathname } from "next/navigation";
-import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+import { useActiveWorkspaceId } from "@/features/workspaces/hooks/use-active-workspace-id";
 
 const routes = [
   { icon: GoHome, activeIcon: GoHomeFill, label: "Home", href: "" },
@@ -53,12 +53,14 @@ const routes = [
 
 
 const Navigation = () => {
-  const workspaceId = useWorkspaceId();
+  const workspaceId = useActiveWorkspaceId();
   const pathname = usePathname();
   return (
     <ul className="flex flex-col ">
       {routes.map((route) => {
-        const fullPath = `/workspaces/${workspaceId}${route.href}`;
+        const fullPath = workspaceId
+          ? `/workspaces/${workspaceId}${route.href}`
+          : "/workspaces";
         const isActive = pathname === fullPath;
         const Icon = isActive ? route.activeIcon : route.icon;
         return (
