@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PencilIcon, XIcon, AlignLeftIcon } from "lucide-react";
 import { TaskWithUser } from "@/types/types";
 import { useUpdateTask } from "../api/use-update-task";
@@ -15,6 +15,12 @@ const TaskDescription = ({ task }: TaskDescriptionProps) => {
   const [value, setValue] = useState(task.description ?? "");
 
   const { mutate: updateTaskDescription, isPending } = useUpdateTask();
+
+  useEffect(() => {
+    if (!isEditing) {
+      setValue(task.description ?? "");
+    }
+  }, [isEditing, task.description]);
 
   const handleSave = async () => {
     updateTaskDescription(
