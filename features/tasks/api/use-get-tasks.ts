@@ -1,11 +1,12 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { TaskStatus } from "@prisma/client";
 import { client } from "@/lib/rpc";
 
 interface UseGetTasksProps {
   workspaceId?: string | null;
   projectId?: string | null;
-  status?: string | null;
+  statuses?: TaskStatus[] | null;
   assigneeId?: string | null;
   dueDate?: string | null;
   search?: string | null;
@@ -15,18 +16,20 @@ interface UseGetTasksProps {
 export const useGetTasks = ({
   workspaceId,
   projectId,
-  status,
+  statuses,
   assigneeId,
   dueDate,
   search,
   limit = 250,
 }: UseGetTasksProps) => {
+  const statusFilter = statuses?.length ? statuses.join(",") : null;
+
   return useQuery({
     queryKey: [
       "tasks",
       workspaceId,
       projectId,
-      status,
+      statusFilter,
       assigneeId,
       dueDate,
       search,
@@ -38,7 +41,7 @@ export const useGetTasks = ({
         query: {
           workspaceId: workspaceId!,
           projectId: projectId ?? undefined,
-          status: status ?? undefined,
+          status: statusFilter ?? undefined,
           assigneeId: assigneeId ?? undefined,
           dueDate: dueDate ?? undefined,
           search: search ?? undefined,

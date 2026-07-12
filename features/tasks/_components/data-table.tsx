@@ -9,6 +9,7 @@ import {
   PaginationState,
   RowSelectionState,
   SortingState,
+  Updater,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -28,9 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { TaskStatus } from "@prisma/client";
+import { useSearchParams } from "next/navigation";
+import { useUrlQuerySetter } from "@/hooks/use-url-query-state";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -39,9 +42,15 @@ interface DataTableProps<TData, TValue> {
   onUpdateStatusSelected?: (ids: string[], status: TaskStatus) => void;
 }
 
+type SelectableRow = {
+  id: string;
+};
+
 const PAGE_SIZE_STORAGE_KEY = "task-table-page-size";
 const PAGE_SIZE_OPTIONS = [15, 30, 50, 100];
 const DEFAULT_PAGE_SIZE = 30;
+const SORT_COLUMN_PARAM = "task-sort";
+const SORT_DIRECTION_PARAM = "task-order";
 
 const getInitialPageSize = () => {
   if (typeof window === "undefined") return DEFAULT_PAGE_SIZE;
@@ -61,19 +70,67 @@ export function DataTable<TData, TValue>({
   onDeleteSelected,
   onUpdateStatusSelected,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pagination, setPagination] = useState<PaginationState>(() => ({
     pageIndex: 0,
     pageSize: getInitialPageSize(),
   }));
+  const searchParams = useSearchParams();
+  const setQuery = useUrlQuerySetter({ history: "push" });
+
+  const sortableColumnIds = useMemo(() => {
+    return new Set(
+      columns
+        .filter((column) => column.enableSorting !== false)
+        .map((column) => {
+          if (typeof column.id === "string") {
+            return column.id;
+          }
+
+          const accessorKey = (column as { accessorKey?: string }).accessorKey;
+          return typeof accessorKey === "string" ? accessorKey : null;
+        })
+        .filter((columnId): columnId is string => Boolean(columnId))
+    );
+  }, [columns]);
+
+  const sorting = useMemo<SortingState>(() => {
+    const sortColumn = searchParams.get(SORT_COLUMN_PARAM);
+    const sortDirection = searchParams.get(SORT_DIRECTION_PARAM);
+
+    if (!sortColumn || !sortableColumnIds.has(sortColumn)) {
+      return [];
+    }
+
+    return [
+      {
+        id: sortColumn,
+        desc: sortDirection === "desc",
+      },
+    ];
+  }, [searchParams, sortableColumnIds]);
+
+  const handleSortingChange = (updater: Updater<SortingState>) => {
+    const nextSorting =
+      typeof updater === "function" ? updater(sorting) : updater;
+    const nextSort = nextSorting.find(({ id }) => sortableColumnIds.has(id));
+
+    setQuery({
+      [SORT_COLUMN_PARAM]: nextSort?.id ?? null,
+      [SORT_DIRECTION_PARAM]: nextSort
+        ? nextSort.desc
+          ? "desc"
+          : "asc"
+        : null,
+    });
+  };
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     getSortedRowModel: getSortedRowModel(),
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
@@ -95,7 +152,7 @@ export function DataTable<TData, TValue>({
   }, [pagination.pageSize]);
 
   const getSelectedIds = () =>
-    selectedRows.map((row) => (row.original as any).id as string);
+    selectedRows.map((row) => (row.original as SelectableRow).id);
 
   const handleDeleteSelected = () => {
     onDeleteSelected?.(getSelectedIds());

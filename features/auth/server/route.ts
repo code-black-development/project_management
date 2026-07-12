@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { uploadToS3, deleteManyFromS3, extractS3KeyFromUrl } from "@/lib/s3";
 import {
   sendEmail,
+  ensureEmailDeliveryAvailable,
   generatePasswordResetEmailTemplate,
   generateVerificationEmailTemplate,
 } from "@/lib/mailing-functions";
@@ -24,6 +25,22 @@ const app = new Hono()
     ),
     async (c) => {
       const { email } = c.req.valid("json");
+
+      try {
+        ensureEmailDeliveryAvailable();
+      } catch (error) {
+        console.error("Forgot password unavailable: email delivery not configured", {
+          email,
+          error,
+        });
+        return c.json(
+          {
+            error:
+              "Password reset is temporarily unavailable. Please try again later.",
+          },
+          503
+        );
+      }
 
       try {
         // Check if user exists
@@ -66,11 +83,17 @@ const app = new Hono()
 
         return c.json({ message: successMessage });
       } catch (error) {
-        console.error("Forgot password error:", error);
-        return c.json({
-          message:
-            "Thank you, if your email is in the system we will email you a reset link. Please check your email account.",
+        console.error("Forgot password error:", {
+          email,
+          error,
         });
+        return c.json(
+          {
+            error:
+              "Password reset is temporarily unavailable. Please try again later.",
+          },
+          503
+        );
       }
     }
   )

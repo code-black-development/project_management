@@ -4,8 +4,27 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+const isProductionLike =
+  process.env.NODE_ENV === "production" ||
+  process.env.VERCEL_ENV === "production" ||
+  process.env.VERCEL === "1";
+
+export function isEmailDeliveryConfigured() {
+  return !!resend;
+}
+
+export function ensureEmailDeliveryAvailable() {
+  if (!resend && isProductionLike) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+}
+
 export async function sendEmail(to: string, subject: string, html: string) {
   if (!resend) {
+    if (isProductionLike) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+
     // In development without a Resend key, log the email instead of sending
     console.log(`[EMAIL - no RESEND_API_KEY set]`);
     console.log(`  To: ${to}`);

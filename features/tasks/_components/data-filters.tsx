@@ -3,18 +3,28 @@ import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 
 import {
-  Select,
-  SelectContent,
-  SelectTrigger,
   SelectItem,
+  SelectContent,
   SelectSeparator,
+  SelectTrigger,
   SelectValue,
+  Select,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import DatePicker from "@/components/date-picker";
 import {
+  ChevronDownIcon,
   FolderIcon,
   ListCheckIcon,
   SearchIcon,
@@ -23,12 +33,15 @@ import {
 } from "lucide-react";
 import { TaskStatus } from "@prisma/client";
 import useTaskFilters from "../api/use-task-filters";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { snakeCaseToTitleCase } from "@/lib/utils";
 
 interface DataFiltersProps {
   hideProjectFilter?: boolean;
   hideAssigneeFilter?: boolean;
 }
+
+const STATUS_OPTIONS = Object.values(TaskStatus) as TaskStatus[];
 
 const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps) => {
   const workspaceId = useWorkspaceId();
@@ -51,13 +64,43 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
     value: member.id,
   }));
 
-  const [{ status, assigneeId, projectId, dueDate, search }, setfilters] =
+  const [{ statuses, assigneeId, projectId, dueDate, search }, setfilters] =
     useTaskFilters();
 
   const [searchInput, setSearchInput] = useState(search || "");
 
-  const onStatusChange = (value: string) => {
-    setfilters({ status: value === "all" ? null : (value as TaskStatus) });
+  useEffect(() => {
+    setSearchInput(search || "");
+  }, [search]);
+
+  const selectedStatusesLabel = useMemo(() => {
+    if (statuses.length === 0) {
+      return "All statuses";
+    }
+
+    if (statuses.length <= 2) {
+      return statuses.map((status) => snakeCaseToTitleCase(status)).join(", ");
+    }
+
+    return `${statuses.length} statuses`;
+  }, [statuses]);
+
+  const onStatusCheckedChange = (value: TaskStatus, checked: boolean) => {
+    const nextStatusSet = new Set(statuses);
+
+    if (checked) {
+      nextStatusSet.add(value);
+    } else {
+      nextStatusSet.delete(value);
+    }
+
+    const nextStatuses = STATUS_OPTIONS.filter((status) =>
+      nextStatusSet.has(status)
+    );
+
+    setfilters({
+      status: nextStatuses.length > 0 ? nextStatuses.join(",") : null,
+    });
   };
 
   const onAssigneeChange = (value: string) => {
@@ -79,7 +122,7 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
   };
 
   const hasActiveFilters = Boolean(
-    status ||
+    statuses.length > 0 ||
       (!hideAssigneeFilter && assigneeId) ||
       (!hideProjectFilter && projectId) ||
       dueDate ||
@@ -125,33 +168,47 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
         </Button>
       </div>
 
-      <Select
-        defaultValue={status ?? undefined}
-        onValueChange={(value) => onStatusChange(value)}
-      >
-        <SelectTrigger className="w-full lg:w-auto h-8">
-          <div className="flex items-center pr-2">
-            <ListCheckIcon className="size-4 mr-2" />
-            <SelectValue placeholder="All statuses" />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          <SelectSeparator />
-          <SelectItem value={TaskStatus.BACKLOG}>Backlog</SelectItem>
-          <SelectSeparator />
-          <SelectItem value={TaskStatus.TODO}>Todo</SelectItem>
-          <SelectSeparator />
-          <SelectItem value={TaskStatus.IN_PROGRESS}>In Progress</SelectItem>
-          <SelectSeparator />
-          <SelectItem value={TaskStatus.IN_REVIEW}>In Review</SelectItem>
-          <SelectSeparator />
-          <SelectItem value={TaskStatus.DONE}>Done</SelectItem>
-        </SelectContent>
-      </Select>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            variant="muted"
+            className="h-8 w-full lg:w-auto justify-between"
+          >
+            <span className="flex min-w-0 items-center">
+              <ListCheckIcon className="mr-2 size-4 shrink-0" />
+              <span className="truncate">{selectedStatusesLabel}</span>
+            </span>
+            <ChevronDownIcon className="ml-2 size-4 shrink-0" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel>Status</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {STATUS_OPTIONS.map((status) => (
+            <DropdownMenuCheckboxItem
+              key={status}
+              checked={statuses.includes(status)}
+              onCheckedChange={(checked) =>
+                onStatusCheckedChange(status, checked === true)
+              }
+              onSelect={(event) => event.preventDefault()}
+            >
+              {snakeCaseToTitleCase(status)}
+            </DropdownMenuCheckboxItem>
+          ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={statuses.length === 0}
+            onSelect={() => setfilters({ status: null })}
+          >
+            Clear status filter
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {!hideAssigneeFilter && (
         <Select
-          defaultValue={assigneeId ?? undefined}
+          value={assigneeId ?? "all"}
           onValueChange={(value) => onAssigneeChange(value)}
         >
           <SelectTrigger className="w-full lg:w-auto h-8">
@@ -173,7 +230,7 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
       )}
       {!hideProjectFilter && (
         <Select
-          defaultValue={projectId ?? undefined}
+          value={projectId ?? "all"}
           onValueChange={(value) => onProjectChange(value)}
         >
           <SelectTrigger className="w-full lg:w-auto h-8">

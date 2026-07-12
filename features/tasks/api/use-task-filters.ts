@@ -4,24 +4,40 @@ import { useSearchParams } from "next/navigation";
 
 type TaskFilterState = {
   projectId: string | null;
-  status: TaskStatus | null;
+  statuses: TaskStatus[];
   assigneeId: string | null;
   search: string | null;
   dueDate: string | null;
 };
 
+const TASK_STATUSES = Object.values(TaskStatus) as TaskStatus[];
+
+const parseStatuses = (rawStatus: string | null) => {
+  if (!rawStatus) {
+    return [];
+  }
+
+  const selectedStatuses = new Set(
+    rawStatus
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value): value is TaskStatus =>
+        TASK_STATUSES.includes(value as TaskStatus)
+      )
+  );
+
+  return TASK_STATUSES.filter((status) => selectedStatuses.has(status));
+};
+
 const useTaskFilters = () => {
   const searchParams = useSearchParams();
-  const setFilters = useUrlQuerySetter();
-  const rawStatus = searchParams.get("status");
-  const status = Object.values(TaskStatus).includes(rawStatus as TaskStatus)
-    ? (rawStatus as TaskStatus)
-    : null;
+  const setFilters = useUrlQuerySetter({ history: "push" });
+  const statuses = parseStatuses(searchParams.get("status"));
 
   return [
     {
       projectId: searchParams.get("projectId"),
-      status,
+      statuses,
       assigneeId: searchParams.get("assigneeId"),
       search: searchParams.get("search"),
       dueDate: searchParams.get("dueDate"),

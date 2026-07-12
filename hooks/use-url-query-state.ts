@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type QueryValue = string | number | boolean | null | undefined;
+type QueryHistoryMode = "push" | "replace";
 
 const serializeQueryValue = (value: QueryValue) => {
   if (value === null || value === undefined || value === false || value === "") {
@@ -15,10 +16,13 @@ const serializeQueryValue = (value: QueryValue) => {
   return String(value);
 };
 
-export const useUrlQuerySetter = () => {
+export const useUrlQuerySetter = (
+  options?: { history?: QueryHistoryMode }
+) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const history = options?.history ?? "replace";
 
   return useCallback(
     (updates: Record<string, QueryValue>) => {
@@ -34,11 +38,20 @@ export const useUrlQuerySetter = () => {
       });
 
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
+      const href = query ? `${pathname}?${query}` : pathname;
+
+      if (history === "push") {
+        router.push(href, {
+          scroll: false,
+        });
+        return;
+      }
+
+      router.replace(href, {
         scroll: false,
       });
     },
-    [pathname, router, searchParams]
+    [history, pathname, router, searchParams]
   );
 };
 

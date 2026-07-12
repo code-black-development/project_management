@@ -1,6 +1,30 @@
 import { z } from "zod";
 import { TaskStatus, TaskType, RecurrenceFrequency, RecurrenceDuration } from "@prisma/client";
 
+const TASK_STATUSES = Object.values(TaskStatus) as TaskStatus[];
+
+const taskStatusFilterSchema = z.string().nullish().transform((value, ctx) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const statuses = [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+  const invalidStatuses = statuses.filter(
+    (status) => !TASK_STATUSES.includes(status as TaskStatus)
+  );
+
+  if (invalidStatuses.length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid status filter: ${invalidStatuses.join(", ")}`,
+    });
+
+    return z.NEVER;
+  }
+
+  return statuses as TaskStatus[];
+});
+
 export const createTaskSchema = z.object({
   name: z.string().trim().nonempty("Name is required"),
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
@@ -137,7 +161,7 @@ export const taskSearchSchema = z.object({
   workspaceId: z.string().nullish(),
   projectId: z.string().nullish(),
   assigneeId: z.string().nullish(),
-  status: z.nativeEnum(TaskStatus).nullish(),
+  status: taskStatusFilterSchema,
   search: z.string().nullish(),
   dueDate: z.coerce.date().nullish(),
   limit: z.coerce.number().int().min(1).max(500).default(250),

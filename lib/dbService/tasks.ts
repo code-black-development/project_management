@@ -21,6 +21,7 @@ export const searchTasks = async (
   excludeChildTasks?: boolean
 ) => {
   const where: Prisma.TaskWhereInput = {};
+  const selectedStatuses = data.status ?? [];
 
   if (data.workspaceId) {
     where.workspaceId = data.workspaceId;
@@ -34,24 +35,17 @@ export const searchTasks = async (
     where.assigneeId = data.assigneeId;
   }
 
-  if (data.status) {
-    where.status = data.status;
+  if (selectedStatuses.length > 0) {
+    where.status = {
+      in: selectedStatuses,
+    };
   }
 
   // Add logic to exclude completed tasks
   if (excludeCompleted) {
-    if (where.status) {
-      // If status filter already exists, we need to combine it with the NOT DONE condition
-      const existingStatus = where.status;
+    if (selectedStatuses.length > 0) {
       where.status = {
-        in:
-          typeof existingStatus === "object" && "in" in existingStatus
-            ? (existingStatus.in as TaskStatus[]).filter(
-                (s) => s !== TaskStatus.DONE
-              )
-            : existingStatus !== TaskStatus.DONE
-              ? [existingStatus as TaskStatus]
-              : [],
+        in: selectedStatuses.filter((status) => status !== TaskStatus.DONE),
       };
     } else {
       where.status = { not: TaskStatus.DONE };
