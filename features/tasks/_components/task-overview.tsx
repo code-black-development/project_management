@@ -135,10 +135,10 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
   }, [task.name, task.timeEstimate]);
 
   const [ConfirmDialog, confirm] = useConfirm(
-    isEvent ? "Delete Event" : "Delete Task",
+    isEvent ? "Delete Event" : "Archive Task",
     isEvent
       ? "This will permanently delete this event and all its occurrences. This action cannot be undone."
-      : "This action cannot be undone.",
+      : "This task will be hidden from normal views, but can still be recovered later if needed.",
     "destructive"
   );
 
@@ -225,7 +225,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 className="text-destructive focus:text-destructive"
               >
                 <TrashIcon className="size-4 mr-2" />
-                {isEvent ? "Delete event" : "Delete task"}
+                {isEvent ? "Delete event" : "Archive task"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

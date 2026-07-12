@@ -141,6 +141,7 @@ model Task {
   description           String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  archivedAt            DateTime?
   assigneeId            String?
   projectId             String
   workspaceId           String
@@ -175,6 +176,7 @@ model Task {
   @@index([workspaceId])
   @@index([projectId])
   @@index([status])
+  @@index([archivedAt])
   @@index([assigneeId])
   @@index([dueDate])
   @@index([workspaceId, status])

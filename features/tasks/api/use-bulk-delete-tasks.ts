@@ -18,15 +18,17 @@ export function useBulkDeleteTasks() {
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ json }) => {
       const response = await client.api.tasks["bulk-delete"].$post({ json });
-      if (!response.ok) throw new Error("Failed to delete tasks");
+      if (!response.ok) throw new Error("Failed to archive tasks");
       return await response.json();
     },
     onSuccess: ({ data }) => {
-      toast.success(`${data.ids.length} task${data.ids.length === 1 ? "" : "s"} deleted`);
+      toast.success(
+        `${data.ids.length} task${data.ids.length === 1 ? "" : "s"} archived`
+      );
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: () => {
-      toast.error("Failed to delete tasks");
+      toast.error("Failed to archive tasks");
     },
   });
   return mutation;

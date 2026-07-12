@@ -3,10 +3,9 @@ import {
   createTask,
   createTaskAssets,
   deleteLinkableTasks,
-  deleteTask,
-  deleteTasksByIds,
+  archiveTask,
+  archiveTasksByIds,
   deleteTaskAsset,
-  getTaskAssetUrlsForTaskIds,
   getTaskAssetById,
   getHighestPositionTask,
   getLinkableTasks,
@@ -384,11 +383,14 @@ const app = new Hono()
     const { taskId } = c.req.param();
     //TODO: we should check if the user is a member of the workspace and has permission
     const task = await getTaskById(taskId);
+    if (!task) {
+      return c.json({ error: "Task not found" }, 404);
+    }
 
     const result = {
       ...task,
-      timeEstimate: task?.timeEstimate
-        ? minutesToTimeEstimateString(task?.timeEstimate)
+      timeEstimate: task.timeEstimate
+        ? minutesToTimeEstimateString(task.timeEstimate)
         : null,
     };
     return c.json({ data: result });
@@ -533,34 +535,22 @@ const app = new Hono()
     async (c) => {
       const { ids } = c.req.valid("json");
       try {
-        const assetUrls = await getTaskAssetUrlsForTaskIds(ids);
-        const assetKeys = assetUrls
-          .map((url) => extractS3KeyFromUrl(url))
-          .filter((key): key is string => !!key);
-
-        await deleteTasksByIds(ids);
-        await deleteManyFromS3(assetKeys, "task assets");
+        await archiveTasksByIds(ids);
         return c.json({ data: { ids } });
       } catch (error) {
-        console.error("Failed to bulk delete tasks:", error);
-        return c.json({ error: "Failed to delete tasks" }, 500);
+        console.error("Failed to bulk archive tasks:", error);
+        return c.json({ error: "Failed to archive tasks" }, 500);
       }
     }
   )
   .delete("/:taskId", async (c) => {
     const { taskId } = c.req.param();
     try {
-      const assetUrls = await getTaskAssetUrlsForTaskIds([taskId]);
-      const assetKeys = assetUrls
-        .map((url) => extractS3KeyFromUrl(url))
-        .filter((key): key is string => !!key);
-
-      const task = await deleteTask(taskId);
-      await deleteManyFromS3(assetKeys, "task assets");
+      const task = await archiveTask(taskId);
       return c.json({ data: { id: task.id } });
     } catch (error) {
-      console.error("Failed to delete task:", error);
-      return c.json({ error: "Failed to delete task" }, 500);
+      console.error("Failed to archive task:", error);
+      return c.json({ error: "Failed to archive task" }, 500);
     }
   })
   .get(

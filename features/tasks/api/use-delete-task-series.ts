@@ -23,18 +23,21 @@ export const useDeleteTaskSeries = () => {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to delete series");
+        throw new Error(body.error || "Failed to archive series");
       }
 
       return response.json();
     },
     onSuccess: (data, { scope }) => {
-      const label = scope === "all" ? "All series tasks deleted" : "Upcoming series tasks deleted";
-      toast.success(`${label} (${data.data.deleted} removed)`);
+      const label =
+        scope === "all"
+          ? "All series tasks archived"
+          : "Upcoming series tasks archived";
+      toast.success(`${label} (${data.data.deleted} archived)`);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to delete series");
+      toast.error(err.message || "Failed to archive series");
     },
   });
 };

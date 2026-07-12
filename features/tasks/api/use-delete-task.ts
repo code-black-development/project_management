@@ -3,7 +3,6 @@ import { InferRequestType, InferResponseType } from "hono";
 
 import { client } from "@/lib/rpc";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 type ResponseType = InferResponseType<
   (typeof client.api.tasks)[":taskId"]["$delete"],
@@ -14,7 +13,6 @@ type RequestType = InferRequestType<
 >;
 
 export function useDeleteTask() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const mutation = useMutation<ResponseType, Error, RequestType>({
@@ -24,17 +22,17 @@ export function useDeleteTask() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete task");
+        throw new Error("Failed to archive task");
       }
       return await response.json();
     },
     onSuccess: ({ data }) => {
-      toast.success("task deleted");
+      toast.success("Task archived");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", data.id] });
     },
     onError: () => {
-      toast.error("Failed to delete task");
+      toast.error("Failed to archive task");
     },
   });
   return mutation;

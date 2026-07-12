@@ -15,12 +15,16 @@ const safeUserSelect = {
   emailVerified: true,
 } as const;
 
+const activeTaskWhere = (): Prisma.TaskWhereInput => ({
+  archivedAt: null,
+});
+
 export const searchTasks = async (
   data: z.infer<typeof taskSearchSchema>,
   excludeCompleted?: boolean,
   excludeChildTasks?: boolean
 ) => {
-  const where: Prisma.TaskWhereInput = {};
+  const where: Prisma.TaskWhereInput = activeTaskWhere();
   const selectedStatuses = data.status ?? [];
 
   if (data.workspaceId) {
@@ -158,15 +162,17 @@ export const getTasksByProjectId = async (projectId: string) => {
   return await prisma.task.findMany({
     where: {
       projectId,
+      archivedAt: null,
     },
   });
 };
 
 export const getTaskById = async (taskId: string) => {
   try {
-    const result = await prisma.task.findUnique({
+    const result = await prisma.task.findFirst({
       where: {
         id: taskId,
+        archivedAt: null,
       },
       include: {
         project: true,
@@ -192,6 +198,9 @@ export const getTaskById = async (taskId: string) => {
           },
         },
         children: {
+          where: {
+            archivedAt: null,
+          },
           include: {
             assignee: { include: { user: { select: safeUserSelect } } },
             createdBy: { include: { user: { select: safeUserSelect } } },
@@ -208,6 +217,9 @@ export const getTaskById = async (taskId: string) => {
             assets: true,
             category: true,
             children: {
+              where: {
+                archivedAt: null,
+              },
               include: {
                 assignee: { include: { user: { select: safeUserSelect } } },
                 createdBy: { include: { user: { select: safeUserSelect } } },
@@ -235,6 +247,7 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
   return await prisma.task.findMany({
     where: {
       workspaceId,
+      archivedAt: null,
     },
     include: {
       project: true,
@@ -259,7 +272,7 @@ export const getTasksByWorkspaceId = async (workspaceId: string) => {
 };
 
 export const createTask = async (
-  data: Omit<Task, "createdAt" | "updatedAt" | "id" | "parentId">
+  data: Omit<Task, "createdAt" | "updatedAt" | "id" | "parentId" | "archivedAt">
 ) => {
   try {
     return await prisma.task.create({ data });
@@ -291,22 +304,35 @@ export const updateTask = async (taskId: string, data: Partial<Task>) => {
   }
 };
 
-export const deleteTask = async (taskId: string) => {
-  return await prisma.task.delete({
-    where: {
-      id: taskId,
-    },
-  });
-};
+export const archiveTasksByIds = async (taskIds: string[]) => {
+  if (taskIds.length === 0) {
+    return [];
+  }
 
-export const deleteTasksByIds = async (taskIds: string[]) => {
-  return await prisma.task.deleteMany({
+  const idsForArchival = await getTaskAndDescendantIds(taskIds);
+  const archivedAt = new Date();
+
+  await prisma.task.updateMany({
     where: {
       id: {
-        in: taskIds,
+        in: idsForArchival,
       },
+      archivedAt: null,
+    },
+    data: {
+      archivedAt,
     },
   });
+
+  return idsForArchival;
+};
+
+export const archiveTask = async (taskId: string) => {
+  const archivedIds = await archiveTasksByIds([taskId]);
+  return {
+    id: taskId,
+    archivedIds,
+  };
 };
 
 export const getTaskAndDescendantIds = async (taskIds: string[]) => {
@@ -319,6 +345,7 @@ export const getTaskAndDescendantIds = async (taskIds: string[]) => {
         parentId: {
           in: currentParentIds,
         },
+        archivedAt: null,
       },
       select: {
         id: true,
@@ -392,6 +419,7 @@ export const getHighestPositionTask = async (
     where: {
       workspaceId,
       status,
+      archivedAt: null,
     },
     orderBy: {
       position: "asc",
@@ -407,6 +435,7 @@ export const getProjectTasksInDateRange = async (
   return await prisma.task.findMany({
     where: {
       projectId,
+      archivedAt: null,
       createdAt: {
         gte: startDate,
         lte: endDate,
@@ -419,6 +448,7 @@ export const getProjectOverdueTasks = async (projectId: string, date: Date) => {
   return await prisma.task.findMany({
     where: {
       projectId,
+      archivedAt: null,
       dueDate: {
         lt: date,
       },
@@ -434,6 +464,7 @@ export const getWorkspaceTasksInDateRange = async (
   return await prisma.task.findMany({
     where: {
       workspaceId,
+      archivedAt: null,
       createdAt: {
         gte: startDate,
         lte: endDate,
@@ -449,6 +480,7 @@ export const getWorkspaceOverdueTasks = async (
   return await prisma.task.findMany({
     where: {
       workspaceId,
+      archivedAt: null,
       dueDate: {
         lt: date,
       },
@@ -462,6 +494,7 @@ export const getLinkableTasks = async (projectId: string) => {
       where: {
         projectId,
         parentId: null,
+        archivedAt: null,
       },
     });
     return res;
@@ -569,7 +602,7 @@ async function copyDescendants(
   memberId: string,
 ) {
   const children = await prisma.task.findMany({
-    where: { parentId: originalParentId },
+    where: { parentId: originalParentId, archivedAt: null },
   });
 
   for (const child of children) {
@@ -588,7 +621,9 @@ export const generateTaskSeries = async (
   endDate: Date,
   memberId: string,
 ) => {
-  const original = await prisma.task.findUnique({ where: { id: taskId } });
+  const original = await prisma.task.findFirst({
+    where: { id: taskId, archivedAt: null },
+  });
   if (!original || !original.dueDate) {
     throw new Error("Task must have a due date to create a series");
   }
@@ -626,12 +661,16 @@ export const deleteTaskSeries = async (
   scope: "all" | "upcoming",
   fromTaskId?: string,
 ) => {
-  const where: Prisma.TaskWhereInput = { seriesId, parentId: null };
+  const where: Prisma.TaskWhereInput = {
+    seriesId,
+    parentId: null,
+    archivedAt: null,
+  };
 
   if (scope === "upcoming") {
     if (fromTaskId) {
-      const fromTask = await prisma.task.findUnique({
-        where: { id: fromTaskId },
+      const fromTask = await prisma.task.findFirst({
+        where: { id: fromTaskId, archivedAt: null },
         select: { dueDate: true },
       });
       if (fromTask?.dueDate) {
@@ -647,13 +686,13 @@ export const deleteTaskSeries = async (
 
   if (ids.length === 0) return 0;
 
-  await prisma.task.deleteMany({ where: { id: { in: ids } } });
+  await archiveTasksByIds(ids);
   return ids.length;
 };
 
 export const getSeriesTasks = async (seriesId: string) => {
   return await prisma.task.findMany({
-    where: { seriesId, parentId: null },
+    where: { seriesId, parentId: null, archivedAt: null },
     select: { id: true, name: true, dueDate: true, status: true },
     orderBy: { dueDate: "asc" },
   });

@@ -33,14 +33,14 @@ const TaskSeriesPanel = ({ task }: TaskSeriesPanelProps) => {
   const { mutate: deleteSeries, isPending: isDeletingSeries } = useDeleteTaskSeries();
 
   const [ConfirmDeleteAll, confirmDeleteAll] = useConfirm(
-    "Delete entire series",
-    "This will delete all tasks in this series, including past ones. This cannot be undone.",
+    "Archive entire series",
+    "This will hide all tasks in this series, including past ones, from normal views while keeping them recoverable.",
     "destructive"
   );
 
   const [ConfirmDeleteUpcoming, confirmDeleteUpcoming] = useConfirm(
-    "Delete this and upcoming tasks",
-    "This will delete this task and all tasks in the series that come after it. Earlier tasks in the series will remain.",
+    "Archive this and upcoming tasks",
+    "This will hide this task and all later tasks in the series from normal views. Earlier tasks in the series will remain.",
     "destructive"
   );
 
@@ -157,7 +157,7 @@ const TaskSeriesPanel = ({ task }: TaskSeriesPanelProps) => {
             onClick={handleDeleteUpcoming}
             className="text-xs"
           >
-            Delete this &amp; upcoming
+            Archive this &amp; upcoming
           </Button>
           <Button
             size="sm"
@@ -166,7 +166,7 @@ const TaskSeriesPanel = ({ task }: TaskSeriesPanelProps) => {
             onClick={handleDeleteAll}
             className="text-xs"
           >
-            Delete all
+            Archive all
           </Button>
         </div>
       </div>

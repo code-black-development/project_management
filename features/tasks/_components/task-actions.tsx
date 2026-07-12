@@ -26,8 +26,8 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
   const { open } = useEditTaskModal();
 
   const [ConfirmDialog, confirm] = useConfirm(
-    "Delete Task",
-    "This action acannot be undone",
+    "Archive Task",
+    "This task will be hidden from normal views, but can still be recovered later if needed.",
     "destructive"
   );
   const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask();
@@ -93,7 +93,7 @@ const TaskActions = ({ id, projectId, children }: TaskActionsProps) => {
             className="text-amber-700 focus:text-amber-700 font-medium p-[10px]"
           >
             <TrashIcon className="mr-2 size=4 stroke-2" />
-            Delete Task
+            Archive Task
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

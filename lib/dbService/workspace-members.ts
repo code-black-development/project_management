@@ -42,8 +42,16 @@ export const getWorkspaceMembersWithStats = async (workspaceId: string) => {
       },
       _count: {
         select: {
-          assignedTasks: true,
-          createdTasks: true,
+          assignedTasks: {
+            where: {
+              archivedAt: null,
+            },
+          },
+          createdTasks: {
+            where: {
+              archivedAt: null,
+            },
+          },
           Worklog: true,
         },
       },
@@ -74,12 +82,23 @@ export const getWorkspaceMemberDetails = async (
       },
       _count: {
         select: {
-          assignedTasks: true,
-          createdTasks: true,
+          assignedTasks: {
+            where: {
+              archivedAt: null,
+            },
+          },
+          createdTasks: {
+            where: {
+              archivedAt: null,
+            },
+          },
           Worklog: true,
         },
       },
       assignedTasks: {
+        where: {
+          archivedAt: null,
+        },
         select: {
           id: true,
           name: true,
@@ -97,6 +116,9 @@ export const getWorkspaceMemberDetails = async (
         take: 8,
       },
       createdTasks: {
+        where: {
+          archivedAt: null,
+        },
         select: {
           id: true,
           name: true,
@@ -146,11 +168,13 @@ export const getWorkspaceMemberDetails = async (
         where: {
           assigneeId: member.id,
           status: TaskStatus.DONE,
+          archivedAt: null,
         },
       }),
       prisma.task.count({
         where: {
           assigneeId: member.id,
+          archivedAt: null,
           status: {
             not: TaskStatus.DONE,
           },

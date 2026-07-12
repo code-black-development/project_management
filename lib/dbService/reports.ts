@@ -33,7 +33,7 @@ export const getWorkspaceTimeReport = async (
 ): Promise<WorkspaceTimeReport> => {
   // Get all tasks with their time estimates and worklogs
   const tasks = await prisma.task.findMany({
-    where: { workspaceId },
+    where: { workspaceId, archivedAt: null },
     select: {
       id: true,
       timeEstimate: true,
@@ -86,6 +86,9 @@ export const getProjectTimeReports = async (
       name: true,
       image: true,
       Task: {
+        where: {
+          archivedAt: null,
+        },
         select: {
           id: true,
           timeEstimate: true,

@@ -143,8 +143,8 @@ const TaskForm = ({
   const [seriesEndDate, setSeriesEndDate] = useState<Date | undefined>(undefined);
 
   const [DeleteDialog, confirmDelete] = useConfirm(
-    "Delete Task",
-    "This action cannot be undone",
+    "Archive Task",
+    "This task will be hidden from normal views, but can still be recovered later if needed.",
     "destructive"
   );
 
@@ -810,7 +810,7 @@ const TaskForm = ({
         <div className="border border-destructive/30 bg-destructive/5 rounded-xl p-5">
           <p className="text-sm font-semibold text-foreground">Danger Zone</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Deleting a task is irreversible and will remove all associated data.
+            Archiving a task hides it from normal views without permanently removing its data.
           </p>
           <Button
             className="mt-4"
@@ -820,7 +820,7 @@ const TaskForm = ({
             disabled={isPending}
             onClick={handleDelete}
           >
-            Delete Task
+            Archive Task
           </Button>
         </div>
       )}

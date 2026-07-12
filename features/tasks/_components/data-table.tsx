@@ -190,7 +190,7 @@ export function DataTable<TData, TValue>({
           {onDeleteSelected && (
             <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
               <Trash2 className="size-4 mr-2" />
-              Delete selected
+              Archive selected
             </Button>
           )}
         </div>
