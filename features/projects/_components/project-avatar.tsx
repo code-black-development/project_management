@@ -5,14 +5,14 @@ import { usePresignedUrl } from "@/hooks/use-presigned-url";
 
 interface ProjectAvatarProps {
   image?: string;
-  name: string;
+  name?: string;
   className?: string;
   fallbackClassName?: string;
 }
 const ProjectAvatar = ({
   image,
   className,
-  name,
+  name = "project",
   fallbackClassName,
 }: ProjectAvatarProps) => {
   const { presignedUrl, loading } = usePresignedUrl(image);
@@ -45,7 +45,7 @@ const ProjectAvatar = ({
           fallbackClassName,
         )}
       >
-        {name[0]}
+        {(name && name[0]) || "P"}
       </AvatarFallback>
     </Avatar>
   );

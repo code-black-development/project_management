@@ -28,8 +28,8 @@ export function useDeleteTask() {
     },
     onSuccess: ({ data }) => {
       toast.success("Task archived");
+      queryClient.removeQueries({ queryKey: ["tasks", data.id], exact: true });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks", data.id] });
     },
     onError: () => {
       toast.error("Failed to archive task");
