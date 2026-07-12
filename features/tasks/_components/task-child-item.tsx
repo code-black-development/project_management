@@ -17,6 +17,7 @@ import {
 import { TaskBadge } from "./task-badge";
 import { snakeCaseToTitleCase } from "@/lib/utils";
 import MemberAvatar from "@/features/members/_components/member-avatar";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface TaskChildItemProps {
   task: TaskWithUser;
@@ -32,12 +33,22 @@ const STATUS_OPTIONS = [
 
 const TaskChildItem = ({ task }: TaskChildItemProps) => {
   const workspaceId = useWorkspaceId();
-  const { mutate: unlinkTask } = useDeleteLinkedTask();
+  const { mutate: archiveChildTask } = useDeleteLinkedTask();
   const { mutate: updateTask, isPending } = useUpdateTask();
+  const [ConfirmDialog, confirmArchive] = useConfirm(
+    "Archive Child Task",
+    "This child task will be hidden from normal views, but can still be recovered later if needed.",
+    "destructive"
+  );
 
-  const handleUnlink = (e: React.MouseEvent) => {
+  const handleArchive = async (e: React.MouseEvent) => {
     e.preventDefault();
-    unlinkTask({ json: { childTask: task.id, parentId: task.parentId! } });
+    const confirmed = await confirmArchive();
+    if (!confirmed) {
+      return;
+    }
+
+    archiveChildTask({ json: { childTask: task.id, parentId: task.parentId! } });
   };
 
   const handleStatusChange = (status: string) => {
@@ -48,7 +59,9 @@ const TaskChildItem = ({ task }: TaskChildItemProps) => {
     task.assignee?.user.name || task.assignee?.user.email || null;
 
   return (
-    <div className="flex items-center gap-x-2.5 px-3 py-2 rounded-lg border border-border hover:bg-accent transition-colors group">
+    <>
+      <ConfirmDialog />
+      <div className="flex items-center gap-x-2.5 px-3 py-2 rounded-lg border border-border hover:bg-accent transition-colors group">
       {/* Status select */}
       <Select
         value={task.status}
@@ -97,15 +110,16 @@ const TaskChildItem = ({ task }: TaskChildItemProps) => {
         <span className="text-xs text-muted-foreground shrink-0">Unassigned</span>
       )}
 
-      {/* Unlink */}
+      {/* Archive child task */}
       <button
-        onClick={handleUnlink}
+        onClick={handleArchive}
         className="shrink-0 h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
-        title="Unlink subtask"
+        title="Archive child task"
       >
         <TrashIcon className="size-3.5" />
       </button>
-    </div>
+      </div>
+    </>
   );
 };
 

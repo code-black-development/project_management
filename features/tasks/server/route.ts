@@ -2,7 +2,6 @@ import {
   createLinkableTasks,
   createTask,
   createTaskAssets,
-  deleteLinkableTasks,
   archiveTask,
   archiveTasksByIds,
   deleteTaskAsset,
@@ -144,7 +143,7 @@ const app = new Hono()
     ),
     async (c) => {
       const { childTask, parentId } = c.req.valid("json");
-      const tasks = await deleteLinkableTasks(childTask);
+      await archiveTask(childTask);
       return c.json({ data: parentId });
     }
   )
