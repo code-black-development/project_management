@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ interface DatePickerProps {
   onChange: (date: Date) => void;
   className?: string;
   placeholder?: string;
+  disablePastDates?: boolean;
 }
 
 const DatePicker = ({
@@ -21,6 +22,7 @@ const DatePicker = ({
   onChange,
   className,
   placeholder,
+  disablePastDates = false,
 }: DatePickerProps) => {
   return (
     <Popover>
@@ -42,7 +44,11 @@ const DatePicker = ({
           mode="single"
           selected={value}
           onSelect={(date) => onChange(date as Date)}
-          disabled={(day) => day < new Date()}
+          disabled={
+            disablePastDates
+              ? (day) => day < startOfDay(new Date())
+              : undefined
+          }
         />
       </PopoverContent>
     </Popover>

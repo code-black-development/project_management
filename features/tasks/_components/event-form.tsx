@@ -27,6 +27,7 @@ import DatePicker from "@/components/date-picker";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import { Editor } from "@/components/editor";
+import PastDateWarning from "./past-date-warning";
 
 import { UserRound } from "lucide-react";
 import {
@@ -203,6 +204,10 @@ const EventForm = ({
                             onChange={field.onChange}
                           />
                         </FormControl>
+                        <PastDateWarning
+                          date={field.value}
+                          message="This date is in the past."
+                        />
                         <FormMessage />
                       </FormItem>
                     )}

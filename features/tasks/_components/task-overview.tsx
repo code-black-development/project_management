@@ -49,6 +49,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import CreateSeriesModal from "./create-series-modal";
+import PastDateWarning from "./past-date-warning";
 
 interface TaskOverviewProps {
   task: TaskWithUser;
@@ -272,11 +273,17 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
           </EditableRow>
 
           <EditableRow label="Due date">
-            <DatePicker
-              value={task.dueDate ? new Date(task.dueDate) : undefined}
-              onChange={(date) => patchTask({ dueDate: date })}
-              placeholder="No due date"
-            />
+            <div className="space-y-2">
+              <DatePicker
+                value={task.dueDate ? new Date(task.dueDate) : undefined}
+                onChange={(date) => patchTask({ dueDate: date })}
+                placeholder="No due date"
+              />
+              <PastDateWarning
+                date={task.dueDate}
+                message="This due date is in the past. The task is overdue."
+              />
+            </div>
           </EditableRow>
 
           <EditableRow label="Assigned to">

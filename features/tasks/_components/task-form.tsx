@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { TaskStatus } from "@prisma/client";
 
 import { useConfirm } from "@/hooks/use-confirm";
-import { createTaskSchema, updateTaskSchema } from "../schema";
+import { createTaskSchema, patchTaskSchema, updateTaskSchema } from "../schema";
 
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useProjectId } from "@/features/projects/hooks/use-project-id";
@@ -45,6 +45,7 @@ import {
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import DynamicIcon from "@/components/dynamic-icon";
+import PastDateWarning from "./past-date-warning";
 
 import type {
   MemberSafeDate,
@@ -195,15 +196,15 @@ const TaskForm = ({
 
   const handleDelete = async () => {
     const deleteStatus = await confirmDelete();
-    if (!deleteStatus) {
+    if (!deleteStatus || !initialValues) {
       return;
     }
-    deleteTask({ param: { taskId: initialValues?.id! } });
+    deleteTask({ param: { taskId: initialValues.id } });
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (initialValues) {
-      const changedFields: any = {};
+      const changedFields: z.infer<typeof patchTaskSchema> = {};
 
       if (values.name !== initialValues.name) {
         changedFields.name = values.name;
@@ -443,6 +444,10 @@ const TaskForm = ({
                             placeholder="Select due date"
                           />
                         </FormControl>
+                        <PastDateWarning
+                          date={field.value}
+                          message="This due date is in the past. The task will show as overdue."
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
