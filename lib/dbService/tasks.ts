@@ -92,6 +92,7 @@ export const searchTasks = async (
       description: true,
       createdAt: true,
       updatedAt: true,
+      archivedAt: true,
       assigneeId: true,
       projectId: true,
       workspaceId: true,
