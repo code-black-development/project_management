@@ -62,11 +62,13 @@ export const searchTasks = async (
       {
         name: {
           contains: data.search,
+          mode: "insensitive",
         },
       },
       {
         description: {
           contains: data.search,
+          mode: "insensitive",
         },
       },
     ];
