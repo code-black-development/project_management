@@ -15,6 +15,7 @@ interface DatePickerProps {
   className?: string;
   placeholder?: string;
   disablePastDates?: boolean;
+  onClear?: () => void;
 }
 
 const DatePicker = ({
@@ -23,9 +24,12 @@ const DatePicker = ({
   className,
   placeholder,
   disablePastDates = false,
+  onClear,
 }: DatePickerProps) => {
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -39,17 +43,40 @@ const DatePicker = ({
           {value ? format(value, "MMM d, yyyy") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-auto p-0">
         <Calendar
           mode="single"
           selected={value}
-          onSelect={(date) => onChange(date as Date)}
+          onSelect={(date) => {
+            if (!date) {
+              return;
+            }
+
+            onChange(date);
+            setOpen(false);
+          }}
           disabled={
             disablePastDates
               ? (day) => day < startOfDay(new Date())
               : undefined
           }
         />
+        {onClear && value && (
+          <div className="border-t border-border p-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="w-full justify-center"
+              onClick={() => {
+                onClear();
+                setOpen(false);
+              }}
+            >
+              Clear date
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

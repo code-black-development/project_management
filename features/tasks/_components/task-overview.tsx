@@ -278,6 +278,7 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                 value={task.dueDate ? new Date(task.dueDate) : undefined}
                 onChange={(date) => patchTask({ dueDate: date })}
                 placeholder="No due date"
+                onClear={() => patchTask({ dueDate: null })}
               />
               <PastDateWarning
                 date={task.dueDate}

@@ -442,6 +442,7 @@ const TaskForm = ({
                               field.value ? new Date(field.value) : undefined
                             }
                             placeholder="Select due date"
+                            onClear={() => field.onChange(undefined)}
                           />
                         </FormControl>
                         <PastDateWarning
