@@ -1,6 +1,31 @@
 # Fasta.work MCP Server
 
-This repo includes a local MCP server for task management at [`mcp/task-manager-server.mjs`](../mcp/task-manager-server.mjs).
+This repo includes a local MCP server for Fasta.work at [`mcp/task-manager-server.mjs`](../mcp/task-manager-server.mjs). It lets Claude Code or Codex create and manage tasks, subtasks and worklogs in Fasta.work by plain-language request, e.g. "log 2h on SA-102".
+
+## How It Works
+
+- **Nothing to run or deploy.** There is no port and no hosted service. Claude Code / Codex starts the server itself at the start of each session (as a child process over stdin/stdout) and it exits when the session ends.
+- **It talks straight to the database** through Prisma, using `DATABASE_URL` from your local `.env`. Writes are real and immediate, so they show up in the app.
+- **It lives in your clone of this repo.** The registration points at absolute paths to the server file and `.env`, so keep the clone where it is (re-run the install script if you move it) and keep `node_modules` installed.
+
+## Where It Is Available
+
+- **Claude Code:** after `./scripts/install-claude-task-mcp.sh`, in every session in any directory (user scope). Inside this repo it is also picked up from the repo's `.mcp.json`.
+- **Codex:** after `./scripts/install-codex-task-mcp.sh`, globally.
+- Start a **new** session after installing or after changing the server code or `.env`. Sessions that were already open do not pick up changes.
+- In Claude Code, run `/mcp` to check that `fasta-work` is connected. Tools appear as `mcp__fasta-work__<tool>`.
+
+## Using It
+
+Just ask, no ids needed (see Defaults below):
+
+- "Create a task SA-102 called 'Add worklog tools to MCP server'"
+- "Log 2h on SA-102: added worklog tools"
+- "Add a subtask 'write tests' under SA-102"
+- "Show worklogs for this project in October"
+- "List my tasks in progress"
+
+Ambiguous or missing ticket references write nothing and tell you why. To work in a workspace other than the default, name it (and its project and member); the helper list tools find the ids.
 
 ## What It Exposes
 
@@ -79,7 +104,7 @@ cp .env.example .env
 
 4. Fill in the real values.
 
-For the MCP server alone, the only required value is `DATABASE_URL`.
+For the MCP server alone, the required values are `DATABASE_URL` and, for the no-id shortcuts, `DEFAULT_MEMBER_ID` set to **your own** member id (see Defaults). `DEFAULT_WORKSPACE_ID` and `DEFAULT_PROJECT_ID` are pre-filled in `.env.example`.
 
 5. Register the MCP server so it works from any directory.
 
@@ -95,7 +120,7 @@ For Codex:
 ./scripts/install-codex-task-mcp.sh
 ```
 
-That helper registers the server globally in the current user's Codex config using absolute paths to this repo clone, so each teammate can run it on their own machine after cloning.
+These helpers register the server globally for the current user using absolute paths to this repo clone, so each teammate can run it on their own machine after cloning. Then start a new session.
 
 ## Manual Run
 
@@ -103,9 +128,18 @@ That helper registers the server globally in the current user's Codex config usi
 npm run mcp:tasks
 ```
 
-## Manual Codex Registration
+## Manual Registration
 
-If you prefer to add it yourself instead of using the helper script:
+If you prefer to add it yourself instead of using the helper scripts:
+
+```bash
+claude mcp add --scope user fasta-work -- \
+  node \
+  --env-file=/ABSOLUTE/PATH/TO/project_management/.env \
+  /ABSOLUTE/PATH/TO/project_management/mcp/task-manager-server.mjs
+```
+
+For Codex:
 
 ```bash
 codex mcp add fasta-work -- \
@@ -117,6 +151,13 @@ codex mcp add fasta-work -- \
 ## Notes
 
 - The server uses Prisma directly against the local `.env` `DATABASE_URL`.
-- It creates, updates, and deletes standard tasks only. Event editing is intentionally out of scope for this first pass.
-- The install helper removes any existing `fasta-work` Codex entry before adding the current repo clone.
+- It creates, updates, and deletes standard tasks, subtasks and worklogs. Event editing is intentionally out of scope.
+- The install helpers remove any existing `fasta-work` entry (and the legacy `project-management-tasks` one) before adding the current repo clone.
+- `claude mcp list` may warn that `fasta-work` is defined in two scopes (the repo `.mcp.json` and your user config). They start the same server, so it is harmless.
 - The server can fall back to another local SDK copy if needed, but the intended setup is to use this repo's own installed `@modelcontextprotocol/sdk`.
+
+## Troubleshooting
+
+- **Tools not found:** start a new session; run `/mcp` (Claude Code) or `codex mcp get fasta-work` to check it is registered and connected.
+- **Server fails to start:** check `.env` exists with a valid `DATABASE_URL`, `npm install` has been run, and the clone has not moved.
+- **"no default is configured":** set the `DEFAULT_*` value named in the error in `.env`, or pass the id explicitly, then start a new session.
