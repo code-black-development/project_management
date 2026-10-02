@@ -12,8 +12,20 @@ This repo includes a local MCP server for task management at [`mcp/task-manager-
 - `create_task`
 - `update_task`
 - `delete_task`
+- `create_worklog`
+- `list_worklogs`
+- `update_worklog`
+- `delete_worklog`
 
 The helper list tools are included so a client can discover workspace, project, and member ids before creating or editing tasks.
+
+## Worklogs
+
+Worklog time is always in minutes.
+
+- `create_worklog` takes `workspaceId`, `taskId`, `memberId`, `timeSpentMinutes`, and optional `dateWorked` (ISO datetime, defaults to now) and `workDescription`.
+- `list_worklogs` takes `workspaceId` plus optional `projectId`, `taskId`, `memberId`, `from` (inclusive), `to` (exclusive), and `limit` (default 100, max 500). Use `from`/`to` for a date range, e.g. all of October is `from: 2026-10-01T00:00:00Z`, `to: 2026-11-01T00:00:00Z`. The response includes `totalMinutes`, `totalCount`, and `byTask` / `byMember` breakdowns covering every match, not just the returned page.
+- `update_worklog` and `delete_worklog` take `workspaceId` and `worklogId`.
 
 ## Repo MCP Config
 
