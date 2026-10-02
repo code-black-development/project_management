@@ -81,7 +81,15 @@ cp .env.example .env
 
 For the MCP server alone, the only required value is `DATABASE_URL`.
 
-5. Register the MCP server with Codex:
+5. Register the MCP server so it works from any directory.
+
+For Claude Code (user scope):
+
+```bash
+./scripts/install-claude-task-mcp.sh
+```
+
+For Codex:
 
 ```bash
 ./scripts/install-codex-task-mcp.sh
