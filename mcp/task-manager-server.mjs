@@ -611,6 +611,263 @@ server.registerTool(
   }
 );
 
+const worklogSelect = {
+  id: true,
+  taskId: true,
+  memberId: true,
+  timeSpent: true,
+  workDescription: true,
+  dateWorked: true,
+  createdAt: true,
+  updatedAt: true,
+  task: {
+    select: {
+      id: true,
+      name: true,
+      projectId: true,
+      workspaceId: true,
+    },
+  },
+  member: {
+    select: {
+      id: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+};
+
+async function requireWorklogInWorkspace(worklogId, workspaceId) {
+  const worklog = await prisma.worklog.findUnique({
+    where: { id: worklogId },
+    select: worklogSelect,
+  });
+
+  if (!worklog) {
+    throw new Error(`Worklog ${worklogId} was not found.`);
+  }
+
+  if (worklog.task.workspaceId !== workspaceId) {
+    throw new Error(`Worklog ${worklogId} does not belong to workspace ${workspaceId}.`);
+  }
+
+  return worklog;
+}
+
+server.registerTool(
+  "create_worklog",
+  {
+    title: "Create Worklog",
+    description: "Log time spent on a task. Time is recorded in minutes.",
+    inputSchema: {
+      workspaceId: z.string().describe("Workspace id."),
+      taskId: z.string().describe("Task id."),
+      memberId: z.string().describe("Member id of the person who did the work."),
+      timeSpentMinutes: z.number().int().min(1).describe("Time spent in minutes."),
+      dateWorked: z
+        .string()
+        .datetime()
+        .optional()
+        .describe("ISO datetime the work was done. Defaults to now."),
+      workDescription: z.string().optional().describe("Optional description of the work done."),
+    },
+  },
+  async ({ workspaceId, taskId, memberId, timeSpentMinutes, dateWorked, workDescription }) => {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, workspaceId: true },
+    });
+
+    if (!task || task.workspaceId !== workspaceId) {
+      throw new Error(`Task ${taskId} was not found in workspace ${workspaceId}.`);
+    }
+
+    await requireMemberInWorkspace(memberId, workspaceId, "Member");
+
+    const worklog = await prisma.worklog.create({
+      data: {
+        taskId,
+        memberId,
+        timeSpent: timeSpentMinutes,
+        dateWorked: dateWorked ? new Date(dateWorked) : new Date(),
+        workDescription: workDescription ?? null,
+      },
+      select: worklogSelect,
+    });
+
+    return textResult({ worklog }, "Created worklog");
+  }
+);
+
+server.registerTool(
+  "list_worklogs",
+  {
+    title: "List Worklogs",
+    description:
+      "List worklogs in a workspace, filtered by project, task, member and/or a dateWorked range (e.g. all of October). Returns total minutes and per-task / per-member breakdowns for the full filtered set.",
+    inputSchema: {
+      workspaceId: z.string().describe("Workspace id."),
+      projectId: z.string().optional().describe("Optional project id filter."),
+      taskId: z.string().optional().describe("Optional task id filter."),
+      memberId: z.string().optional().describe("Optional member id filter."),
+      from: z
+        .string()
+        .datetime()
+        .optional()
+        .describe("Optional ISO datetime; include work done on or after this."),
+      to: z
+        .string()
+        .datetime()
+        .optional()
+        .describe("Optional ISO datetime; include work done before this (exclusive)."),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(500)
+        .optional()
+        .describe("Max worklogs to return. Defaults to 100. Totals cover all matches."),
+    },
+  },
+  async ({ workspaceId, projectId, taskId, memberId, from, to, limit }) => {
+    const where = {
+      taskId,
+      memberId,
+      task: { workspaceId, projectId },
+      ...(from || to
+        ? {
+            dateWorked: {
+              ...(from ? { gte: new Date(from) } : {}),
+              ...(to ? { lt: new Date(to) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [worklogs, totalCount, byTask, byMember] = await Promise.all([
+      prisma.worklog.findMany({
+        where,
+        select: worklogSelect,
+        orderBy: [{ dateWorked: "desc" }, { createdAt: "desc" }],
+        take: limit ?? 100,
+      }),
+      prisma.worklog.aggregate({
+        where,
+        _sum: { timeSpent: true },
+        _count: true,
+      }),
+      prisma.worklog.groupBy({
+        by: ["taskId"],
+        where,
+        _sum: { timeSpent: true },
+        _count: true,
+      }),
+      prisma.worklog.groupBy({
+        by: ["memberId"],
+        where,
+        _sum: { timeSpent: true },
+        _count: true,
+      }),
+    ]);
+
+    const taskNames = new Map(
+      (
+        await prisma.task.findMany({
+          where: { id: { in: byTask.map((row) => row.taskId) } },
+          select: { id: true, name: true },
+        })
+      ).map((task) => [task.id, task.name])
+    );
+    const memberNames = new Map(
+      (
+        await prisma.member.findMany({
+          where: { id: { in: byMember.map((row) => row.memberId) } },
+          select: { id: true, user: { select: { name: true, email: true } } },
+        })
+      ).map((member) => [member.id, member.user.name ?? member.user.email])
+    );
+
+    return textResult(
+      {
+        totalMinutes: totalCount._sum.timeSpent ?? 0,
+        totalCount: totalCount._count,
+        returnedCount: worklogs.length,
+        byTask: byTask.map((row) => ({
+          taskId: row.taskId,
+          taskName: taskNames.get(row.taskId),
+          minutes: row._sum.timeSpent ?? 0,
+          count: row._count,
+        })),
+        byMember: byMember.map((row) => ({
+          memberId: row.memberId,
+          memberName: memberNames.get(row.memberId),
+          minutes: row._sum.timeSpent ?? 0,
+          count: row._count,
+        })),
+        worklogs,
+      },
+      "Worklogs"
+    );
+  }
+);
+
+server.registerTool(
+  "update_worklog",
+  {
+    title: "Update Worklog",
+    description: "Update the time, date or description of an existing worklog.",
+    inputSchema: {
+      workspaceId: z.string().describe("Workspace id."),
+      worklogId: z.string().describe("Worklog id."),
+      timeSpentMinutes: z.number().int().min(1).optional().describe("Updated time in minutes."),
+      dateWorked: z.string().datetime().optional().describe("Updated ISO datetime worked."),
+      workDescription: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Updated description, or null to clear."),
+    },
+  },
+  async ({ workspaceId, worklogId, timeSpentMinutes, dateWorked, workDescription }) => {
+    await requireWorklogInWorkspace(worklogId, workspaceId);
+
+    const worklog = await prisma.worklog.update({
+      where: { id: worklogId },
+      data: {
+        ...(timeSpentMinutes !== undefined ? { timeSpent: timeSpentMinutes } : {}),
+        ...(dateWorked !== undefined ? { dateWorked: new Date(dateWorked) } : {}),
+        ...(workDescription !== undefined ? { workDescription } : {}),
+      },
+      select: worklogSelect,
+    });
+
+    return textResult({ worklog }, "Updated worklog");
+  }
+);
+
+server.registerTool(
+  "delete_worklog",
+  {
+    title: "Delete Worklog",
+    description: "Delete a worklog by id.",
+    inputSchema: {
+      workspaceId: z.string().describe("Workspace id."),
+      worklogId: z.string().describe("Worklog id."),
+    },
+  },
+  async ({ workspaceId, worklogId }) => {
+    const existing = await requireWorklogInWorkspace(worklogId, workspaceId);
+
+    await prisma.worklog.delete({ where: { id: worklogId } });
+
+    return textResult({ deleted: true, worklog: existing }, "Deleted worklog");
+  }
+);
+
 export async function startServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
