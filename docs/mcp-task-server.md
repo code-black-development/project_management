@@ -16,8 +16,25 @@ This repo includes a local MCP server for task management at [`mcp/task-manager-
 - `list_worklogs`
 - `update_worklog`
 - `delete_worklog`
+- `log_work` (quick worklog by task name/ticket code)
 
 The helper list tools are included so a client can discover workspace, project, and member ids before creating or editing tasks.
+
+## Defaults (SIS Freelance)
+
+To avoid passing ids on every call, the server reads three optional env vars (set them in `.env`; see `.env.example`):
+
+- `DEFAULT_WORKSPACE_ID` - the SIS Freelance workspace
+- `DEFAULT_PROJECT_ID` - the SIS Dev Work project
+- `DEFAULT_MEMBER_ID` - **your own** member id in that workspace (run `list_members` to find it)
+
+When a tool is called without `workspaceId` / `projectId` / `memberId` (or `createdById`), these are used. The project and member defaults only apply to the default workspace; if you pass a different `workspaceId` you must also pass the project and member explicitly. Explicit ids always win.
+
+Quick examples (no ids needed):
+
+- "Log 2h on SA-102: added worklog tools" -> `log_work` with `task: "SA-102"`, `duration: "2h"`. Ticket codes are matched against task names ignoring dashes and spaces, and nothing is written unless exactly one task matches.
+- "Create a task 'SA-1003 Fix login'" -> `create_task` with just `name`.
+- "Add a subtask 'write tests' under SA-102" -> `create_task` with `name` and `parentTask: "SA-102"` (the subtask lands in the parent's project).
 
 ## Worklogs
 
