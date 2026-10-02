@@ -238,6 +238,83 @@ async function getNextTaskPosition(workspaceId, status) {
   return (result._max.position ?? 0) + 1;
 }
 
+const defaults = {
+  workspaceId: process.env.DEFAULT_WORKSPACE_ID || undefined,
+  projectId: process.env.DEFAULT_PROJECT_ID || undefined,
+  memberId: process.env.DEFAULT_MEMBER_ID || undefined,
+};
+
+const defaultEnvNames = {
+  workspaceId: "DEFAULT_WORKSPACE_ID",
+  projectId: "DEFAULT_PROJECT_ID",
+  memberId: "DEFAULT_MEMBER_ID",
+};
+
+// projectId/memberId defaults belong to the default workspace, so they are only
+// applied when the call is (implicitly or explicitly) targeting that workspace.
+function defaultAppliesTo(key, workspaceId) {
+  return key === "workspaceId" || !workspaceId || workspaceId === defaults.workspaceId;
+}
+
+function optionalDefault(value, key, workspaceId) {
+  if (value !== undefined) return value;
+  return defaultAppliesTo(key, workspaceId) ? defaults[key] : undefined;
+}
+
+function withDefault(value, key, label, workspaceId) {
+  const resolved = optionalDefault(value, key, workspaceId);
+  if (!resolved) {
+    throw new Error(
+      `${label} was not provided and no default is configured for this workspace (set ${defaultEnvNames[key]} in the MCP server environment, or pass it explicitly).`
+    );
+  }
+  return resolved;
+}
+
+const normalizeRef = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Resolve a task by name or ticket code (dashes/spaces ignored). Exactly one match or an error.
+async function resolveTaskByReference(reference, workspaceId, projectId) {
+  const candidates = await prisma.task.findMany({
+    where: { workspaceId, projectId, taskType: TaskType.TASK },
+    select: { id: true, name: true, projectId: true },
+  });
+  const wanted = normalizeRef(reference);
+  const exact = candidates.filter((candidate) => normalizeRef(candidate.name) === wanted);
+  const matches =
+    exact.length > 0
+      ? exact
+      : candidates.filter((candidate) => normalizeRef(candidate.name).includes(wanted));
+
+  if (matches.length !== 1) {
+    throw new Error(
+      matches.length === 0
+        ? `No task matching "${reference}" was found. Nothing was changed.`
+        : `"${reference}" matches ${matches.length} tasks; nothing was changed. Be more specific: ${matches
+            .slice(0, 10)
+            .map((match) => `${match.name} (${match.id})`)
+            .join(", ")}`
+    );
+  }
+  return matches[0];
+}
+
+function parseDurationMinutes(input) {
+  const text = input.trim().toLowerCase();
+  if (/^\d+(\.\d+)?$/.test(text)) {
+    return Math.round(Number(text));
+  }
+  const match = text.match(
+    /^(?:(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours))?\s*(?:(\d+)\s*(?:m|min|mins|minute|minutes))?$/
+  );
+  if (!match || (!match[1] && !match[2])) {
+    throw new Error(`Could not understand duration "${input}". Use e.g. "2h", "1h 30m" or "90".`);
+  }
+  return Math.round(Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0));
+}
+
+const WORKSPACE_DESC = "Workspace id. Defaults to the configured default workspace.";
+
 const server = new McpServer({
   name: "project-management-task-server",
   version: "0.1.0",
@@ -285,10 +362,11 @@ server.registerTool(
     title: "List Members",
     description: "List workspace members so you can choose assignee and creator ids.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id to list members for."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
     },
   },
   async ({ workspaceId }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     const members = await prisma.member.findMany({
       where: { workspaceId },
       select: memberSelect,
@@ -305,7 +383,7 @@ server.registerTool(
     title: "List Tasks",
     description: "List tasks with basic filters so you can inspect ids before editing or deleting.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id to search within."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
       projectId: z.string().optional().describe("Optional project id filter."),
       assigneeId: z.string().optional().describe("Optional assignee member id filter."),
       status: z.nativeEnum(TaskStatus).optional().describe("Optional task status filter."),
@@ -314,6 +392,7 @@ server.registerTool(
     },
   },
   async ({ workspaceId, projectId, assigneeId, status, search, limit }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     const tasks = await prisma.task.findMany({
       where: {
         workspaceId,
@@ -368,9 +447,9 @@ server.registerTool(
     title: "Create Task",
     description: "Create a standard task in a workspace project.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id."),
-      projectId: z.string().describe("Project id."),
-      createdById: z.string().describe("Member id of the creator."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
+      projectId: z.string().optional().describe("Project id. Defaults to the configured default project."),
+      createdById: z.string().optional().describe("Member id of the creator. Defaults to the configured default member."),
       name: z.string().min(1).describe("Task name."),
       description: z.string().optional().describe("Optional task description."),
       assigneeId: z.string().optional().describe("Optional member id to assign."),
@@ -384,6 +463,10 @@ server.registerTool(
         .describe("Optional time estimate in minutes."),
       categoryId: z.string().optional().describe("Optional task category id."),
       parentId: z.string().optional().describe("Optional parent task id."),
+      parentTask: z
+        .string()
+        .optional()
+        .describe("Create a subtask: parent task name or ticket code, e.g. SA-102. Alternative to parentId."),
     },
   },
   async ({
@@ -398,7 +481,23 @@ server.registerTool(
     timeEstimateMinutes,
     categoryId,
     parentId,
+    parentTask,
   }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    createdById = withDefault(createdById, "memberId", "createdById", workspaceId);
+    if (parentTask) {
+      if (parentId) {
+        throw new Error("Pass either parentId or parentTask, not both.");
+      }
+      const parent = await resolveTaskByReference(
+        parentTask,
+        workspaceId,
+        optionalDefault(projectId, "projectId", workspaceId)
+      );
+      parentId = parent.id;
+      projectId = projectId ?? parent.projectId;
+    }
+    projectId = withDefault(projectId, "projectId", "projectId", workspaceId);
     await requireProjectInWorkspace(projectId, workspaceId);
     await requireMemberInWorkspace(createdById, workspaceId, "Creator");
 
@@ -664,9 +763,9 @@ server.registerTool(
     title: "Create Worklog",
     description: "Log time spent on a task. Time is recorded in minutes.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
       taskId: z.string().describe("Task id."),
-      memberId: z.string().describe("Member id of the person who did the work."),
+      memberId: z.string().optional().describe("Member id of the person who did the work. Defaults to the configured default member."),
       timeSpentMinutes: z.number().int().min(1).describe("Time spent in minutes."),
       dateWorked: z
         .string()
@@ -677,6 +776,8 @@ server.registerTool(
     },
   },
   async ({ workspaceId, taskId, memberId, timeSpentMinutes, dateWorked, workDescription }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    memberId = withDefault(memberId, "memberId", "memberId", workspaceId);
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       select: { id: true, workspaceId: true },
@@ -710,7 +811,7 @@ server.registerTool(
     description:
       "List worklogs in a workspace, filtered by project, task, member and/or a dateWorked range (e.g. all of October). Returns total minutes and per-task / per-member breakdowns for the full filtered set.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
       projectId: z.string().optional().describe("Optional project id filter."),
       taskId: z.string().optional().describe("Optional task id filter."),
       memberId: z.string().optional().describe("Optional member id filter."),
@@ -734,6 +835,7 @@ server.registerTool(
     },
   },
   async ({ workspaceId, projectId, taskId, memberId, from, to, limit }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     const where = {
       taskId,
       memberId,
@@ -821,7 +923,7 @@ server.registerTool(
     title: "Update Worklog",
     description: "Update the time, date or description of an existing worklog.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
       worklogId: z.string().describe("Worklog id."),
       timeSpentMinutes: z.number().int().min(1).optional().describe("Updated time in minutes."),
       dateWorked: z.string().datetime().optional().describe("Updated ISO datetime worked."),
@@ -833,6 +935,7 @@ server.registerTool(
     },
   },
   async ({ workspaceId, worklogId, timeSpentMinutes, dateWorked, workDescription }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     await requireWorklogInWorkspace(worklogId, workspaceId);
 
     const worklog = await prisma.worklog.update({
@@ -855,16 +958,61 @@ server.registerTool(
     title: "Delete Worklog",
     description: "Delete a worklog by id.",
     inputSchema: {
-      workspaceId: z.string().describe("Workspace id."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
       worklogId: z.string().describe("Worklog id."),
     },
   },
   async ({ workspaceId, worklogId }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     const existing = await requireWorklogInWorkspace(worklogId, workspaceId);
 
     await prisma.worklog.delete({ where: { id: worklogId } });
 
     return textResult({ deleted: true, worklog: existing }, "Deleted worklog");
+  }
+);
+
+server.registerTool(
+  "log_work",
+  {
+    title: "Log Work",
+    description:
+      "Quick way to log time against a task by name or ticket code (e.g. SA-102). Uses the default workspace, project and member. Fails with a list of candidates if the task reference is ambiguous.",
+    inputSchema: {
+      task: z.string().min(1).describe("Task name or ticket code, e.g. SA-102 (dashes/spaces are ignored)."),
+      duration: z.string().describe('Time spent, e.g. "2h", "1h 30m", "45m" or "90" (minutes).'),
+      workDescription: z.string().optional().describe("Optional description of the work done."),
+      dateWorked: z.string().datetime().optional().describe("ISO datetime the work was done. Defaults to now."),
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
+      projectId: z.string().optional().describe("Project id. Defaults to the configured default project."),
+      memberId: z.string().optional().describe("Member id. Defaults to the configured default member."),
+    },
+  },
+  async ({ task, duration, workDescription, dateWorked, workspaceId, projectId, memberId }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    projectId = optionalDefault(projectId, "projectId", workspaceId);
+    memberId = withDefault(memberId, "memberId", "memberId", workspaceId);
+
+    const minutes = parseDurationMinutes(duration);
+    if (minutes < 1) {
+      throw new Error("Duration must be at least 1 minute.");
+    }
+
+    await requireMemberInWorkspace(memberId, workspaceId, "Member");
+    const match = await resolveTaskByReference(task, workspaceId, projectId);
+
+    const worklog = await prisma.worklog.create({
+      data: {
+        taskId: match.id,
+        memberId,
+        timeSpent: minutes,
+        dateWorked: dateWorked ? new Date(dateWorked) : new Date(),
+        workDescription: workDescription ?? null,
+      },
+      select: worklogSelect,
+    });
+
+    return textResult({ worklog }, `Logged ${minutes} minutes on ${match.name}`);
   }
 );
 
