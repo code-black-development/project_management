@@ -316,7 +316,7 @@ function parseDurationMinutes(input) {
 const WORKSPACE_DESC = "Workspace id. Defaults to the configured default workspace.";
 
 const server = new McpServer({
-  name: "project-management-task-server",
+  name: "fasta-work",
   version: "0.1.0",
 });
 
@@ -1019,7 +1019,7 @@ server.registerTool(
 export async function startServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("project-management-task-server running on stdio");
+  console.error("fasta-work running on stdio");
 }
 
 const isDirectRun =
@@ -1027,7 +1027,7 @@ const isDirectRun =
 
 if (isDirectRun) {
   startServer().catch(async (error) => {
-    console.error("Failed to start project-management-task-server:", error);
+    console.error("Failed to start fasta-work:", error);
     await prisma.$disconnect().catch(() => {});
     process.exit(1);
   });

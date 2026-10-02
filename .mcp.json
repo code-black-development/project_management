@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "project-management-tasks": {
+    "fasta-work": {
       "command": "node",
       "args": [
         "--env-file=.env",

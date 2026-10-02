@@ -1,4 +1,4 @@
-# Task MCP Server
+# Fasta.work MCP Server
 
 This repo includes a local MCP server for task management at [`mcp/task-manager-server.mjs`](../mcp/task-manager-server.mjs).
 
@@ -51,7 +51,7 @@ The repo root [`.mcp.json`](../.mcp.json) points Codex to the server:
 ```json
 {
   "mcpServers": {
-    "project-management-tasks": {
+    "fasta-work": {
       "command": "node",
       "args": [
         "--env-file=.env",
@@ -108,7 +108,7 @@ npm run mcp:tasks
 If you prefer to add it yourself instead of using the helper script:
 
 ```bash
-codex mcp add project-management-tasks -- \
+codex mcp add fasta-work -- \
   node \
   --env-file=/ABSOLUTE/PATH/TO/project_management/.env \
   /ABSOLUTE/PATH/TO/project_management/mcp/task-manager-server.mjs
@@ -118,5 +118,5 @@ codex mcp add project-management-tasks -- \
 
 - The server uses Prisma directly against the local `.env` `DATABASE_URL`.
 - It creates, updates, and deletes standard tasks only. Event editing is intentionally out of scope for this first pass.
-- The install helper removes any existing `project-management-tasks` Codex entry before adding the current repo clone.
+- The install helper removes any existing `fasta-work` Codex entry before adding the current repo clone.
 - The server can fall back to another local SDK copy if needed, but the intended setup is to use this repo's own installed `@modelcontextprotocol/sdk`.

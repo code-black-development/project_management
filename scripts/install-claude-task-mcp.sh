@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-MCP_NAME="${MCP_NAME:-project-management-tasks}"
+MCP_NAME="${MCP_NAME:-fasta-work}"
 ENV_FILE="${ENV_FILE:-${REPO_ROOT}/.env}"
 SERVER_FILE="${REPO_ROOT}/mcp/task-manager-server.mjs"
 
@@ -32,6 +32,7 @@ fi
 echo "Registering MCP server '${MCP_NAME}' with Claude Code (user scope)..."
 
 claude mcp remove --scope user "${MCP_NAME}" >/dev/null 2>&1 || true
+claude mcp remove --scope user project-management-tasks >/dev/null 2>&1 || true  # legacy name
 claude mcp add --scope user "${MCP_NAME}" -- \
   node \
   "--env-file=${ENV_FILE}" \
