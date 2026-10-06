@@ -54,7 +54,7 @@ interface TaskViewSwitcherProps {
 }
 
 const TaskViewSwitcher = ({ hideProjectFilter, myTasksOnly }: TaskViewSwitcherProps) => {
-  const [{ statuses, assigneeId, projectId, dueDate, search }] = useTaskFilters();
+  const [{ statuses, priorities, assigneeId, projectId, dueDate, search }] = useTaskFilters();
   const { mutate: bulkUpdate } = useBulkUpdateTasks();
   const { mutate: bulkDelete } = useBulkDeleteTasks();
   const { mutate: bulkStatusUpdate } = useBulkStatusUpdateTasks();
@@ -72,6 +72,7 @@ const TaskViewSwitcher = ({ hideProjectFilter, myTasksOnly }: TaskViewSwitcherPr
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
     statuses,
+    priorities,
     assigneeId: myTasksOnly ? (currentMemberId ?? null) : assigneeId,
     projectId: paramProjectId || projectId,
     dueDate,

@@ -42,6 +42,7 @@ export const getWorkspaces = async () => {
 export const getWorkspaceByUserId = async (userId: string) => {
   const workspace = await prisma.workspace.findMany({
     where: {
+      archivedAt: null,
       members: {
         some: {
           userId,

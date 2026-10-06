@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from "@prisma/client";
 import { client } from "@/lib/rpc";
 
 interface CreateChildTaskParams {
@@ -15,6 +15,7 @@ interface CreateChildTaskParams {
     description?: string | null;
     timeEstimate?: string | null;
     categoryId?: string | null;
+    priority?: TaskPriority | null;
   };
 }
 

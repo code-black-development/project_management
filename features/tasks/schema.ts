@@ -1,7 +1,31 @@
 import { z } from "zod";
-import { TaskStatus, TaskType, RecurrenceFrequency, RecurrenceDuration } from "@prisma/client";
+import { TaskStatus, TaskType, TaskPriority, RecurrenceFrequency, RecurrenceDuration } from "@prisma/client";
 
 const TASK_STATUSES = Object.values(TaskStatus) as TaskStatus[];
+
+const TASK_PRIORITY_VALUES = Object.values(TaskPriority) as TaskPriority[];
+
+const taskPriorityFilterSchema = z.string().nullish().transform((value, ctx) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const priorities = [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+  const invalid = priorities.filter(
+    (priority) => !TASK_PRIORITY_VALUES.includes(priority as TaskPriority)
+  );
+
+  if (invalid.length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid priority filter: ${invalid.join(", ")}`,
+    });
+
+    return z.NEVER;
+  }
+
+  return priorities as TaskPriority[];
+});
 
 const taskStatusFilterSchema = z.string().nullish().transform((value, ctx) => {
   if (!value) {
@@ -28,6 +52,11 @@ const taskStatusFilterSchema = z.string().nullish().transform((value, ctx) => {
 export const createTaskSchema = z.object({
   name: z.string().trim().nonempty("Name is required"),
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
+  priority: z
+    .nativeEnum(TaskPriority)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
   taskType: z.nativeEnum(TaskType).optional().default(TaskType.TASK),
@@ -72,6 +101,11 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = z.object({
   name: z.string().trim().nonempty("Name is required"),
   status: z.nativeEnum(TaskStatus, { required_error: "Required" }),
+  priority: z
+    .nativeEnum(TaskPriority)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
   workspaceId: z.string().nonempty("Workspace is required"),
   projectId: z.string().nonempty("Project is required"),
   taskType: z.nativeEnum(TaskType).optional().default(TaskType.TASK),
@@ -116,6 +150,7 @@ export const updateTaskSchema = z.object({
 export const patchTaskSchema = z.object({
   name: z.string().trim().optional(),
   status: z.nativeEnum(TaskStatus).optional(),
+  priority: z.nativeEnum(TaskPriority).nullable().optional(),
   workspaceId: z.string().optional(),
   projectId: z.string().optional(),
   taskType: z.nativeEnum(TaskType).optional(),
@@ -162,6 +197,7 @@ export const taskSearchSchema = z.object({
   projectId: z.string().nullish(),
   assigneeId: z.string().nullish(),
   status: taskStatusFilterSchema,
+  priority: taskPriorityFilterSchema,
   search: z.string().nullish(),
   dueDate: z.coerce.date().nullish(),
   limit: z.coerce.number().int().min(1).max(500).default(250),

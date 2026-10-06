@@ -1,5 +1,6 @@
 "use client";
 
+import { PRIORITY_LABELS, TASK_PRIORITIES } from "@/lib/task-priority";
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -162,6 +163,7 @@ const TaskForm = ({
         initialValues?.projectId ?? parentTaskInfo?.projectId ?? activeProjectId ?? "",
       timeEstimate: initialValues?.timeEstimate ?? "",
       categoryId: initialValues?.categoryId ?? "",
+      priority: initialValues?.priority ?? null,
       description: initialValues?.description ?? "",
     },
   });
@@ -217,6 +219,9 @@ const TaskForm = ({
       }
       if (values.assigneeId !== (initialValues.assigneeId || "")) {
         changedFields.assigneeId = values.assigneeId || null;
+      }
+      if ((values.priority ?? null) !== (initialValues.priority ?? null)) {
+        changedFields.priority = values.priority ?? null;
       }
       if (values.categoryId !== (initialValues.categoryId || "")) {
         changedFields.categoryId = values.categoryId || null;
@@ -281,6 +286,7 @@ const TaskForm = ({
             description: values.description || null,
             timeEstimate: values.timeEstimate || null,
             categoryId: values.categoryId || null,
+            priority: values.priority ?? null,
           },
         },
         {
@@ -300,6 +306,7 @@ const TaskForm = ({
             description: values.description || null,
             timeEstimate: values.timeEstimate || null,
             categoryId: values.categoryId || null,
+            priority: values.priority ?? null,
           },
         },
         {
@@ -600,6 +607,47 @@ const TaskForm = ({
                       )}
                     />
                   )}
+
+                  <FormField
+                    name="priority"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <div className="grid min-h-9 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                          {[...TASK_PRIORITIES].reverse().map((priority) => (
+                            <div
+                              key={priority}
+                              role="button"
+                              className={compactOptionClassName(
+                                field.value === priority
+                              )}
+                              onClick={(e) => {
+                                if ((e.target as HTMLElement).tagName === "INPUT") return;
+                                field.onChange(
+                                  field.value === priority ? null : priority
+                                );
+                              }}
+                            >
+                              <Checkbox
+                                checked={field.value === priority}
+                                onCheckedChange={() =>
+                                  field.onChange(
+                                    field.value === priority ? null : priority
+                                  )
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="truncate">
+                                {PRIORITY_LABELS[priority]}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     name="categoryId"

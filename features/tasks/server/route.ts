@@ -398,6 +398,7 @@ const app = new Hono()
     let {
       name,
       status,
+      priority,
       projectId,
       dueDate,
       assigneeId,
@@ -425,6 +426,7 @@ const app = new Hono()
 
     if (name !== undefined) taskData.name = name;
     if (status !== undefined) taskData.status = status;
+    if (priority !== undefined) taskData.priority = priority;
     if (projectId !== undefined) taskData.projectId = projectId;
     if (dueDateValue !== undefined) taskData.dueDate = dueDateValue;
     if (assigneeId !== undefined) taskData.assigneeId = assigneeId;
@@ -594,6 +596,7 @@ const app = new Hono()
       let {
         name,
         status,
+        priority,
         workspaceId,
         projectId,
         dueDate,
@@ -642,6 +645,7 @@ const app = new Hono()
       const taskData = {
         name,
         status,
+        priority: priority ?? null,
         workspaceId,
         projectId,
         dueDate: dueDateValue,

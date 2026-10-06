@@ -111,6 +111,10 @@ const app = new Hono()
         return c.json({ error: "This workspace is frozen and cannot be modified." }, 403);
       }
 
+      if (existingWorkspace.archivedAt) {
+        return c.json({ error: "This workspace is archived and cannot be modified." }, 403);
+      }
+
       let fileUrl: string | null = existingWorkspace.image;
       let uploadedImageKey: string | null = null;
       const oldImageKey = existingWorkspace.image

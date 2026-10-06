@@ -1,10 +1,19 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { PrismaClient, TaskStatus, TaskType } from "@prisma/client";
+import {
+  PrismaClient,
+  RecurrenceDuration,
+  RecurrenceFrequency,
+  TaskPriority,
+  TaskStatus,
+  TaskType,
+} from "@prisma/client";
 import { z } from "zod";
+import { addDays, addMonths, addWeeks, addYears, isBefore, isEqual } from "date-fns";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +83,8 @@ const workspaceSelect = {
   id: true,
   name: true,
   status: true,
+  image: true,
+  archivedAt: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -85,6 +96,8 @@ const projectSelect = {
   autoHideCompletedTasks: true,
   autoHideChildTasks: true,
   taskAssignmentEmail: true,
+  image: true,
+  archivedAt: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -113,6 +126,7 @@ const taskSelect = {
   name: true,
   description: true,
   status: true,
+  priority: true,
   taskType: true,
   workspaceId: true,
   projectId: true,
@@ -123,6 +137,13 @@ const taskSelect = {
   timeEstimate: true,
   categoryId: true,
   parentId: true,
+  archivedAt: true,
+  isRecurring: true,
+  recurrenceFrequency: true,
+  recurrenceDuration: true,
+  recurrenceEndDate: true,
+  originalEventId: true,
+  seriesId: true,
   createdAt: true,
   updatedAt: true,
   project: {
@@ -324,10 +345,14 @@ server.registerTool(
   "list_workspaces",
   {
     title: "List Workspaces",
-    description: "List workspaces available in the local project database.",
+    description: "List workspaces. Archived workspaces are hidden unless includeArchived is true.",
+    inputSchema: {
+      includeArchived: z.boolean().optional().describe("Also return archived workspaces. Defaults to false."),
+    },
   },
-  async () => {
+  async ({ includeArchived }) => {
     const workspaces = await prisma.workspace.findMany({
+      where: includeArchived ? undefined : { archivedAt: null },
       select: workspaceSelect,
       orderBy: { updatedAt: "desc" },
     });
@@ -340,14 +365,19 @@ server.registerTool(
   "list_projects",
   {
     title: "List Projects",
-    description: "List projects, optionally scoped to one workspace.",
+    description:
+      "List projects, optionally scoped to one workspace. Archived projects (and projects in archived workspaces) are hidden unless includeArchived is true.",
     inputSchema: {
       workspaceId: z.string().optional().describe("Optional workspace id to filter projects."),
+      includeArchived: z.boolean().optional().describe("Also return archived projects. Defaults to false."),
     },
   },
-  async ({ workspaceId }) => {
+  async ({ workspaceId, includeArchived }) => {
     const projects = await prisma.project.findMany({
-      where: workspaceId ? { workspaceId } : undefined,
+      where: {
+        ...(workspaceId ? { workspaceId } : {}),
+        ...(includeArchived ? {} : { archivedAt: null, workspace: { archivedAt: null } }),
+      },
       select: projectSelect,
       orderBy: [{ workspaceId: "asc" }, { updatedAt: "desc" }],
     });
@@ -387,11 +417,13 @@ server.registerTool(
       projectId: z.string().optional().describe("Optional project id filter."),
       assigneeId: z.string().optional().describe("Optional assignee member id filter."),
       status: z.nativeEnum(TaskStatus).optional().describe("Optional task status filter."),
+      priority: z.nativeEnum(TaskPriority).optional().describe("Optional task priority filter (LOW, MEDIUM, HIGH)."),
       search: z.string().optional().describe("Optional name/description search text."),
+      includeArchived: z.boolean().optional().describe("Also return archived tasks. Defaults to false."),
       limit: z.number().int().min(1).max(100).optional().describe("Max tasks to return. Defaults to 25."),
     },
   },
-  async ({ workspaceId, projectId, assigneeId, status, search, limit }) => {
+  async ({ workspaceId, projectId, assigneeId, status, priority, search, includeArchived, limit }) => {
     workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
     const tasks = await prisma.task.findMany({
       where: {
@@ -400,6 +432,8 @@ server.registerTool(
         projectId,
         assigneeId,
         status,
+        priority,
+        ...(includeArchived ? {} : { archivedAt: null }),
         ...(search
           ? {
               OR: [
@@ -454,6 +488,7 @@ server.registerTool(
       description: z.string().optional().describe("Optional task description."),
       assigneeId: z.string().optional().describe("Optional member id to assign."),
       status: z.nativeEnum(TaskStatus).optional().describe("Defaults to TODO."),
+      priority: z.nativeEnum(TaskPriority).optional().describe("Optional priority: LOW, MEDIUM or HIGH."),
       dueDate: z.string().datetime().optional().describe("Optional ISO datetime due date."),
       timeEstimateMinutes: z
         .number()
@@ -477,6 +512,7 @@ server.registerTool(
     description,
     assigneeId,
     status,
+    priority,
     dueDate,
     timeEstimateMinutes,
     categoryId,
@@ -498,7 +534,8 @@ server.registerTool(
       projectId = projectId ?? parent.projectId;
     }
     projectId = withDefault(projectId, "projectId", "projectId", workspaceId);
-    await requireProjectInWorkspace(projectId, workspaceId);
+    await requireEditableWorkspace(workspaceId);
+    await requireEditableProject(projectId, workspaceId);
     await requireMemberInWorkspace(createdById, workspaceId, "Creator");
 
     if (assigneeId) {
@@ -537,6 +574,7 @@ server.registerTool(
         name,
         description: description ?? null,
         status: nextStatus,
+        priority: priority ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         timeEstimate: timeEstimateMinutes ?? null,
         categoryId: categoryId ?? null,
@@ -562,6 +600,11 @@ server.registerTool(
       description: z.string().nullable().optional().describe("Updated description or null to clear."),
       assigneeId: z.string().nullable().optional().describe("Updated assignee member id or null to unassign."),
       status: z.nativeEnum(TaskStatus).optional().describe("Updated task status."),
+      priority: z
+        .nativeEnum(TaskPriority)
+        .nullable()
+        .optional()
+        .describe("Updated priority (LOW, MEDIUM, HIGH) or null to clear."),
       dueDate: z
         .string()
         .datetime()
@@ -651,6 +694,7 @@ server.registerTool(
       data.position = await getNextTaskPosition(workspaceId, updates.status);
     }
 
+    if (updates.priority !== undefined) data.priority = updates.priority ?? null;
     if (updates.name !== undefined) data.name = updates.name;
     if (updates.description !== undefined) data.description = updates.description ?? null;
     if (updates.dueDate !== undefined) {
@@ -670,43 +714,580 @@ server.registerTool(
   }
 );
 
+// ── Archive-first management tools ───────────────────────────────────────────
+// Nothing below hard-deletes workspaces, projects, tasks or events. Archived
+// items are hidden from the app and from the list tools but can be restored.
+
+// Acting user: MCP_USER_ID, or the user behind DEFAULT_MEMBER_ID.
+async function getActingUserId() {
+  if (process.env.MCP_USER_ID) return process.env.MCP_USER_ID;
+  if (defaults.memberId) {
+    const member = await prisma.member.findUnique({
+      where: { id: defaults.memberId },
+      select: { userId: true },
+    });
+    if (member) return member.userId;
+  }
+  throw new Error("No acting user configured. Set MCP_USER_ID (or DEFAULT_MEMBER_ID) in the MCP server environment.");
+}
+
+async function requireEditableWorkspace(workspaceId) {
+  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: workspaceSelect });
+  if (!workspace) throw new Error(`Workspace ${workspaceId} was not found.`);
+  if (workspace.archivedAt) throw new Error(`Workspace "${workspace.name}" is archived. Unarchive it first.`);
+  if (workspace.status === "FROZEN") throw new Error(`Workspace "${workspace.name}" is frozen and cannot be modified.`);
+  return workspace;
+}
+
+async function requireEditableProject(projectId, workspaceId) {
+  const project = await requireProjectInWorkspace(projectId, workspaceId);
+  if (project.archivedAt) throw new Error(`Project "${project.name}" is archived. Unarchive it first.`);
+  return project;
+}
+
+// Task ids plus all descendants and recurring-event occurrences.
+async function collectTaskTreeIds(taskIds, archived) {
+  const all = new Set(taskIds);
+  let frontier = [...all];
+  while (frontier.length > 0) {
+    const related = await prisma.task.findMany({
+      where: {
+        OR: [{ parentId: { in: frontier } }, { originalEventId: { in: frontier } }],
+        archivedAt: archived ? { not: null } : null,
+      },
+      select: { id: true },
+    });
+    frontier = related.map((task) => task.id).filter((id) => !all.has(id));
+    frontier.forEach((id) => all.add(id));
+  }
+  return [...all];
+}
+
 server.registerTool(
-  "delete_task",
+  "create_workspace",
   {
-    title: "Delete Task",
-    description: "Delete a task by id. Child tasks, assets, and worklogs will cascade.",
+    title: "Create Workspace",
+    description: "Create a workspace owned by the acting user, who becomes its admin member.",
+    inputSchema: { name: z.string().min(1).describe("Workspace name.") },
+  },
+  async ({ name }) => {
+    const userId = await getActingUserId();
+    const subscription = await prisma.subscription.findUnique({ where: { userId }, include: { plan: true } });
+    if (subscription?.plan && subscription.plan.maxWorkspaces !== -1) {
+      const count = await prisma.workspace.count({ where: { user: userId, archivedAt: null } });
+      if (count >= subscription.plan.maxWorkspaces) {
+        throw new Error("Workspace limit reached for the current plan.");
+      }
+    }
+    const workspace = await prisma.workspace.create({
+      data: { name, user: userId, members: { create: { userId, role: "admin" } } },
+      select: workspaceSelect,
+    });
+    return textResult({ workspace }, "Created workspace");
+  }
+);
+
+server.registerTool(
+  "update_workspace",
+  {
+    title: "Update Workspace",
+    description: "Rename a workspace.",
     inputSchema: {
-      taskId: z.string().describe("Task id."),
+      workspaceId: z.string().describe("Workspace id."),
+      name: z.string().min(1).describe("New workspace name."),
     },
   },
-  async ({ taskId }) => {
-    const existingTask = await prisma.task.findUnique({
-      where: { id: taskId },
-      select: {
-        id: true,
-        name: true,
-        workspaceId: true,
-        projectId: true,
-        status: true,
-        taskType: true,
-      },
-    });
+  async ({ workspaceId, name }) => {
+    await requireEditableWorkspace(workspaceId);
+    const workspace = await prisma.workspace.update({ where: { id: workspaceId }, data: { name }, select: workspaceSelect });
+    return textResult({ workspace }, "Updated workspace");
+  }
+);
 
-    if (!existingTask) {
-      throw new Error(`Task ${taskId} was not found.`);
+server.registerTool(
+  "archive_workspace",
+  {
+    title: "Archive Workspace",
+    description:
+      "Archive a workspace so it is hidden from the app and list tools. Nothing is deleted; use unarchive_workspace to restore it.",
+    inputSchema: { workspaceId: z.string().describe("Workspace id.") },
+  },
+  async ({ workspaceId }) => {
+    const existing = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: workspaceSelect });
+    if (!existing) throw new Error(`Workspace ${workspaceId} was not found.`);
+    if (existing.archivedAt) return textResult({ workspace: existing }, "Workspace was already archived");
+    const workspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { archivedAt: new Date() },
+      select: workspaceSelect,
+    });
+    return textResult({ workspace }, "Archived workspace");
+  }
+);
+
+server.registerTool(
+  "unarchive_workspace",
+  {
+    title: "Unarchive Workspace",
+    description: "Restore an archived workspace.",
+    inputSchema: { workspaceId: z.string().describe("Workspace id.") },
+  },
+  async ({ workspaceId }) => {
+    const existing = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: workspaceSelect });
+    if (!existing) throw new Error(`Workspace ${workspaceId} was not found.`);
+    const workspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { archivedAt: null },
+      select: workspaceSelect,
+    });
+    return textResult({ workspace }, "Unarchived workspace");
+  }
+);
+
+server.registerTool(
+  "create_project",
+  {
+    title: "Create Project",
+    description: "Create a project in a workspace.",
+    inputSchema: {
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
+      name: z.string().min(1).describe("Project name."),
+      autoHideCompletedTasks: z.boolean().optional().describe("Hide DONE tasks in the app. Defaults to false."),
+      autoHideChildTasks: z.boolean().optional().describe("Hide child tasks in top-level lists."),
+      taskAssignmentEmail: z.boolean().optional().describe("Email assignees when assigned. Defaults to true."),
+    },
+  },
+  async ({ workspaceId, name, autoHideCompletedTasks, autoHideChildTasks, taskAssignmentEmail }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    await requireEditableWorkspace(workspaceId);
+    const project = await prisma.project.create({
+      data: { workspaceId, name, autoHideCompletedTasks, autoHideChildTasks, taskAssignmentEmail },
+      select: projectSelect,
+    });
+    return textResult({ project }, "Created project");
+  }
+);
+
+server.registerTool(
+  "update_project",
+  {
+    title: "Update Project",
+    description: "Update a project's name or settings.",
+    inputSchema: {
+      projectId: z.string().describe("Project id."),
+      name: z.string().min(1).optional().describe("New project name."),
+      autoHideCompletedTasks: z.boolean().optional(),
+      autoHideChildTasks: z.boolean().nullable().optional(),
+      taskAssignmentEmail: z.boolean().optional(),
+    },
+  },
+  async ({ projectId, ...updates }) => {
+    const existing = await prisma.project.findUnique({ where: { id: projectId }, select: projectSelect });
+    if (!existing) throw new Error(`Project ${projectId} was not found.`);
+    await requireEditableWorkspace(existing.workspaceId);
+    await requireEditableProject(projectId, existing.workspaceId);
+    const project = await prisma.project.update({ where: { id: projectId }, data: updates, select: projectSelect });
+    return textResult({ project }, "Updated project");
+  }
+);
+
+server.registerTool(
+  "archive_project",
+  {
+    title: "Archive Project",
+    description:
+      "Archive a project so it is hidden from the app and list tools. Its tasks are kept untouched; use unarchive_project to restore it.",
+    inputSchema: { projectId: z.string().describe("Project id.") },
+  },
+  async ({ projectId }) => {
+    const existing = await prisma.project.findUnique({ where: { id: projectId }, select: projectSelect });
+    if (!existing) throw new Error(`Project ${projectId} was not found.`);
+    if (existing.archivedAt) return textResult({ project: existing }, "Project was already archived");
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: { archivedAt: new Date() },
+      select: projectSelect,
+    });
+    return textResult({ project }, "Archived project");
+  }
+);
+
+server.registerTool(
+  "unarchive_project",
+  {
+    title: "Unarchive Project",
+    description: "Restore an archived project.",
+    inputSchema: { projectId: z.string().describe("Project id.") },
+  },
+  async ({ projectId }) => {
+    const existing = await prisma.project.findUnique({ where: { id: projectId }, select: projectSelect });
+    if (!existing) throw new Error(`Project ${projectId} was not found.`);
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: { archivedAt: null },
+      select: projectSelect,
+    });
+    return textResult({ project }, "Unarchived project");
+  }
+);
+
+server.registerTool(
+  "archive_task",
+  {
+    title: "Archive Task",
+    description:
+      "Archive a task or event, including its child tasks and recurring-event occurrences. Nothing is deleted; use unarchive_task to restore it.",
+    inputSchema: { taskId: z.string().describe("Task or event id.") },
+  },
+  async ({ taskId }) => {
+    const existing = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true, name: true, archivedAt: true } });
+    if (!existing) throw new Error(`Task ${taskId} was not found.`);
+    const ids = await collectTaskTreeIds([taskId], false);
+    await prisma.task.updateMany({ where: { id: { in: ids }, archivedAt: null }, data: { archivedAt: new Date() } });
+    return textResult({ archived: true, task: { id: existing.id, name: existing.name }, archivedCount: ids.length }, "Archived task");
+  }
+);
+
+server.registerTool(
+  "unarchive_task",
+  {
+    title: "Unarchive Task",
+    description: "Restore an archived task or event, including its child tasks and occurrences.",
+    inputSchema: { taskId: z.string().describe("Task or event id.") },
+  },
+  async ({ taskId }) => {
+    const existing = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true, name: true } });
+    if (!existing) throw new Error(`Task ${taskId} was not found.`);
+    const ids = await collectTaskTreeIds([taskId], true);
+    await prisma.task.updateMany({ where: { id: { in: ids }, archivedAt: { not: null } }, data: { archivedAt: null } });
+    return textResult({ restored: true, task: existing, restoredCount: ids.length }, "Unarchived task");
+  }
+);
+
+// ── Categories ───────────────────────────────────────────────────────────────
+
+server.registerTool(
+  "list_categories",
+  { title: "List Categories", description: "List task categories (shared across all workspaces)." },
+  async () => {
+    const categories = await prisma.taskCategory.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { tasks: true } } },
+    });
+    return textResult({ categories }, "Categories");
+  }
+);
+
+server.registerTool(
+  "create_category",
+  {
+    title: "Create Category",
+    description: "Create a task category. Categories are shared across all workspaces.",
+    inputSchema: {
+      name: z.string().min(1).describe("Category name."),
+      icon: z.string().optional().describe("Optional icon name (lucide icon, e.g. bug)."),
+      color: z.string().optional().describe("Optional color."),
+    },
+  },
+  async ({ name, icon, color }) => {
+    const category = await prisma.taskCategory.create({ data: { name, icon: icon ?? null, color: color ?? null } });
+    return textResult({ category }, "Created category");
+  }
+);
+
+server.registerTool(
+  "update_category",
+  {
+    title: "Update Category",
+    description: "Update a task category's name, icon or color.",
+    inputSchema: {
+      categoryId: z.string().describe("Category id."),
+      name: z.string().min(1).optional(),
+      icon: z.string().nullable().optional(),
+      color: z.string().nullable().optional(),
+    },
+  },
+  async ({ categoryId, ...updates }) => {
+    const existing = await prisma.taskCategory.findUnique({ where: { id: categoryId } });
+    if (!existing) throw new Error(`Category ${categoryId} was not found.`);
+    const category = await prisma.taskCategory.update({ where: { id: categoryId }, data: updates });
+    return textResult({ category }, "Updated category");
+  }
+);
+
+// ── Events ───────────────────────────────────────────────────────────────────
+
+function nextOccurrenceDate(date, frequency) {
+  switch (frequency) {
+    case RecurrenceFrequency.WEEKLY:
+      return addWeeks(date, 1);
+    case RecurrenceFrequency.FORTNIGHTLY:
+      return addWeeks(date, 2);
+    case RecurrenceFrequency.MONTHLY:
+      return addMonths(date, 1);
+    case RecurrenceFrequency.ANNUALLY:
+      return addYears(date, 1);
+    default:
+      return addDays(date, 1);
+  }
+}
+
+function recurrenceEnd(event) {
+  const start = event.dueDate;
+  switch (event.recurrenceDuration) {
+    case RecurrenceDuration.ONE_MONTH:
+      return addMonths(start, 1);
+    case RecurrenceDuration.CUSTOM:
+      return event.recurrenceEndDate || addYears(start, 1);
+    case RecurrenceDuration.CONTINUOUS:
+      return addYears(start, 2);
+    default:
+      return addYears(start, 1);
+  }
+}
+
+async function generateOccurrences(eventId) {
+  const event = await prisma.task.findUnique({ where: { id: eventId } });
+  if (!event || !event.isRecurring || !event.dueDate || !event.recurrenceFrequency) return 0;
+
+  const { id, createdAt, updatedAt, ...base } = event;
+  void id; void createdAt; void updatedAt;
+  const end = recurrenceEnd(event);
+  const occurrences = [];
+  let current = nextOccurrenceDate(new Date(event.dueDate), event.recurrenceFrequency);
+  while (isBefore(current, end)) {
+    occurrences.push({
+      ...base,
+      dueDate: new Date(current),
+      originalEventId: eventId,
+      isRecurring: false,
+      recurrenceFrequency: null,
+      recurrenceDuration: null,
+      recurrenceEndDate: null,
+    });
+    current = nextOccurrenceDate(current, event.recurrenceFrequency);
+  }
+  if (occurrences.length > 0) await prisma.task.createMany({ data: occurrences });
+  return occurrences.length;
+}
+
+const recurrenceInput = {
+  isRecurring: z.boolean().optional().describe("Make the event repeat."),
+  recurrenceFrequency: z.nativeEnum(RecurrenceFrequency).optional().describe("DAILY, WEEKLY, FORTNIGHTLY, MONTHLY or ANNUALLY."),
+  recurrenceDuration: z
+    .nativeEnum(RecurrenceDuration)
+    .optional()
+    .describe("ONE_MONTH, ONE_YEAR, CUSTOM (needs recurrenceEndDate) or CONTINUOUS (2 years ahead)."),
+  recurrenceEndDate: z.string().datetime().optional().describe("ISO end date when recurrenceDuration is CUSTOM."),
+};
+
+server.registerTool(
+  "list_events",
+  {
+    title: "List Events",
+    description: "List events (tasks of type EVENT), soonest first.",
+    inputSchema: {
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
+      projectId: z.string().optional().describe("Optional project id filter."),
+      from: z.string().datetime().optional().describe("Only events on/after this ISO datetime."),
+      to: z.string().datetime().optional().describe("Only events on/before this ISO datetime."),
+      includeArchived: z.boolean().optional().describe("Also return archived events. Defaults to false."),
+      limit: z.number().int().min(1).max(200).optional().describe("Max events. Defaults to 50."),
+    },
+  },
+  async ({ workspaceId, projectId, from, to, includeArchived, limit }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    const events = await prisma.task.findMany({
+      where: {
+        workspaceId,
+        projectId,
+        taskType: TaskType.EVENT,
+        ...(includeArchived ? {} : { archivedAt: null }),
+        ...(from || to ? { dueDate: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) } } : {}),
+      },
+      select: taskSelect,
+      orderBy: { dueDate: "asc" },
+      take: limit ?? 50,
+    });
+    return textResult({ events }, "Events");
+  }
+);
+
+server.registerTool(
+  "create_event",
+  {
+    title: "Create Event",
+    description: "Create a calendar event in a workspace project, optionally recurring (occurrences are generated automatically).",
+    inputSchema: {
+      workspaceId: z.string().optional().describe(WORKSPACE_DESC),
+      projectId: z.string().optional().describe("Project id. Defaults to the configured default project."),
+      createdById: z.string().optional().describe("Member id of the creator. Defaults to the configured default member."),
+      name: z.string().min(1).describe("Event name."),
+      dueDate: z.string().datetime().describe("ISO datetime of the event."),
+      description: z.string().optional(),
+      assigneeId: z.string().optional().describe("Optional member id to assign."),
+      categoryId: z.string().optional(),
+      ...recurrenceInput,
+    },
+  },
+  async ({ workspaceId, projectId, createdById, name, dueDate, description, assigneeId, categoryId, isRecurring, recurrenceFrequency, recurrenceDuration, recurrenceEndDate }) => {
+    workspaceId = withDefault(workspaceId, "workspaceId", "workspaceId");
+    createdById = withDefault(createdById, "memberId", "createdById", workspaceId);
+    projectId = withDefault(projectId, "projectId", "projectId", workspaceId);
+    await requireEditableWorkspace(workspaceId);
+    await requireEditableProject(projectId, workspaceId);
+    await requireMemberInWorkspace(createdById, workspaceId, "Creator");
+    if (assigneeId) await requireMemberInWorkspace(assigneeId, workspaceId, "Assignee");
+    if (isRecurring && !recurrenceFrequency) {
+      throw new Error("recurrenceFrequency is required when isRecurring is true.");
+    }
+    if (isRecurring && recurrenceDuration === RecurrenceDuration.CUSTOM && !recurrenceEndDate) {
+      throw new Error("recurrenceEndDate is required when recurrenceDuration is CUSTOM.");
     }
 
-    await prisma.task.delete({
-      where: { id: taskId },
-    });
-
-    return textResult(
-      {
-        deleted: true,
-        task: existingTask,
+    const position = await getNextTaskPosition(workspaceId, TaskStatus.TODO);
+    const event = await prisma.task.create({
+      data: {
+        workspaceId,
+        projectId,
+        createdById,
+        assigneeId: assigneeId ?? null,
+        categoryId: categoryId ?? null,
+        name,
+        description: description ?? null,
+        status: TaskStatus.TODO,
+        dueDate: new Date(dueDate),
+        taskType: TaskType.EVENT,
+        position,
+        isRecurring: isRecurring ?? false,
+        recurrenceFrequency: isRecurring ? recurrenceFrequency : null,
+        recurrenceDuration: isRecurring ? (recurrenceDuration ?? RecurrenceDuration.ONE_YEAR) : null,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate) : null,
       },
-      "Deleted task"
-    );
+      select: taskSelect,
+    });
+    const occurrences = isRecurring ? await generateOccurrences(event.id) : 0;
+    return textResult({ event, occurrencesCreated: occurrences }, "Created event");
+  }
+);
+
+server.registerTool(
+  "update_event",
+  {
+    title: "Update Event",
+    description:
+      "Update an event. If the event is recurring and you change its date or recurrence, its generated occurrences are regenerated.",
+    inputSchema: {
+      eventId: z.string().describe("Event id (the original event, not an occurrence)."),
+      name: z.string().min(1).optional(),
+      description: z.string().nullable().optional(),
+      dueDate: z.string().datetime().optional().describe("New ISO datetime."),
+      assigneeId: z.string().nullable().optional(),
+      categoryId: z.string().nullable().optional(),
+      ...recurrenceInput,
+    },
+  },
+  async ({ eventId, ...updates }) => {
+    const existing = await prisma.task.findUnique({ where: { id: eventId } });
+    if (!existing || existing.taskType !== TaskType.EVENT) throw new Error(`Event ${eventId} was not found.`);
+    await requireEditableWorkspace(existing.workspaceId);
+    if (updates.assigneeId) await requireMemberInWorkspace(updates.assigneeId, existing.workspaceId, "Assignee");
+
+    const data = {};
+    if (updates.name !== undefined) data.name = updates.name;
+    if (updates.description !== undefined) data.description = updates.description;
+    if (updates.assigneeId !== undefined) data.assigneeId = updates.assigneeId;
+    if (updates.categoryId !== undefined) data.categoryId = updates.categoryId;
+    if (updates.dueDate !== undefined) data.dueDate = new Date(updates.dueDate);
+    if (updates.isRecurring !== undefined) data.isRecurring = updates.isRecurring;
+    if (updates.recurrenceFrequency !== undefined) data.recurrenceFrequency = updates.recurrenceFrequency;
+    if (updates.recurrenceDuration !== undefined) data.recurrenceDuration = updates.recurrenceDuration;
+    if (updates.recurrenceEndDate !== undefined) data.recurrenceEndDate = new Date(updates.recurrenceEndDate);
+    if (updates.isRecurring === false) {
+      data.recurrenceFrequency = null;
+      data.recurrenceDuration = null;
+      data.recurrenceEndDate = null;
+    }
+
+    const event = await prisma.task.update({ where: { id: eventId }, data, select: taskSelect });
+
+    const recurrenceTouched =
+      updates.dueDate !== undefined ||
+      updates.isRecurring !== undefined ||
+      updates.recurrenceFrequency !== undefined ||
+      updates.recurrenceDuration !== undefined ||
+      updates.recurrenceEndDate !== undefined;
+    let occurrencesCreated = 0;
+    if (recurrenceTouched || existing.isRecurring) {
+      // Same behaviour as the app: occurrences are generated rows, so they are replaced rather than archived.
+      if (recurrenceTouched) await prisma.task.deleteMany({ where: { originalEventId: eventId } });
+      if (recurrenceTouched) occurrencesCreated = await generateOccurrences(eventId);
+    }
+    return textResult({ event, occurrencesCreated }, "Updated event");
+  }
+);
+
+// ── Task series ──────────────────────────────────────────────────────────────
+
+async function copyTaskTree(originalParentId, newParentId, memberId) {
+  const children = await prisma.task.findMany({ where: { parentId: originalParentId, archivedAt: null } });
+  for (const child of children) {
+    const { id, createdAt, updatedAt, parentId, seriesId, ...childData } = child;
+    void createdAt; void updatedAt; void parentId; void seriesId;
+    const copy = await prisma.task.create({
+      data: { ...childData, parentId: newParentId, createdById: memberId, seriesId: null },
+    });
+    await copyTaskTree(id, copy.id, memberId);
+  }
+}
+
+server.registerTool(
+  "create_task_series",
+  {
+    title: "Create Task Series",
+    description:
+      "Repeat an existing task (with its child tasks) on a schedule until an end date. The task needs a due date; copies are created at each interval.",
+    inputSchema: {
+      taskId: z.string().describe("Id of the task to repeat. Needs a due date."),
+      frequency: z.enum(["WEEKLY", "FORTNIGHTLY", "MONTHLY"]).describe("How often to repeat."),
+      endDate: z.string().datetime().describe("ISO datetime; copies are created up to and including this date."),
+      createdById: z.string().optional().describe("Member id recorded as creator of the copies. Defaults to the configured default member."),
+    },
+  },
+  async ({ taskId, frequency, endDate, createdById }) => {
+    const original = await prisma.task.findFirst({ where: { id: taskId, archivedAt: null } });
+    if (!original) throw new Error(`Task ${taskId} was not found.`);
+    if (!original.dueDate) throw new Error("Task must have a due date to create a series.");
+    if (original.seriesId) throw new Error("Task is already part of a series.");
+    await requireEditableWorkspace(original.workspaceId);
+    createdById = withDefault(createdById, "memberId", "createdById", original.workspaceId);
+    await requireMemberInWorkspace(createdById, original.workspaceId, "Creator");
+
+    const end = new Date(endDate);
+    const dates = [];
+    for (let i = 1; ; i++) {
+      const date =
+        frequency === "WEEKLY" ? addDays(original.dueDate, 7 * i)
+        : frequency === "FORTNIGHTLY" ? addDays(original.dueDate, 14 * i)
+        : addMonths(original.dueDate, i);
+      if (!isBefore(date, end) && !isEqual(date, end)) break;
+      dates.push(date);
+      if (dates.length > 500) throw new Error("Series would create more than 500 tasks; choose an earlier endDate.");
+    }
+    if (dates.length === 0) throw new Error("endDate is too early to create any repeats.");
+
+    const seriesId = randomUUID();
+    await prisma.task.update({ where: { id: taskId }, data: { seriesId } });
+    let position = await getNextTaskPosition(original.workspaceId, original.status);
+    const { id, createdAt, updatedAt, parentId, seriesId: _s, ...taskData } = original;
+    void id; void createdAt; void updatedAt; void parentId; void _s;
+    for (const date of dates) {
+      const copy = await prisma.task.create({
+        data: { ...taskData, dueDate: date, seriesId, createdById, position: position++ },
+      });
+      await copyTaskTree(taskId, copy.id, createdById);
+    }
+    return textResult({ seriesId, copiesCreated: dates.length }, "Created task series");
   }
 );
 

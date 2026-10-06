@@ -41,9 +41,10 @@ export type TaskListItem = TaskSafeDate & {
   } | null;
 };
 
-export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt"> & {
+export type ProjectSafeDate = Omit<Project, "createdAt" | "updatedAt" | "archivedAt"> & {
   createdAt: string;
   updatedAt: string;
+  archivedAt: string | null;
 };
 
 export type TaskSafeDate = Omit<
@@ -91,10 +92,11 @@ export type TaskAssetFile = {
   type: string;
 };
 
-export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt" | "frozenAt"> & {
+export type WorkspaceSafeDates = Omit<Workspace, "createdAt" | "updatedAt" | "frozenAt" | "archivedAt"> & {
   createdAt: string;
   updatedAt: string;
   frozenAt: string | null;
+  archivedAt: string | null;
 };
 
 export type WorklogType = Omit<

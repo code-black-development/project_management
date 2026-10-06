@@ -26,6 +26,7 @@ export const searchTasks = async (
 ) => {
   const where: Prisma.TaskWhereInput = activeTaskWhere();
   const selectedStatuses = data.status ?? [];
+  const selectedPriorities = data.priority ?? [];
 
   if (data.workspaceId) {
     where.workspaceId = data.workspaceId;
@@ -42,6 +43,12 @@ export const searchTasks = async (
   if (selectedStatuses.length > 0) {
     where.status = {
       in: selectedStatuses,
+    };
+  }
+
+  if (selectedPriorities.length > 0) {
+    where.priority = {
+      in: selectedPriorities,
     };
   }
 
@@ -98,6 +105,7 @@ export const searchTasks = async (
       workspaceId: true,
       dueDate: true,
       status: true,
+      priority: true,
       position: true,
       timeEstimate: true,
       createdById: true,
@@ -121,6 +129,7 @@ export const searchTasks = async (
           autoHideCompletedTasks: true,
           autoHideChildTasks: true,
           taskAssignmentEmail: true,
+          archivedAt: true,
         },
       },
       assignee: {

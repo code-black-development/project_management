@@ -25,13 +25,15 @@ import {
 import DatePicker from "@/components/date-picker";
 import {
   ChevronDownIcon,
+  FlagIcon,
   FolderIcon,
   ListCheckIcon,
   SearchIcon,
   UserIcon,
   TrashIcon,
 } from "lucide-react";
-import { TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from "@prisma/client";
+import { PRIORITY_LABELS, TASK_PRIORITIES } from "@/lib/task-priority";
 import useTaskFilters from "../api/use-task-filters";
 import { useEffect, useMemo, useState } from "react";
 import { snakeCaseToTitleCase } from "@/lib/utils";
@@ -64,7 +66,7 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
     value: member.id,
   }));
 
-  const [{ statuses, assigneeId, projectId, dueDate, search }, setfilters] =
+  const [{ statuses, priorities, assigneeId, projectId, dueDate, search }, setfilters] =
     useTaskFilters();
 
   const [searchInput, setSearchInput] = useState(search || "");
@@ -103,6 +105,30 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
     });
   };
 
+  const selectedPrioritiesLabel = useMemo(() => {
+    if (priorities.length === 0) {
+      return "All priorities";
+    }
+
+    return priorities.map((priority) => PRIORITY_LABELS[priority]).join(", ");
+  }, [priorities]);
+
+  const onPriorityCheckedChange = (value: TaskPriority, checked: boolean) => {
+    const nextSet = new Set(priorities);
+
+    if (checked) {
+      nextSet.add(value);
+    } else {
+      nextSet.delete(value);
+    }
+
+    const next = TASK_PRIORITIES.filter((priority) => nextSet.has(priority));
+
+    setfilters({
+      priority: next.length > 0 ? next.join(",") : null,
+    });
+  };
+
   const onAssigneeChange = (value: string) => {
     setfilters({ assigneeId: value === "all" ? null : value });
   };
@@ -123,6 +149,7 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
 
   const hasActiveFilters = Boolean(
     statuses.length > 0 ||
+      priorities.length > 0 ||
       (!hideAssigneeFilter && assigneeId) ||
       (!hideProjectFilter && projectId) ||
       dueDate ||
@@ -132,6 +159,7 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
   const onClearFilters = () => {
     setfilters({
       status: null,
+      priority: null,
       assigneeId: hideAssigneeFilter ? assigneeId : null,
       projectId: null,
       dueDate: null,
@@ -203,6 +231,44 @@ const DataFilters = ({ hideProjectFilter, hideAssigneeFilter }: DataFiltersProps
             onSelect={() => setfilters({ status: null })}
           >
             Clear status filter
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            variant="muted"
+            className="h-8 w-full lg:w-auto justify-between"
+          >
+            <span className="flex min-w-0 items-center">
+              <FlagIcon className="mr-2 size-4 shrink-0" />
+              <span className="truncate">{selectedPrioritiesLabel}</span>
+            </span>
+            <ChevronDownIcon className="ml-2 size-4 shrink-0" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel>Priority</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {TASK_PRIORITIES.map((priority) => (
+            <DropdownMenuCheckboxItem
+              key={priority}
+              checked={priorities.includes(priority)}
+              onCheckedChange={(checked) =>
+                onPriorityCheckedChange(priority, checked === true)
+              }
+              onSelect={(event) => event.preventDefault()}
+            >
+              {PRIORITY_LABELS[priority]}
+            </DropdownMenuCheckboxItem>
+          ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={priorities.length === 0}
+            onSelect={() => setfilters({ priority: null })}
+          >
+            Clear priority filter
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

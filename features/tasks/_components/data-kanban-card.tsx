@@ -7,6 +7,7 @@ import DynamicIcon from "@/components/dynamic-icon";
 import Link from "next/link";
 import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { PRIORITY_BADGE_CLASSES, PRIORITY_LABELS } from "@/lib/task-priority";
 
 interface DataKanbanCardProps {
   task: TaskListItem;
@@ -39,6 +40,18 @@ const DataKanbanCard = ({ task }: DataKanbanCardProps) => {
           <MoreHorizontal className="size-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground transition-opacity cursor-pointer" />
         </TaskActions>
       </div>
+
+      {/* Priority — only if set */}
+      {task.priority && (
+        <span
+          className={cn(
+            "w-fit rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+            PRIORITY_BADGE_CLASSES[task.priority]
+          )}
+        >
+          {PRIORITY_LABELS[task.priority]}
+        </span>
+      )}
 
       {/* Category — only if set */}
       {task.category && (

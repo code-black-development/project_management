@@ -66,17 +66,18 @@ model VerificationToken {
 }
 
 model Workspace {
-  id        String             @id @default(cuid())
-  user      String
-  name      String
-  image     String?
-  status    WorkspaceStatus    @default(ACTIVE)
-  frozenAt  DateTime?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  members   Member[]
-  projects  Project[]
-  invites   WorkspaceInvites[]
+  id         String             @id @default(cuid())
+  user       String
+  name       String
+  image      String?
+  status     WorkspaceStatus    @default(ACTIVE)
+  frozenAt   DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  members    Member[]
+  projects   Project[]
+  invites    WorkspaceInvites[]
 }
 
 model Member {
@@ -119,10 +120,12 @@ model Project {
   autoHideCompletedTasks Boolean   @default(false)
   autoHideChildTasks     Boolean?
   taskAssignmentEmail    Boolean   @default(true)
+  archivedAt             DateTime?
   workspace              Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   Task                   Task[]
 
   @@index([workspaceId])
+  @@index([archivedAt])
 }
 
 model TaskCategory {
@@ -136,39 +139,40 @@ model TaskCategory {
 }
 
 model Task {
-  id                    String                 @id @default(cuid())
-  name                  String
-  description           String?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  archivedAt            DateTime?
-  assigneeId            String?
-  projectId             String
-  workspaceId           String
-  dueDate               DateTime?
-  status                TaskStatus             @default(TODO)
-  position              Int
-  timeEstimate          Int?
-  createdById           String
-  parentId              String?
-  categoryId            String?
-  taskType              TaskType               @default(TASK)
-  isRecurring           Boolean                @default(false)
-  recurrenceFrequency   RecurrenceFrequency?
-  recurrenceDuration    RecurrenceDuration?
-  recurrenceEndDate     DateTime?
-  originalEventId       String?
-  seriesId              String?
-  assignee              Member?                @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  category              TaskCategory?          @relation(fields: [categoryId], references: [id])
-  createdBy             Member                 @relation("TaskCreator", fields: [createdById], references: [id])
-  parent                Task?                  @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children              Task[]                 @relation("TaskHierarchy")
-  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assets                TaskAsset[]
-  worklogs              Worklog[]
-  originalEvent         Task?                  @relation("EventOccurrences", fields: [originalEventId], references: [id])
-  eventOccurrences      Task[]                 @relation("EventOccurrences")
+  id                  String               @id @default(cuid())
+  name                String
+  description         String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  archivedAt          DateTime?
+  assigneeId          String?
+  projectId           String
+  workspaceId         String
+  dueDate             DateTime?
+  status              TaskStatus           @default(TODO)
+  priority            TaskPriority?
+  position            Int
+  timeEstimate        Int?
+  createdById         String
+  parentId            String?
+  categoryId          String?
+  taskType            TaskType             @default(TASK)
+  isRecurring         Boolean              @default(false)
+  recurrenceFrequency RecurrenceFrequency?
+  recurrenceDuration  RecurrenceDuration?
+  recurrenceEndDate   DateTime?
+  originalEventId     String?
+  seriesId            String?
+  assignee            Member?              @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  category            TaskCategory?        @relation(fields: [categoryId], references: [id])
+  createdBy           Member               @relation("TaskCreator", fields: [createdById], references: [id])
+  parent              Task?                @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children            Task[]               @relation("TaskHierarchy")
+  project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assets              TaskAsset[]
+  worklogs            Worklog[]
+  originalEvent       Task?                @relation("EventOccurrences", fields: [originalEventId], references: [id])
+  eventOccurrences    Task[]               @relation("EventOccurrences")
 
   @@index([parentId])
   @@index([originalEventId])
@@ -176,6 +180,7 @@ model Task {
   @@index([workspaceId])
   @@index([projectId])
   @@index([status])
+  @@index([priority])
   @@index([archivedAt])
   @@index([assigneeId])
   @@index([dueDate])
@@ -277,6 +282,12 @@ enum TaskStatus {
   IN_PROGRESS
   IN_REVIEW
   DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum TaskType {

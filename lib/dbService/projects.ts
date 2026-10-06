@@ -5,6 +5,7 @@ export const getProjectsByWorkspaceId = async (workspaceId: string) => {
     const result = await prisma.project.findMany({
       where: {
         workspaceId,
+        archivedAt: null,
       },
     });
     return result;

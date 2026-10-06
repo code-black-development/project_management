@@ -37,6 +37,8 @@ import { useDeleteEvent } from "../api/use-delete-event";
 import { useDeleteTask } from "../api/use-delete-task";
 import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
+import { PRIORITY_LABELS, TASK_PRIORITIES } from "@/lib/task-priority";
+import type { TaskPriority } from "@prisma/client";
 import { useGetTaskCategories } from "../hooks/use-get-task-categories";
 import { useRouter } from "next/navigation";
 import { useUpdateTask } from "../api/use-update-task";
@@ -57,6 +59,7 @@ interface TaskOverviewProps {
 
 const UNASSIGNED_VALUE = "unassigned";
 const NO_CATEGORY_VALUE = "no-category";
+const NO_PRIORITY_VALUE = "no-priority";
 
 const statusOptions = [
   TaskStatus.BACKLOG,
@@ -346,6 +349,33 @@ const TaskOverview = ({ task }: TaskOverviewProps) => {
                       />
                       {project.name}
                     </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </EditableRow>
+
+          <EditableRow label="Priority">
+            <Select
+              value={task.priority || NO_PRIORITY_VALUE}
+              onValueChange={(priority) =>
+                patchTask({
+                  priority:
+                    priority === NO_PRIORITY_VALUE
+                      ? null
+                      : (priority as TaskPriority),
+                })
+              }
+              disabled={isUpdating}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_PRIORITY_VALUE}>No priority</SelectItem>
+                {[...TASK_PRIORITIES].reverse().map((priority) => (
+                  <SelectItem key={priority} value={priority}>
+                    {PRIORITY_LABELS[priority]}
                   </SelectItem>
                 ))}
               </SelectContent>

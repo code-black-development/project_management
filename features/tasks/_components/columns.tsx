@@ -2,14 +2,19 @@
 
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
-import { TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown, MoreVertical } from "lucide-react";
 import ProjectAvatar from "@/features/projects/_components/project-avatar";
 import MemberAvatar from "@/features/members/_components/member-avatar";
 import TaskDate from "./task-date";
-import { snakeCaseToTitleCase } from "@/lib/utils";
+import { cn, snakeCaseToTitleCase } from "@/lib/utils";
+import {
+  PRIORITY_BADGE_CLASSES,
+  PRIORITY_LABELS,
+  TASK_PRIORITIES,
+} from "@/lib/task-priority";
 import { TaskBadge } from "./task-badge";
 import TaskActions from "./task-actions";
 import { TaskListItem } from "@/types/types";
@@ -102,6 +107,54 @@ const AssigneeCell = ({ task }: { task: TaskListItem }) => {
         {members.map((member) => (
           <SelectItem key={member.id} value={member.id}>
             {member.user.name || member.user.email}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+const PRIORITY_NONE = "none";
+
+const PriorityCell = ({ task }: { task: TaskListItem }) => {
+  const { mutate: updateTask, isPending } = useUpdateTask();
+
+  const handleChange = (value: string) => {
+    updateTask({
+      param: { taskId: task.id },
+      json: {
+        priority: value === PRIORITY_NONE ? null : (value as TaskPriority),
+      },
+    });
+  };
+
+  return (
+    <Select
+      value={task.priority ?? PRIORITY_NONE}
+      onValueChange={handleChange}
+      disabled={isPending}
+    >
+      <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden">
+        <SelectValue>
+          {task.priority ? (
+            <Badge
+              variant="secondary"
+              className={cn("text-xs", PRIORITY_BADGE_CLASSES[task.priority])}
+            >
+              {PRIORITY_LABELS[task.priority]}
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={PRIORITY_NONE}>
+          <span className="text-muted-foreground">No priority</span>
+        </SelectItem>
+        {TASK_PRIORITIES.map((priority) => (
+          <SelectItem key={priority} value={priority}>
+            {PRIORITY_LABELS[priority]}
           </SelectItem>
         ))}
       </SelectContent>
@@ -282,6 +335,26 @@ export const columns: ColumnDef<TaskListItem>[] = [
       }
       return <TaskDate value={dueDate} />;
     },
+  },
+  {
+    accessorKey: "priority",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Priority
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    sortingFn: (a, b) => {
+      const rank = (p: TaskPriority | null | undefined) =>
+        p ? TASK_PRIORITIES.indexOf(p) + 1 : 0;
+      return rank(a.original.priority) - rank(b.original.priority);
+    },
+    cell: ({ row }) => <PriorityCell task={row.original} />,
   },
   {
     accessorKey: "category",
